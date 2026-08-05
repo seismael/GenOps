@@ -1,0 +1,32 @@
+# {Project} — Prototype
+
+## Interview
+
+1. **Prototype Scope** — "Which screens and flows should be interactive?"
+2. **Interaction Detail** — "What interactions need specification? Transitions, animations, feedback?"
+3. **Testing Plan** — "How will the prototype be tested? Tasks, participants, success criteria?"
+4. **Iteration Focus** — "What specific feedback are you seeking?"
+
+## Output
+
+## Scope
+
+## Interaction Patterns
+| Element | Trigger | Action | Feedback |
+|---------|---------|--------|----------|
+
+## Prototype Link
+<!-- URL or file path -->
+
+## User Testing Plan
+### Test Objectives
+### Tasks
+| Task | Expected Path | Success Criteria |
+|------|---------------|-----------------|
+### Participants
+
+## Findings
+| Finding | Severity | Recommendation |
+|---------|----------|----------------|
+
+## Iteration Plan

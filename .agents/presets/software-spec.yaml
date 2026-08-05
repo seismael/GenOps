@@ -1,0 +1,62 @@
+# GenOps Pipeline Configuration — Software Specification
+#
+# Preset: software-spec
+# Use with: /genops-init --preset software-spec
+# Stages: prd → hld → adr → lld → code
+
+pipeline:
+  name: "Software Specification Pipeline"
+  stages:
+    - id: prd
+      name: "Product Requirements"
+      focus: "Product vision, user stories, success metrics, scope boundaries"
+      requires: []
+      outputs:
+        - "docs/PRD.md"
+      template: "PRD.md.template"
+      next:
+        - hld
+
+    - id: hld
+      name: "High-Level Design"
+      focus: "System topology, component boundaries, data flow, integration points"
+      requires:
+        - "docs/PRD.md"
+      outputs:
+        - "docs/HLD.md"
+      template: "HLD.md.template"
+      next:
+        - adr
+
+    - id: adr
+      name: "Architecture Decisions"
+      focus: "Architectural trade-offs, technology selection, design pattern choices"
+      requires:
+        - "docs/HLD.md"
+      outputs:
+        - "docs/architecture/adr-*.md"
+      template: "ADR.md.template"
+      next:
+        - lld
+
+    - id: lld
+      name: "Low-Level Design"
+      focus: "Class diagrams, database schemas, API contracts, module structure"
+      requires:
+        - "docs/HLD.md"
+        - "docs/architecture/adr-*.md"
+      outputs:
+        - "docs/LLD.md"
+      template: "LLD.md.template"
+      next:
+        - code
+
+    - id: code
+      name: "Implementation"
+      focus: "Implementation plan, file scaffolding, test alignment"
+      requires:
+        - "docs/LLD.md"
+      outputs:
+        - "src/**/*"
+      template: "CODE.md.template"
+      next: []

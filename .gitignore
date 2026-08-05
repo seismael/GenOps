@@ -1,0 +1,20 @@
+# Generated docs (keep as examples or delete for clean start)
+# docs/prd/*.md
+# docs/hld/*.md
+# docs/architecture/*.md
+# docs/lld/*.md
+# docs/code/*.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Node modules (if node-based tools added later)
+node_modules/
+
+# Evaluation reports (keep for reference, ignore if desired)
+# docs/eval/

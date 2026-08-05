@@ -1,0 +1,50 @@
+# {Domain} — Product Requirements
+
+## Interview
+
+Questions asked ONE at a time. Required first, optional only if unclear.
+
+**Required:**
+1. **Vision** — "What does success look like 6-12 months out for this domain?"
+2. **Stakeholders** — "Who are the primary users or stakeholders? What are their needs?"
+3. **Key Capabilities** — "What are the top 3-5 things users must be able to do? (As a <role>, I want <goal> so that <reason>)"
+4. **Success Criteria** — "How do we measure success? What metrics, what targets?"
+
+**Optional:**
+5. **Scope Boundaries** — "What is explicitly OUT of scope for the first iteration?"
+6. **Risks & Constraints** — "What assumptions are we making? What could go wrong?"
+
+## Output
+
+## Vision
+<!-- One sentence describing the aspirational goal for this domain -->
+
+## Problem Statement
+<!-- What problem does this domain solve? Who experiences it? -->
+
+## Target Users
+<!-- Primary user personas for this domain. Who, what needs, constraints. -->
+
+## Key Capabilities
+| Priority | As a... | I want to... | So that... | Acceptance Criteria |
+|----------|---------|--------------|------------|---------------------|
+| P1       |         |              |            |                     |
+
+## Success Metrics
+| Metric | Baseline | Target | Measurement Method |
+|--------|----------|--------|--------------------|
+|        |          |        |                    |
+
+## Scope
+### In Scope
+<!-- What is included in this domain -->
+### Out of Scope
+<!-- What is explicitly excluded and why -->
+
+## Assumptions & Dependencies
+<!-- Assumptions. External systems, teams, or decisions this depends on. -->
+
+## Risks
+| Risk | Likelihood | Impact | Mitigation |
+|------|------------|--------|------------|
+|      |            |        |            |

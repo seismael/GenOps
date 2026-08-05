@@ -1,0 +1,55 @@
+# {Domain} — High-Level Design
+
+## Interview
+
+Questions asked ONE at a time.
+
+**Required:**
+1. **Architecture Pattern** — "What architecture fits best? A) Monolith B) Microservices C) Event-driven D) Modular monolith E) Other"
+2. **Core Components** — "What are the top 3-5 components? For each: responsibility, public interface, dependencies."
+3. **Critical Flow** — "Walk through the most important flow end-to-end. What touches what?"
+4. **Scale & Performance** — "Expected scale (users/requests per second)? Latency targets?"
+
+**Optional:**
+5. **Availability & Security** — "Uptime target? Authentication model? Data sensitivity?"
+6. **External Integrations** — "What external systems or services does this integrate with?"
+7. **Technology Direction** — "Any technology preferences or constraints? Flag unresolved items as 'Needs ADR'."
+
+## Output
+
+## System Overview
+<!-- One paragraph describing the system at a high level -->
+
+## Architecture Diagram
+```mermaid
+C4Context
+  title System Context Diagram
+```
+
+## Component Descriptions
+### {Component Name}
+- **Responsibility**: <!-- What it owns and does -->
+- **Public Interface**: <!-- What it exposes -->
+- **Dependencies**: <!-- What it depends on -->
+
+## Data Flow
+```mermaid
+sequenceDiagram
+  <!-- Primary flow -->
+```
+
+## Error Handling Strategy
+| Error Category | Handling | User-Facing Message | Severity |
+|---------------|----------|---------------------|----------|
+
+## Integration Points
+| Integration | Type | Protocol | Direction | Description |
+|-------------|------|----------|-----------|-------------|
+
+## Non-Functional Requirements
+| Category | Requirement | Target |
+|----------|-------------|--------|
+
+## Technology Constraints
+| Concern | Preference | Status |
+|---------|-----------|--------|

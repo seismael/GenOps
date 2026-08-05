@@ -1,0 +1,69 @@
+# GenOps Pipeline Configuration
+# Stages execute sequentially. Each stage reads its template which defines
+# both interview questions (## Interview) and output structure (## Output).
+# File naming: {STAGE}-{NNN}-{descriptive-slug}.md
+
+pipeline:
+  name: "Software Specification Pipeline"
+  stages:
+    - id: prd
+      name: "Product Requirements"
+      focus: "Product vision, user stories, success metrics, scope boundaries"
+      requires: []
+      outputs: ["docs/prd/"]
+      file_pattern: "PRD-{NNN}-{slug}.md"
+      template: "prd/PRD-domain.md.template"
+      next: [hld]
+
+    - id: hld
+      name: "High-Level Design"
+      focus: "System topology, component boundaries, data flow, integration points"
+      requires: ["docs/prd/"]
+      outputs: ["docs/hld/"]
+      file_pattern: "HLD-{NNN}-{slug}.md"
+      template: "hld/HLD-domain.md.template"
+      next: [adr]
+
+    - id: adr
+      name: "Architecture Decisions"
+      focus: "Architectural trade-offs, technology selection, design pattern choices"
+      requires: ["docs/hld/"]
+      outputs: ["docs/architecture/"]
+      file_pattern: "ADR-{NNN}-{slug}.md"
+      template: "adr/ADR.md.template"
+      next: [lld]
+
+    - id: lld
+      name: "Low-Level Design"
+      focus: "Class diagrams, database schemas, API contracts, module structure"
+      requires: ["docs/hld/", "docs/architecture/"]
+      outputs: ["docs/lld/"]
+      file_pattern: "LLD-{NNN}-{slug}.md"
+      template: "lld/LLD-domain.md.template"
+      next: [code]
+
+    - id: code
+      name: "Implementation"
+      focus: "Implementation plan, file scaffolding, test alignment"
+      requires: ["docs/lld/"]
+      outputs: ["docs/code/"]
+      file_pattern: "CODE-{NNN}-{slug}.md"
+      template: "code/CODE-domain.md.template"
+      next: []
+
+  validation_rules:
+    - from: prd
+      to: hld
+      rule: "Verify each Key Capability from PRD maps to ≥1 HLD component or data flow"
+    - from: hld
+      to: adr
+      rule: "Verify all Technology items marked 'Needs ADR' in HLD have matching ADRs"
+    - from: adr
+      to: lld
+      rule: "Verify each ADR decision is reflected in LLD entities, schema, or contracts"
+    - from: hld
+      to: lld
+      rule: "Verify LLD module structure matches HLD component descriptions"
+    - from: lld
+      to: code
+      rule: "Verify Code tasks reference LLD entities, schema, and contracts"

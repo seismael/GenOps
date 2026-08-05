@@ -1,0 +1,27 @@
+# {Project} — Mockups
+
+## Interview
+
+1. **Visual Direction** — "What visual style? Modern, minimal, playful, professional?"
+2. **Color Palette** — "Primary, secondary, accent colors? Any existing brand colors?"
+3. **Typography** — "Font preferences? Serif, sans-serif, display?"
+4. **Component Priority** — "Which UI components need detailed specs first? Buttons, forms, cards?"
+
+## Output
+
+## Visual Design System
+### Color Palette
+| Color | Hex | Usage |
+|-------|-----|-------|
+### Typography
+| Element | Font | Size | Weight |
+|---------|------|------|--------|
+
+## Components
+### {Component Name}
+- **States**: Default, Hover, Active, Disabled, Error
+- **Specs**: <!-- dimensions, spacing, shadows -->
+
+## Screen Mockups
+### {Screen Name}
+<!-- Visual design applied -->

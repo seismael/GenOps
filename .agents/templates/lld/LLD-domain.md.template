@@ -1,0 +1,61 @@
+# {Domain} — Detailed Design
+
+## Interview
+
+Start by listing ADR decisions. "ADR-001 says X, ADR-002 says Y. Confirm these still stand?" Then ask ONE at a time.
+
+**Required:**
+1. **Core Entities** — "What are the core entities or data structures? Attributes, relationships, validation rules?"
+2. **Schema or Structure** — "How is data organized? Tables, collections, indexes, schemas?"
+3. **Contracts or Interfaces** — "What are the API contracts, function signatures, or module interfaces?"
+
+**Optional:**
+4. **Module Organization** — "How is the code or structure organized? Directory tree, packages, namespaces?"
+5. **Error Strategy** — "How are errors categorized, propagated, logged, and surfaced?"
+6. **Testing Approach** — "What testing pyramid? What frameworks? Coverage targets?"
+
+## Output
+
+## Entities & Interfaces
+### {Entity Name}
+```<!-- language -->
+<!-- Definition -->
+```
+- **Purpose**: <!-- What it represents -->
+- **Attributes**: <!-- Key fields and types -->
+- **Relationships**: <!-- How it relates -->
+- **Invariants**: <!-- Rules that always hold -->
+
+## Entity Relationship Diagram
+```mermaid
+erDiagram
+```
+
+## Database Schema
+### {Table/Collection}
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+Indexes:
+```sql
+<!-- Statements -->
+```
+
+## Module Structure
+```
+<!-- Directory tree -->
+```
+
+## API Contracts
+### {Endpoint}
+```
+<METHOD> <path>
+```
+**Request/Response:** <!-- Shape -->
+
+## Error Handling
+| Error Condition | Message | Code |
+|-----------------|---------|------|
+
+## Testing Strategy
+| Layer | Scope | Framework | Target |
+|-------|-------|-----------|--------|

@@ -1,0 +1,54 @@
+# GenOps Pipeline Configuration — Research
+#
+# Preset: research
+# Use with: /genops-init --preset research
+# Stages: lit-review → hypothesis → experiment → report
+
+pipeline:
+  name: "Research Pipeline"
+  stages:
+    - id: lit-review
+      name: "Literature Review"
+      focus: "Paper summaries, gap analysis, prior art survey"
+      requires: []
+      outputs:
+        - "docs/research/"
+      file_pattern: "LIT-REVIEW-{NNN}-{slug}.md"
+      template: "research/LIT-REVIEW.md.template"
+      next:
+        - hypothesis
+
+    - id: hypothesis
+      name: "Hypothesis"
+      focus: "Hypothesis formulation, experiment design, success criteria"
+      requires:
+        - "docs/research/"
+      outputs:
+        - "docs/hypothesis/"
+      file_pattern: "HYPOTH-{NNN}-{slug}.md"
+      template: "research/HYPOTHESIS.md.template"
+      next:
+        - experiment
+
+    - id: experiment
+      name: "Experiment"
+      focus: "Run experiment, collect data, analyze results"
+      requires:
+        - "docs/hypothesis/"
+      outputs:
+        - "docs/experiment/"
+      file_pattern: "EXPR-{NNN}-{slug}.md"
+      template: "research/EXPERIMENT.md.template"
+      next:
+        - report
+
+    - id: report
+      name: "Report"
+      focus: "Write research paper, generate figures, compile findings"
+      requires:
+        - "docs/experiment/"
+      outputs:
+        - "docs/report/"
+      file_pattern: "RPRT-{NNN}-{slug}.md"
+      template: "research/REPORT.md.template"
+      next: []

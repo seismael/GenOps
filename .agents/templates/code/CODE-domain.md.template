@@ -1,0 +1,41 @@
+# {Domain} — Implementation
+
+## Interview
+
+1. **Output Mode** — "A) Implementation plan (task breakdown) B) Scaffolded code (stubs + tests) C) Full generation"
+2. **Project Layout** — "Where do source files live? Follow upstream module structure?"
+3. **Testing Setup** — "What framework and runner? Confirm from upstream."
+
+## Output
+
+> **Goal:** <!-- One sentence from upstream -->
+
+## Architecture Summary
+<!-- 2-3 sentences recap -->
+
+## Tech Stack
+| Layer | Technology | Version | Rationale |
+|-------|-----------|---------|-----------|
+
+## File Structure
+```
+<!-- Directory tree -->
+```
+
+## Tasks
+### Task N: {Component}
+**Files:** Create: `path`, Modify: `path`, Test: `path`
+**Steps:**
+1. Write failing test
+2. Run test → fails
+3. Implement minimal code
+4. Run test → passes
+5. Commit
+
+## Testing Plan
+| Task | Type | What It Verifies | Expected Pass |
+|------|------|-----------------|---------------|
+
+## Risks & Mitigations
+| Risk | Impact | Mitigation |
+|------|--------|------------|

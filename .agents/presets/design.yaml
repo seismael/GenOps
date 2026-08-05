@@ -1,0 +1,54 @@
+# GenOps Pipeline Configuration — Design
+#
+# Preset: design
+# Use with: /genops-init --preset design
+# Stages: brief → wireframes → mockups → prototype
+
+pipeline:
+  name: "Design Pipeline"
+  stages:
+    - id: brief
+      name: "Design Brief"
+      focus: "Project goals, target audience, brand guidelines, constraints"
+      requires: []
+      outputs:
+        - "docs/brief/"
+      file_pattern: "BRIEF-{NNN}-{slug}.md"
+      template: "design/BRIEF.md.template"
+      next:
+        - wireframes
+
+    - id: wireframes
+      name: "Wireframes"
+      focus: "Layout structure, user flows, information architecture"
+      requires:
+        - "docs/brief/"
+      outputs:
+        - "docs/wireframes/"
+      file_pattern: "WIRE-{NNN}-{slug}.md"
+      template: "design/WIREFRAMES.md.template"
+      next:
+        - mockups
+
+    - id: mockups
+      name: "Mockups"
+      focus: "Visual design, color palette, typography, component styling"
+      requires:
+        - "docs/wireframes/"
+      outputs:
+        - "docs/mockups/"
+      file_pattern: "MOCK-{NNN}-{slug}.md"
+      template: "design/MOCKUPS.md.template"
+      next:
+        - prototype
+
+    - id: prototype
+      name: "Prototype"
+      focus: "Interactive prototype, animations, user testing plan"
+      requires:
+        - "docs/mockups/"
+      outputs:
+        - "docs/prototype/"
+      file_pattern: "PROTO-{NNN}-{slug}.md"
+      template: "design/PROTOTYPE.md.template"
+      next: []

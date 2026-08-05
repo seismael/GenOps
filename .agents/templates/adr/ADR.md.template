@@ -1,0 +1,34 @@
+# {Decision Topic} — Architecture Decision
+
+## Interview
+
+ONE decision at a time. After each decision, ask if another is needed.
+
+1. **Decision Scope** — "What architectural decision needs to be made? (Scan upstream for unresolved technology items first.)"
+2. **Options Considered** — "What options were considered? For each: pros, cons."
+3. **Decision** — "Which option was chosen and why?"
+4. **Consequences** — "What becomes easier? What becomes harder? What constraints does this impose on later stages?"
+
+## Output
+
+**Status**: <!-- Proposed / Accepted / Deprecated / Superseded -->
+**Date**: <!-- YYYY-MM-DD -->
+
+## Context
+<!-- Problem statement. Constraints. What triggered this? Reference upstream documents. -->
+
+## Decision
+<!-- What was decided? Be specific. -->
+
+## Alternatives Considered
+| Option | Description | Pros | Cons | Why Rejected |
+|--------|-------------|------|------|--------------|
+
+## Consequences
+### Positive
+### Negative
+### Neutral
+
+## Related Decisions
+
+## References

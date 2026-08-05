@@ -1,0 +1,39 @@
+# {Project} — Wireframes
+
+## Interview
+
+1. **Information Architecture** — "What is the site or app structure? Main sections and hierarchy?"
+2. **Critical User Flows** — "What are the 2-3 most important user flows?"
+3. **Screen Inventory** — "What screens or pages are needed? Purpose of each?"
+4. **Responsive Strategy** — "How does the layout adapt? Mobile, tablet, desktop breakpoints?"
+
+## Output
+
+## Information Architecture
+```
+<!-- Structure tree -->
+```
+
+## User Flows
+```mermaid
+graph TD
+```
+
+### Flow: {Name}
+<!-- Step-by-step -->
+
+## Screens
+### {Screen Name}
+**Purpose**: <!-- What it does -->
+**Layout sketch**:
+```
++----------------------------------+
+| [Header]                         |
+| [Content Area]                   |
+| [Footer]                         |
++----------------------------------+
+```
+
+## Responsive Breakpoints
+| Breakpoint | Change |
+|------------|--------|
