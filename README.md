@@ -8,24 +8,25 @@ GenOps is a separation-of-concerns pipeline engine that decomposes complex softw
 /genops-prd ──cascade──> /genops-hld ──cascade──> /genops-adr ──cascade──> /genops-lld ──cascade──> /genops-code
      │                       │                       │                       │                       │
      v                       v                       v                       v                       v
-docs/prd/               docs/hld/           docs/architecture/          docs/lld/               docs/code/
+docs/prd/               docs/hld/           docs/architecture/          docs/lld/               src/**/*
 ```
+
+The terminal stage (`/genops-code`) reads LLD's project structure and scaffolds actual source files using predefined scaffold templates — not documentation about code, but the code itself.
 
 ## Why GenOps
 
 AI coding agents are powerful but unfocused. They skip planning, mix concerns, and lose context across long sessions. GenOps enforces structure:
 
-- **One stage at a time** — SoC by design. Each `/genops-prd`, `/genops-hld`, etc. handles exactly one layer.
-- **Reactive cascading** — Change an upstream doc and all downstream layers detect staleness. The agent knows exactly which files need regeneration.
+- **One stage at a time** — SoC by design. Each stage handles exactly one layer.
+- **Reactive cascading** — Change an upstream doc and all downstream layers detect staleness with per-file precision.
 - **Agent-native** — No code. No install. Skills are SKILL.md files discovered by AGENTS.md. Works with Claude CLI, OpenCode, Gemini CLI.
-- **Generic** — Edit `genops.yaml` to define any pipeline. Software spec is one preset. Research, design, or any sequential workflow works.
+- **Template-driven** — Interview questions and output structure live in templates. Add a pipeline by adding templates, not skills.
+- **Scaffold system** — `/genops-code` generates actual project files from LLD design. Go services, React apps, Python APIs — deterministic, tech-stack-aware scaffolding.
 
 ## Quick Start
 
-Clone GenOps as your project template:
-
 ```bash
-git clone https://github.com/user/genops.git my-project
+git clone https://github.com/seismael/genops.git my-project
 cd my-project
 ```
 
@@ -33,11 +34,11 @@ The agent discovers GenOps automatically from `AGENTS.md` and `.agents/skills/`.
 
 ```bash
 /genops-init           # Initialize (or validate) the project
-/genops-prd            # Start: define product requirements
+/genops-prd            # Define product requirements
 /genops-hld            # Design system architecture
 /genops-adr            # Document architectural decisions
-/genops-lld            # Specify low-level design
-/genops-code           # Implementation plan
+/genops-lld            # Specify low-level design (includes project structure)
+/genops-code           # Scaffold actual project from LLD → src/
 ```
 
 ## Commands
@@ -47,8 +48,8 @@ The agent discovers GenOps automatically from `AGENTS.md` and `.agents/skills/`.
 | `/genops-prd` | Product Requirements | Define vision, user stories, success metrics, scope |
 | `/genops-hld` | High-Level Design | Architecture topology, components, data flow, NFRs |
 | `/genops-adr` | Architecture Decisions | Trade-off analysis, technology selection (incremental) |
-| `/genops-lld` | Low-Level Design | Class diagrams, DB schemas, API contracts, modules |
-| `/genops-code` | Implementation | Implementation plan, scaffolding, code generation |
+| `/genops-lld` | Low-Level Design | Entities, schemas, API contracts, **project structure** |
+| `/genops-code` | Implementation | Scaffold project from LLD using scaffold templates |
 | `/genops` | Pipeline Engine | Orchestrate pipeline, check status, start from any stage |
 | `/genops-init` | Initializer | Initialize GenOps in any project, validate setup |
 | `/genops-status` | Dashboard | Pipeline health report with per-file stale detection |
@@ -64,44 +65,62 @@ The agent discovers GenOps automatically from `AGENTS.md` and `.agents/skills/`.
 
 ## Document Organization
 
-Files use domain-split naming: `{STAGE}-{NNN}-{descriptive-slug}.md`
+Design documents use domain-split naming: `{STAGE}-{NNN}-{descriptive-slug}.md`
 
 ```
 docs/
 ├── prd/
 │   ├── PRD-001-product-catalog.md       # Single domain = 1 file
-│   ├── PRD-002-shopping-cart.md         # Multi-domain = N files
-│   └── PRD-003-checkout-payment.md
+│   └── PRD-002-shopping-cart.md         # Multi-domain = N files
 ├── hld/
 │   ├── HLD-001-system-topology.md
-│   ├── HLD-002-catalog-service.md
-│   └── HLD-004-payment-service.md
+│   └── HLD-002-catalog-service.md
 ├── architecture/
 │   ├── ADR-001-go-language.md           # One per decision
-│   ├── ADR-002-sqlite-storage.md
-│   └── ADR-003-cobra-cli-framework.md
+│   └── ADR-002-sqlite-storage.md
 ├── lld/
-│   ├── LLD-001-catalog-schema.md
+│   ├── LLD-001-catalog-schema.md        # Defines project structure
 │   └── LLD-002-payment-contracts.md
-├── code/
-│   ├── CODE-001-architecture-summary.md
-│   ├── CODE-002-catalog-implementation.md
-│   └── CODE-003-payment-implementation.md
 └── .genops-state.json                   # Per-file hash tracking
 ```
 
-The domain slug in the filename **is** the agent's navigation system. `grep docs/ payment` finds every file across every layer related to "payment".
+## Project Output
+
+`/genops-code` reads LLD's `## Project Structure` and scaffolds real source files:
+
+```
+src/
+├── services/                     # Microservices (one per LLD module)
+│   ├── user-service/             # Scaffolded from: go-service template
+│   │   ├── cmd/main.go
+│   │   ├── internal/{handler,service,store}/
+│   │   ├── go.mod
+│   │   ├── Dockerfile
+│   │   └── tests/
+│   └── payment-service/          # Same scaffold, different module
+├── web/                          # Scaffolded from: react-vite template
+│   ├── src/{components,pages,hooks}/
+│   ├── package.json
+│   └── tsconfig.json
+├── docker-compose.yml
+└── README.md
+```
+
+Available scaffolds: `go-service`, `react-vite`, `python-fastapi`, `go-library`. See `.agents/scaffolds/`.
 
 ## Key Features
 
+### Scaffold Template System
+LLD defines modules with scaffold references (`go-service`, `react-vite`, etc.). `/genops-code` loads the scaffold's STRUCTURE.yaml + build templates, generates deterministic project files with entity stubs, tests, and cross-module config. Add a new tech stack by adding a scaffold directory — no skill changes needed.
+
 ### Pre-Flight Validation
-Every skill validates its dependencies before executing. Missing upstream stage? Corrupt state file? Uninitialized project? The agent halts with a specific error message and the exact command to fix it.
+Every skill validates its dependencies before executing. Missing upstream? Corrupt state? Uninitialized? The agent halts with the exact command to fix it.
 
 ### Per-File Staleness Detection
-Change one PRD file and the agent identifies exactly which downstream files are affected. Not binary stale/not-stale — precision targeting.
+Change one PRD file and the agent identifies exactly which downstream files are affected — precision targeting, not binary stale/not-stale.
 
 ### Cross-Layer Validation
-PRD→HLD: every user story must map to a component. ADR→LLD: every technology decision must appear in the design. Interface consistency between layers is automatically checked.
+PRD→HLD: every user story maps to a component. ADR→LLD: every technology decision appears in the design. Code: every LLD entity has a source file stub.
 
 ### Pipeline Presets
 ```bash
@@ -112,7 +131,7 @@ PRD→HLD: every user story must map to a component. ADR→LLD: every technology
 ```
 
 ### State Machine
-Every stage has a well-defined lifecycle: `absent → drafting → generated → approved → stale`. Per-file hashes detect staleness. Combined hashes drive cascade detection.
+Every stage: `absent → drafting → generated → approved → stale`. Per-file hashes detect staleness. Combined hashes drive cascade detection.
 
 ## Architecture
 
@@ -122,68 +141,58 @@ Every stage has a well-defined lifecycle: `absent → drafting → generated →
 ├──────────────────────────────────────┤
 │  AGENTS.md         Entry Point        │  Agent discovers GenOps here
 ├──────────────────────────────────────┤
-│  genops/SKILL.md   Pipeline Engine    │  Orchestrator + state manager
+│  genops/SKILL.md   Engine             │  Orchestrator + state manager
 ├──────────────────────────────────────┤
-│  genops-stage/     Stage Protocol     │  PRE-FLIGHT → LOAD → DOMAINS →
-│  SKILL.md                              │  CHECK → INTERVIEW → GENERATE →
-│                                         │  PRESENT → APPROVE → RECORD →
-│                                         │  TRANSITION
+│  genops-stage/     Stage Protocol     │  11-step template-driven protocol
 ├──────────────────────────────────────┤
-│  genops-prd/hld/   Stage Skills       │  5 domain skills (extend protocol)
-│  adr/lld/code/                         │
+│  genops-{prd,hld,  Stage Skills      │  Thin wrappers (read template → execute)
+│   adr,lld,code}/                       │
 ├──────────────────────────────────────┤
-│  .agents/templates/  Templates        │  Per-layer structured output formats
+│  .agents/templates/ Templates         │  Interview questions + output structure
 ├──────────────────────────────────────┤
-│  docs/               Generated Docs   │  Domain-split, per-file hash tracked
+│  .agents/scaffolds/ Scaffolds         │  Build templates per tech stack
 ├──────────────────────────────────────┤
-│  .genops-state.json  State Tracker    │  Per-file hashes + combined hashes
+│  docs/             Design Docs        │  Domain-split, per-file hash tracked
+├──────────────────────────────────────┤
+│  src/              Project Output     │  Scaffolded from LLD by /genops-code
 └──────────────────────────────────────┘
 ```
 
-## Adding Your Own Pipeline
+## Adding a Scaffold
 
-Edit `genops.yaml`:
+1. Create `.agents/scaffolds/<name>/STRUCTURE.yaml`
+2. Add build templates (go.mod, package.json, etc.)
+3. Reference in LLD's `## Project Structure`
 
 ```yaml
-pipeline:
-  name: "My Pipeline"
-  stages:
-    - id: research
-      name: "Research Phase"
-      focus: "Background research and findings"
-      requires: []
-      outputs: ["docs/research/"]
-      file_pattern: "RSCH-{NNN}-{slug}.md"
-      template: "research/template.md.template"
-      next: [implementation]
-
-    - id: implementation
-      name: "Implementation Phase"
-      requires: ["docs/research/"]
-      outputs: ["docs/impl/"]
-      file_pattern: "IMPL-{NNN}-{slug}.md"
-      template: "impl/template.md.template"
-      next: []
+# .agents/scaffolds/rust-actix/STRUCTURE.yaml
+name: "Rust Actix Service"
+language: "Rust"
+framework: "Actix Web"
+directories: [src/, src/handlers/, src/models/, tests/]
+templates:
+  Cargo.toml.template: "{module}/Cargo.toml"
+  main.rs.template: "{module}/src/main.rs"
+entity_stubs:
+  handler: "src/handlers/{entity_lower}.rs"
+  model: "src/models/{entity_lower}.rs"
 ```
-
-Create matching skill files at `.agents/skills/genops-research/SKILL.md` and `.agents/skills/genops-implementation/SKILL.md`. Create templates. Run `/genops-init` to update AGENTS.md.
 
 ## Token Efficiency
 
-GenOps is designed for minimal LLM cost:
-
 | Component | Lines | Load Frequency |
 |-----------|-------|---------------|
-| genops-stage (protocol) | 63 | Every stage invocation |
-| genops (engine) | 31 | Orchestration |
-| Stage skills | 19-27 avg | Once per stage run |
-| **Hot-path total** | **~118 lines** | 41% under 200-line budget |
-| Templates | 23-59 | Only during GENERATE step |
+| genops-stage (protocol) | 61 | Every stage invocation |
+| genops (engine) | 33 | Orchestration |
+| Stage skills | 16-20 avg | Once per stage |
+| **Hot-path total** | **~114 lines** | 43% under 200-line budget |
+| Templates | 23-59 | Only during GENERATE |
+| Scaffolds | Per-module | Only during code stage GENERATE |
 
 ## Requirements
 
 - Any AI coding agent that supports AGENTS.md and SKILL.md (Claude CLI, OpenCode, Gemini CLI)
-- No runtime dependencies, no package installation, no language runtime
+- No runtime dependencies, no package installation
 
 ## License
 
@@ -191,4 +200,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). GenOps follows the same pipeline it provides: propose changes via PRD, design via ADR, implement via Code plan.
+See [CONTRIBUTING.md](CONTRIBUTING.md). GenOps follows its own pipeline: propose via PRD, design via ADR, implement via Code.

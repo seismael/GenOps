@@ -1,7 +1,7 @@
 # GenOps Pipeline Configuration
 # Stages execute sequentially. Each stage reads its template which defines
 # both interview questions (## Interview) and output structure (## Output).
-# File naming: {STAGE}-{NNN}-{descriptive-slug}.md
+# Terminal stage (code) scaffolds actual project files from LLD design.
 
 pipeline:
   name: "Software Specification Pipeline"
@@ -44,11 +44,9 @@ pipeline:
 
     - id: code
       name: "Implementation"
-      focus: "Implementation plan, file scaffolding, test alignment"
+      focus: "Scaffold project from LLD design using scaffold templates"
       requires: ["docs/lld/"]
-      outputs: ["docs/code/"]
-      file_pattern: "CODE-{NNN}-{slug}.md"
-      template: "code/CODE-domain.md.template"
+      outputs: ["src/"]
       next: []
 
   validation_rules:
@@ -66,4 +64,4 @@ pipeline:
       rule: "Verify LLD module structure matches HLD component descriptions"
     - from: lld
       to: code
-      rule: "Verify Code tasks reference LLD entities, schema, and contracts"
+      rule: "Verify Code scaffold modules match LLD Project Structure modules. All entities have stubs."

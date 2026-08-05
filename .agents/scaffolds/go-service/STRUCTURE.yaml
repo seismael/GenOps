@@ -1,0 +1,30 @@
+# Go Microservice Scaffold
+# Used when LLD Project Structure maps a module to scaffold: go-service
+
+name: "Go Microservice"
+description: "Standard Go service with clean architecture (handler → service → store)"
+language: "Go"
+framework: "gin (or stdlib net/http)"
+build: "go build"
+
+directories:
+  - cmd/
+  - internal/handler/
+  - internal/service/
+  - internal/store/
+  - tests/
+
+templates:
+  go.mod.template: "{module}/go.mod"
+  main.go.template: "{module}/cmd/main.go"
+  Dockerfile.template: "{module}/Dockerfile"
+
+entity_stubs:
+  handler: "internal/handler/{entity_lower}.go"
+  service: "internal/service/{entity_lower}.go"
+  store: "internal/store/{entity_lower}.go"
+  test: "tests/{entity_lower}_test.go"
+
+default_files:
+  - "{module}/internal/handler/health.go"
+  - "{module}/internal/service/health.go"

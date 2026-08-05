@@ -59,3 +59,22 @@ Indexes:
 ## Testing Strategy
 | Layer | Scope | Framework | Target |
 |-------|-------|-----------|--------|
+
+## Project Structure
+
+<!-- /genops-code reads this section to scaffold the actual project -->
+
+### Modules
+| Module | Scaffold | Entities | Description |
+|--------|----------|----------|-------------|
+| &lt;name&gt; | &lt;scaffold-id&gt; | &lt;entity list&gt; | &lt;what this module does&gt; |
+
+Available scaffolds: `go-service`, `react-vite`, `python-fastapi`, `go-library`. See `.agents/scaffolds/` for full list.
+
+### Custom Overrides (optional)
+```
+<!-- Override scaffold defaults with an exact directory tree if templates don't fit -->
+```
+
+### Cross-Module Configuration (optional)
+<!-- Docker-compose, CI pipeline, monorepo workspace, shared config -->

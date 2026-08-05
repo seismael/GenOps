@@ -45,8 +45,10 @@ Compute hash of each upstream file. Compare to stored per-file hashes. If change
 ## 4. INTERVIEW — Template-driven
 For each domain, read questions from template's `## Interview` section. Ask ONE at a time. Prefer multiple-choice if template provides options. Use upstream docs + CONTEXT.md for context. Required questions first, optional if needed.
 
-## 5. GENERATE — Template-driven
-For each domain, generate output using template's `## Output` section structure. Synthesize upstream docs + interview answers. Output: `<outputs>/<STAGE>-<NNN>-<slug>.md`. Show progress: "Generating domain X/Y: <domain>". No TBD, TODO, or placeholder sections.
+## 5. GENERATE — Template-driven (or scaffold-driven for code stage)
+For non-code stages: generate output using template's `## Output` section structure. Output: `<outputs>/<STAGE>-<NNN>-<slug>.md`. Show progress: "Generating domain X/Y: <domain>". No TBD, TODO, or placeholder sections.
+
+For code stage: read LLD's `## Project Structure` → Modules table. Load scaffold templates from `.agents/scaffolds/`. Generate actual project files in `src/`. See genops-code SKILL.md for scaffold protocol.
 
 ## 6. VALIDATE — Cross-layer checks
 If `genops.yaml` defines `validation_rules` for this stage transition, run them. Generic pattern: verify items from upstream stage map to items in generated output. Flag uncovered items. Also verify: no upstream "Needs ADR" or "open question" items remain unresolved. Apply interface/structure consistency checks if defined.

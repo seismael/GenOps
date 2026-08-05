@@ -1,0 +1,2 @@
+// Package {module_name} provides shared types and utilities.
+package {module_name}

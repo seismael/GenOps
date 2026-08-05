@@ -8,7 +8,7 @@ This project uses **GenOps**, a separation-of-concerns agent-native pipeline eng
 /genops-prd ──cascade──> /genops-hld ──cascade──> /genops-adr ──cascade──> /genops-lld ──cascade──> /genops-code
      │                       │                       │                       │                       │
      v                       v                       v                       v                       v
-docs/prd/               docs/hld/           docs/architecture/          docs/lld/               docs/code/
+docs/prd/               docs/hld/           docs/architecture/          docs/lld/               src/**/*
 ```
 
 The pipeline is defined declaratively in `genops.yaml`. Each stage produces files into its output directory.

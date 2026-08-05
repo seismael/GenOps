@@ -19,7 +19,7 @@ Before ANY action, run these checks. Halt on first failure.
 
 ## State Management
 
-Each stage: `state`, `last_run`, `requires_hash`, `files` (per-file hashes), `combined_hash`, `output_dir`, `domain_count`.
+Each stage: `state`, `last_run`, `requires_hash`, `files` (per-file hashes), `combined_hash`, `output_dir`, `domain_count`. Code stage tracks hashes of generated source files in `src/`.
 
 ## Staleness Detection
 
@@ -42,7 +42,7 @@ Table: stage | state | last run | upstream | downstream. Highlight stale. Per-fi
 
 ## Stage Protocol
 
-All stages follow **genops-stage**: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT → APPROVE → RECORD → TRANSITION (11 steps). Stage skills read their template's `## Interview` and `## Output` sections to drive execution.
+All stages follow **genops-stage**: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT → APPROVE → RECORD → TRANSITION (11 steps). Non-code stages read their template's `## Interview` and `## Output` sections. Code stage reads LLD's `## Project Structure` and uses scaffold templates from `.agents/scaffolds/`.
 
 ## Transition Logic
 - `--nonstop` → next with `--nonstop`
