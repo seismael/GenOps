@@ -5,24 +5,25 @@
 GenOps is a separation-of-concerns pipeline engine that decomposes complex software work into isolated, cascading specification stages. Each stage is a native agent skill backed by a deterministic, zero-dependency engine (`.agents/scripts/genops.py`) and a Model Context Protocol (MCP) server.
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart LR
     subgraph P1 ["1. Requirements"]
         direction TB
-        CMD_PRD["/genops-prd<br/><b>Product Requirements</b>"]
+        CMD_PRD["/genops-prd<br/><b>Product Vision & Scope</b>"]
         DOC_PRD[("docs/prd/<br/>PRD-*.md")]
         CMD_PRD --> DOC_PRD
     end
 
     subgraph P2 ["2. High-Level Design"]
         direction TB
-        CMD_HLD["/genops-hld<br/><b>System Topology</b>"]
+        CMD_HLD["/genops-hld<br/><b>System Topology & NFRs</b>"]
         DOC_HLD[("docs/hld/<br/>HLD-*.md")]
         CMD_HLD --> DOC_HLD
     end
 
-    subgraph P3 ["3. Architecture"]
+    subgraph P3 ["3. Architecture Decisions"]
         direction TB
-        CMD_ADR["/genops-adr<br/><b>Decisions & Trade-offs</b>"]
+        CMD_ADR["/genops-adr<br/><b>Tech Stack & Trade-offs</b>"]
         DOC_ADR[("docs/architecture/<br/>ADR-*.md")]
         CMD_ADR --> DOC_ADR
     end
@@ -37,7 +38,7 @@ flowchart LR
     subgraph P5 ["5. Implementation"]
         direction TB
         CMD_CODE["/genops-code<br/><b>Deterministic Scaffolder</b>"]
-        OUT_SRC[("src/<br/>Scaffolded Code")]
+        OUT_SRC[("src/<br/>Source Code & Tests")]
         CMD_CODE --> OUT_SRC
     end
 
@@ -46,10 +47,13 @@ flowchart LR
     DOC_ADR ==>|"Cascade"| CMD_LLD
     DOC_LLD ==>|"Scaffold"| CMD_CODE
 
-    classDef stageNode fill:#1e293b,stroke:#00f0ff,stroke-width:2px,color:#f8fafc;
-    classDef docNode fill:#0f172a,stroke:#3b82f6,stroke-width:1px,color:#94a3b8;
-    class CMD_PRD,CMD_HLD,CMD_ADR,CMD_LLD,CMD_CODE stageNode;
-    class DOC_PRD,DOC_HLD,DOC_ADR,DOC_LLD,OUT_SRC docNode;
+    classDef stageNode fill:#f8fafc,stroke:#2563eb,stroke-width:1.5px,color:#0f172a,rx:8px,ry:8px;
+    classDef docNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#334155,rx:6px,ry:6px;
+    classDef codeNode fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d,rx:8px,ry:8px;
+    
+    class CMD_PRD,CMD_HLD,CMD_ADR,CMD_LLD stageNode;
+    class DOC_PRD,DOC_HLD,DOC_ADR,DOC_LLD docNode;
+    class CMD_CODE,OUT_SRC codeNode;
 ```
 
 The terminal stage (`/genops-code`) reads LLD's project structure and scaffolds actual source files using predefined scaffold templates — not documentation about code, but the code itself.
@@ -73,6 +77,7 @@ AI coding agents are powerful but unfocused. They skip planning, mix concerns, a
 ## Architecture & System Topology
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart TB
     subgraph Agents ["Universal AI Coding Agent Layer"]
         direction LR
@@ -125,10 +130,11 @@ flowchart TB
     Engine <==>|"Deterministic Hashing & State Tracking"| Specs
     Engine ==>|"Scaffolds Source Code"| Output
 
-    classDef agentBox fill:#1e1e38,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
-    classDef engineBox fill:#0f172a,stroke:#00f0ff,stroke-width:2px,color:#f8fafc;
-    classDef specBox fill:#111827,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
-    classDef outBox fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef agentBox fill:#faf5ff,stroke:#9333ea,stroke-width:1.5px,color:#3b0764,rx:6px,ry:6px;
+    classDef engineBox fill:#f8fafc,stroke:#0284c7,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
+    classDef specBox fill:#ffffff,stroke:#475569,stroke-width:1.5px,color:#1e293b,rx:6px,ry:6px;
+    classDef outBox fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d,rx:6px,ry:6px;
+    
     class AG1,AG2,AG3,AG4,AG5,AG6 agentBox;
     class CLI,MCP,HASHER,LOCK,RULES,DRIFT engineBox;
     class FRONTMATTER,DAG,STATE,EVENTS specBox;
@@ -142,6 +148,7 @@ flowchart TB
 When an upstream requirement or design changes, GenOps uses LF-normalized cryptographic hashing to instantly identify affected downstream layers:
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a', 'actorBkg': '#f8fafc', 'actorBorder': '#2563eb', 'signalColor': '#334155' }}}%%
 sequenceDiagram
     autonumber
     actor User as Developer / Agent
@@ -156,7 +163,7 @@ sequenceDiagram
     Engine->>State: Compares with recorded requires_hash
     Note over Engine,State: Live Hash != Stored Hash (Drift Detected)
     Engine->>Downstream: Flags HLD, LLD, Code as STALE & AT-RISK
-    Engine-->>User: ⚠ Alert: Upstream changed. Requires regeneration.
+    Engine-->>User: Alert: Upstream changed. Requires regeneration.
     User->>Engine: Approves cascaded HLD update
     Engine->>State: Updates HLD hash & logs to .genops-events.jsonl
     Engine->>Downstream: Cascades clean state downstream

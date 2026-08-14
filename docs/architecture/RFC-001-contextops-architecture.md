@@ -17,13 +17,14 @@ Modern AI coding agents fail predominantly due to **monolithic prompt collapse**
 **GenOps** formalizes the **Docs-as-Context (ContextOps)** paradigm through a cascading, separation-of-concerns (SoC) specification pipeline:
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart LR
     PRD["<b>PRD</b><br/>Product Requirements"] -->|"Cascades into"| HLD["<b>HLD</b><br/>System Topology"]
     HLD -->|"Cascades into"| ADR["<b>ADR</b><br/>Tech Decisions"]
     ADR -->|"Cascades into"| LLD["<b>LLD</b><br/>Contracts & Schemas"]
     LLD -->|"Scaffolds into"| CODE["<b>Code</b><br/>Deterministic Source"]
 
-    classDef stageBox fill:#0f172a,stroke:#00f0ff,stroke-width:2px,color:#f8fafc;
+    classDef stageBox fill:#f8fafc,stroke:#2563eb,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
     class PRD,HLD,ADR,LLD,CODE stageBox;
 ```
 
@@ -36,6 +37,7 @@ $$\text{State}(\text{Stage}_i) = f\left(\text{Hash}_{\text{LF}}(\text{Requires}(
 ## 2. The 6 Pillars of ContextOps
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart TB
     subgraph Pillars ["The 6 Pillars of the ContextOps Paradigm"]
         direction TB
@@ -47,7 +49,7 @@ flowchart TB
         P6["6. Multi-Stack Scaffolding Determinism"]
     end
 
-    classDef pBox fill:#1e1e38,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
+    classDef pBox fill:#faf5ff,stroke:#9333ea,stroke-width:1.5px,color:#3b0764,rx:6px,ry:6px;
     class P1,P2,P3,P4,P5,P6 pBox;
 ```
 
@@ -67,6 +69,7 @@ flowchart TB
 Applying the full four-tier stack to every simple script creates unnecessary friction. GenOps scales dynamically across three tiers:
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart LR
     subgraph Tier1 ["Tier 1: Full Enterprise Stack"]
         direction TB
@@ -83,9 +86,9 @@ flowchart LR
         T3_README["README"] --> T3_ADR["ADR"] --> T3_CODE["Code"]
     end
 
-    classDef t1 fill:#0f172a,stroke:#00f0ff,stroke-width:2px,color:#f8fafc;
-    classDef t2 fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
-    classDef t3 fill:#1e1e38,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
+    classDef t1 fill:#f8fafc,stroke:#2563eb,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
+    classDef t2 fill:#f8fafc,stroke:#0284c7,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
+    classDef t3 fill:#faf5ff,stroke:#9333ea,stroke-width:1.5px,color:#3b0764,rx:6px,ry:6px;
     class T1_PRD,T1_HLD,T1_ADR,T1_LLD,T1_CODE t1;
     class T2_HLD,T2_ADR,T2_CODE t2;
     class T3_README,T3_ADR,T3_CODE t3;
