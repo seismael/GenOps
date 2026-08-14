@@ -5,7 +5,7 @@ description: Use when initializing GenOps in a project, adding GenOps to an exis
 
 # GenOps Initializer
 
-One command to make any project GenOps-ready. Discovers, validates, customizes, and connects.
+One command to make any project GenOps-ready. Discovers, validates, customizes, and connects. Backed by `python .agents/scripts/genops.py`.
 
 ## Procedure
 
@@ -22,16 +22,18 @@ Look for `<!-- GENOPS:START -->` marker. Results:
 
 ### 3. VALIDATE — Check infrastructure
 
-| Component | Check |
-|-----------|-------|
-| `genops.yaml` | Exists, valid YAML, stages defined, `validation_rules` if cross-stage |
-| Skills | `.agents/skills/genops-<id>/SKILL.md` for each stage `id` |
-| Engine skills | `genops`, `genops-stage`, `genops-status`, `genops-init` present |
-| Templates | `.agents/templates/<template>` exists with `## Interview` + `## Output` sections |
-| Context | `.agents/context/CONTEXT.md` present |
-| State | `docs/.genops-state.json` present |
+Run deterministic validation:
+```bash
+python .agents/scripts/genops.py validate
+```
 
-Report missing components. Offer to create or fix.
+Checks:
+- `genops.yaml`: Exists, valid YAML, stages defined, validation_rules
+- Skills: `.agents/skills/genops-<id>/SKILL.md` for each stage `id`
+- Engine skills: `genops`, `genops-stage`, `genops-status`, `genops-init` present
+- Templates: `.agents/templates/<template>` exists with `## Interview` + `## Output` sections
+- Context: `.agents/context/CONTEXT.md` present
+- State: `docs/.genops-state.json` present (v2.0 schema)
 
 ### 4. CUSTOMIZE — Pipeline setup
 
@@ -44,14 +46,13 @@ D) Custom — define each stage manually
 ```
 
 If custom → walk through stage-by-stage: name, focus, requires, outputs, template path.
-
 Write selected preset or custom definition to `genops.yaml`.
 
 ### 5. SCAFFOLD — Generate missing files
 
 After pipeline is selected, check and create missing components:
 
-**Missing templates:** For each stage with missing template, create one with `## Interview` (sample questions) and `## Output` (sample structure) sections. Ask user to customize.
+**Missing templates:** For each stage with missing template, create one with `## Interview` (sample questions) and `## Output` (sample structure with YAML frontmatter).
 
 **Missing skill files:** For each stage `id` without `.agents/skills/genops-<id>/SKILL.md`, generate a template-driven wrapper:
 ```markdown
@@ -84,7 +85,7 @@ Config         genops.yaml            ✓ {N} stages
 Skills         {N}/{N}                ✓ all present
 Templates      {N}/{N}                ✓ all have Interview + Output
 Presets        3                      ✓ available
-State          .genops-state.json     ✓ initialized
+State          .genops-state.json     ✓ initialized (v2.0)
 
 Pipeline: genops-{id1} → genops-{id2} → ...
 
@@ -99,8 +100,6 @@ Ready. Run /genops-{first} to start.
 <!-- GENOPS:END -->
 ```
 
-Re-running detects markers and updates the block without touching other content.
-
 ## Presets
 
-Presets in `.agents/presets/`. Each is a complete `genops.yaml`. `--preset` copies to project root. Missing templates and skill files are auto-generated during SCAFFOLD step.
+Presets in `.agents/presets/`. Each is a complete `genops.yaml`. `--preset` copies to project root.

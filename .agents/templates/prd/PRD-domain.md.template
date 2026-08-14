@@ -16,6 +16,21 @@ Questions asked ONE at a time. Required first, optional only if unclear.
 
 ## Output
 
+---
+id: PRD-{NNN}-{slug}
+domain: {domain}
+stage: prd
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: []
+downstream_refs: []
+tags: [{domain}, prd]
+---
+
+# {Domain} — Product Requirements
+
 ## Vision
 <!-- One sentence describing the aspirational goal for this domain -->
 

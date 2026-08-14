@@ -1,6 +1,1 @@
-{
-    "pipeline":  "genops.yaml",
-    "stages":  {
-
-               }
-}
+{"version":"2.0","pipeline":"genops.yaml","stages":{}}

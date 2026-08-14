@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GenOpsScaffoldStructure",
+  "description": "Schema for STRUCTURE.yaml files in .agents/scaffolds/",
+  "type": "object",
+  "required": ["name", "description", "language", "directories", "templates"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable scaffold name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this scaffold produces"
+    },
+    "language": {
+      "type": "string",
+      "description": "Programming language"
+    },
+    "framework": {
+      "type": "string",
+      "description": "Framework or core library"
+    },
+    "build": {
+      "type": "string",
+      "description": "Build command"
+    },
+    "package_manager": {
+      "type": "string",
+      "description": "Package manager"
+    },
+    "directories": {
+      "type": "array",
+      "description": "List of directory paths created for every module",
+      "items": { "type": "string" }
+    },
+    "templates": {
+      "type": "object",
+      "description": "Mapping from template filename to target module output path",
+      "additionalProperties": { "type": "string" }
+    },
+    "entity_stubs": {
+      "type": "object",
+      "description": "Mapping from stub type to target module output path pattern containing {entity} or {entity_lower}",
+      "additionalProperties": { "type": "string" }
+    },
+    "default_files": {
+      "type": "array",
+      "description": "List of static or boilerplate files generated unconditionally",
+      "items": { "type": "string" }
+    }
+  }
+}

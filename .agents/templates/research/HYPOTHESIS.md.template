@@ -9,6 +9,21 @@
 
 ## Output
 
+---
+id: HYPOTH-{NNN}-{slug}
+domain: {domain}
+stage: hypothesis
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["LIT-REVIEW-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, research, hypothesis]
+---
+
+# {Topic} — Hypothesis
+
 ## Research Question
 
 ## Hypothesis

@@ -8,6 +8,21 @@
 
 ## Output
 
+---
+id: CODE-{NNN}-{slug}
+domain: {domain}
+stage: code
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["LLD-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, code, implementation]
+---
+
+# {Domain} — Implementation Plan
+
 > **Goal:** <!-- One sentence from upstream -->
 
 ## Architecture Summary

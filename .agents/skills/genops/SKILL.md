@@ -5,7 +5,7 @@ description: Use when orchestrating the GenOps pipeline, checking status, starti
 
 # GenOps Pipeline Engine
 
-Orchestrates pipeline stages defined in `genops.yaml`. Reads config, validates graph, coordinates execution, manages state.
+Orchestrates pipeline stages defined in `genops.yaml`. Reads config, validates graph, coordinates execution, manages state. Backed by deterministic CLI helper `.agents/scripts/genops.py`.
 
 ## Pre-Flight Validation
 
@@ -13,21 +13,21 @@ Before ANY action, run these checks. Halt on first failure.
 
 **Init:** AGENTS.md has `<!-- GENOPS:START -->`. genops.yaml exists. "Run /genops-init first." if missing.
 
-**Config:** Read genops.yaml. Verify pipeline + stages exist. Every stage `id` has skill at `.agents/skills/genops-<id>/SKILL.md`. Every `next` ref valid. Every `template` exists with `## Interview` and `## Output` sections.
+**Config:** Validate via `python .agents/scripts/genops.py validate`. Verify pipeline + stages exist. Every stage `id` has skill at `.agents/skills/genops-<id>/SKILL.md`. Every `next` ref valid. Every `template` exists with `## Interview` and `## Output` sections.
 
-**State:** `.genops-state.json` readable. Create empty if missing. Warn if pipeline field mismatch from genops.yaml.
+**State:** `docs/.genops-state.json` readable (v2.0 schema). Create if missing. Warn if pipeline field mismatch from genops.yaml.
 
 ## State Management
 
-Each stage: `state`, `last_run`, `requires_hash`, `files` (per-file hashes), `combined_hash`, `output_dir`, `domain_count`. Code stage tracks hashes of generated source files in `src/`.
+Each stage: `state`, `last_run`, `requires_hash`, `files` (per-file LF-normalized SHA-256), `combined_hash`, `output_dir`, `domain_count`, `approved_by`. Append-only event history logged in `docs/.genops-events.jsonl`.
 
 ## Staleness Detection
 
-Compute combined hash of all files in `requires` directories → compare to stored `requires_hash`. Different → upstream changed → mark stage + downstream `stale`. Per-file hashes identify which specific file changed. Output hash mismatch → manual edit warning.
+Compute combined LF-normalized hash of all files in `requires` directories (`python .agents/scripts/genops.py hash <dir>`) → compare to stored `requires_hash`. Different → upstream changed → mark stage + downstream `stale`. Per-file hashes identify which specific file changed.
 
 ## Status Dashboard (`/genops --status`)
 
-Table: stage | state | last run | upstream | downstream. Highlight stale. Per-file granularity in issue summary.
+Run `python .agents/scripts/genops.py status`. Outputs table: stage | state | last run | upstream | downstream. Highlight stale.
 
 ## Flow Modes
 
@@ -42,7 +42,7 @@ Table: stage | state | last run | upstream | downstream. Highlight stale. Per-fi
 
 ## Stage Protocol
 
-All stages follow **genops-stage**: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT → APPROVE → RECORD → TRANSITION (11 steps). Non-code stages read their template's `## Interview` and `## Output` sections. Code stage reads LLD's `## Project Structure` and uses scaffold templates from `.agents/scaffolds/`.
+All stages follow **genops-stage**: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT → APPROVE → RECORD → TRANSITION (11 steps). Non-code stages generate documents with YAML frontmatter from templates. Code stage uses scaffold templates via `python .agents/scripts/genops.py scaffold`.
 
 ## Transition Logic
 - `--nonstop` → next with `--nonstop`

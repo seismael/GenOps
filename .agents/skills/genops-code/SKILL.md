@@ -5,7 +5,7 @@ description: Use when scaffolding project structure, generating stub files, test
 
 # Implementation (Code)
 
-Terminal stage. Reads LLD's `## Project Structure` section and scaffolds actual project files into `src/`. Uses scaffold templates from `.agents/scaffolds/` for deterministic, tech-stack-aware generation.
+Terminal stage. Reads LLD's `## Project Structure` section and scaffolds actual project files into `src/`. Uses scaffold templates from `.agents/scaffolds/` and deterministic CLI helper `python .agents/scripts/genops.py scaffold`.
 
 **Protocol:** genops-stage — reads LLD project structure, not a markdown template.
 
@@ -27,7 +27,7 @@ Terminal stage. Reads LLD's `## Project Structure` section and scaffolds actual 
 Modules from LLD = one scaffold directory each. Single module → single project. Multiple modules → multi-project structure.
 
 ### 4. CHECK
-Per-file staleness against LLD hashes.
+Per-file staleness against LLD hashes via `python .agents/scripts/genops.py hash docs/lld/`.
 
 ### 5. INTERVIEW — Ask ONE at a time
 1. **Output Mode** — "A) Scaffold stubs + build files B) Full implementation"
@@ -37,39 +37,29 @@ Per-file staleness against LLD hashes.
 ### 6. GENERATE — Scaffold the project
 
 For each module in LLD's Modules table:
+Execute deterministic scaffolder:
+```bash
+python .agents/scripts/genops.py scaffold --module {module} --scaffold {scaffold} --entities {comma_separated_entities}
+```
 
-**a. Create directories** from scaffold's `STRUCTURE.yaml` → `directories` list. Prepend `src/{module}/`.
+Apply any custom overrides from LLD's Custom Overrides section. Merge or replace scaffold-generated structure.
 
-**b. Generate build files** from scaffold's `templates` mapping. For each template file, read the template, fill variables:
-- `{module}` → module name
-- `{module_path}` → `github.com/project/{module}` (Go) or equivalent
-- `{module_name}` → module name, humanized
-- `{entity}` → each entity (PascalCase)
-- `{entity_lower}` → each entity (lowercase)
-Write filled template to the output path.
-
-**c. Generate entity stubs** from scaffold's `entity_stubs` mapping. Per entity listed in LLD module: generate stub file with interface/type definition from LLD Entities section.
-
-**d. Generate default files** from scaffold's `default_files` list (files always generated regardless of entities).
-
-**e. Apply custom overrides** from LLD's Custom Overrides section. Merge or replace scaffold-generated structure.
-
-**f. Generate cross-module config:**
+Generate cross-module config:
 - If >1 module: `src/docker-compose.yml` with all services
 - `src/.gitignore` (language-appropriate)
 - `src/README.md` (project overview from PRD)
-
-Show progress: "Scaffolding module X/Y: {module} ({scaffold})"
 
 ### 7. VALIDATE
 - Every LLD entity has at least one stub file generated
 - Every module has build files
 - Every scaffold template variable was resolved (no unreplaced `{...}`)
 - Cross-module Docker config is valid YAML
+- Run compiler check / verification (`go build`, `tsc --noEmit`, `pytest`) if tools installed
 
 ### 8. PRESENT → APPROVE → RECORD → TRANSITION
 
-Show tree of generated files per module. Terminal stage: "Pipeline complete. Project scaffolded at `src/`."
+Show tree of generated files per module. Run `python .agents/scripts/genops.py record code --actor user` to record state v2.
+Terminal stage: "Pipeline complete. Project scaffolded at `src/`."
 
 <HARD-GATE>
 Full generation: ALWAYS present for review. NEVER commit without approval. Scaffolded code must build before commit.

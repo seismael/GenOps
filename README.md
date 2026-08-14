@@ -2,7 +2,7 @@
 
 **Declarative. Cascading. Agent-First.**
 
-GenOps is a separation-of-concerns pipeline engine that decomposes complex software work into isolated, cascading specification stages. Each stage is a native agent skill — no custom code, no CLI tools, no installers. Just files that agents discover and execute.
+GenOps is a separation-of-concerns pipeline engine that decomposes complex software work into isolated, cascading specification stages. Each stage is a native agent skill backed by a deterministic, zero-dependency engine (`.agents/scripts/genops.py`) and a Model Context Protocol (MCP) server.
 
 ```
 /genops-prd ──cascade──> /genops-hld ──cascade──> /genops-adr ──cascade──> /genops-lld ──cascade──> /genops-code
@@ -19,9 +19,10 @@ AI coding agents are powerful but unfocused. They skip planning, mix concerns, a
 
 - **One stage at a time** — SoC by design. Each stage handles exactly one layer.
 - **Reactive cascading** — Change an upstream doc and all downstream layers detect staleness with per-file precision.
-- **Agent-native** — No code. No install. Skills are SKILL.md files discovered by AGENTS.md. Works with Claude CLI, OpenCode, Gemini CLI.
-- **Template-driven** — Interview questions and output structure live in templates. Add a pipeline by adding templates, not skills.
-- **Scaffold system** — `/genops-code` generates actual project files from LLD design. Go services, React apps, Python APIs — deterministic, tech-stack-aware scaffolding.
+- **Universal Agent-Native** — Works out of the box with Claude Code, Cursor, Antigravity, GitHub Copilot, Windsurf, OpenCode, and Gemini.
+- **Template-driven with YAML Frontmatter** — Every design doc includes machine-readable metadata headers for deterministic indexing and graph traversal.
+- **Scaffold system** — `/genops-code` generates actual project files from LLD design. Go services, React apps, Python APIs — deterministic, tech-stack-aware scaffolding with multi-casing transforms.
+- **Model Context Protocol (MCP) Server** — Native tool-calling integration for any MCP-compatible environment.
 
 ## Quick Start
 
@@ -30,16 +31,57 @@ git clone https://github.com/seismael/genops.git my-project
 cd my-project
 ```
 
-The agent discovers GenOps automatically from `AGENTS.md` and `.agents/skills/`.
+Initialize for your coding agent:
 
 ```bash
-/genops-init           # Initialize (or validate) the project
+# Sync all agent instruction files (AGENTS.md, CLAUDE.md, Cursor rules, Copilot)
+python .agents/scripts/genops.py init --agent all
+```
+
+Execute the pipeline:
+
+```bash
 /genops-prd            # Define product requirements
 /genops-hld            # Design system architecture
 /genops-adr            # Document architectural decisions
 /genops-lld            # Specify low-level design (includes project structure)
 /genops-code           # Scaffold actual project from LLD → src/
 ```
+
+## Universal Agent Compatibility
+
+GenOps is 100% agent-agnostic and supports multiple integration modalities:
+
+| Agent / Platform | Integration Entrypoint | Setup Command |
+|---|---|---|
+| **Antigravity / Gemini CLI** | `AGENTS.md` / `GEMINI.md` | `python .agents/scripts/genops.py init --agent antigravity` |
+| **Anthropic Claude Code CLI** | `CLAUDE.md` | `python .agents/scripts/genops.py init --agent claude` |
+| **Cursor IDE** | `.cursor/rules/genops.mdc` / `.cursorrules` | `python .agents/scripts/genops.py init --agent cursor` |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | `python .agents/scripts/genops.py init --agent copilot` |
+| **Windsurf Cascade** | `.windsurfrules` | `python .agents/scripts/genops.py init --agent windsurf` |
+| **MCP Tool-Calling (Any IDE)** | `.agents/mcp.json` (`genops mcp`) | Add `.agents/mcp.json` to IDE MCP settings |
+
+### Model Context Protocol (MCP) Integration
+
+Any agent environment supporting MCP can expose GenOps tools directly:
+
+```json
+{
+  "mcpServers": {
+    "genops": {
+      "command": "python",
+      "args": [".agents/scripts/genops.py", "mcp"]
+    }
+  }
+}
+```
+
+Exposed MCP tools:
+- `genops_validate`: Validates configuration, presets, templates, and scaffolds.
+- `genops_status`: Retrieves live pipeline health and staleness graph.
+- `genops_hash`: Computes cross-platform LF-normalized SHA-256 hashes.
+- `genops_record`: Atomically records stage state and appends to audit log.
+- `genops_scaffold`: Expands LLD module stubs and templates into `src/`.
 
 ## Commands
 
@@ -51,7 +93,7 @@ The agent discovers GenOps automatically from `AGENTS.md` and `.agents/skills/`.
 | `/genops-lld` | Low-Level Design | Entities, schemas, API contracts, **project structure** |
 | `/genops-code` | Implementation | Scaffold project from LLD using scaffold templates |
 | `/genops` | Pipeline Engine | Orchestrate pipeline, check status, start from any stage |
-| `/genops-init` | Initializer | Initialize GenOps in any project, validate setup |
+| `/genops-init` | Initializer | Initialize GenOps across agent entrypoint files |
 | `/genops-status` | Dashboard | Pipeline health report with per-file stale detection |
 
 ## Flow Modes
@@ -65,7 +107,7 @@ The agent discovers GenOps automatically from `AGENTS.md` and `.agents/skills/`.
 
 ## Document Organization
 
-Design documents use domain-split naming: `{STAGE}-{NNN}-{descriptive-slug}.md`
+Design documents use domain-split naming: `{STAGE}-{NNN}-{descriptive-slug}.md` with standardized YAML frontmatter headers.
 
 ```
 docs/
@@ -81,7 +123,8 @@ docs/
 ├── lld/
 │   ├── LLD-001-catalog-schema.md        # Defines project structure
 │   └── LLD-002-payment-contracts.md
-└── .genops-state.json                   # Per-file hash tracking
+├── .genops-state.json                   # State v2.0 per-file LF-hash tracking
+└── .genops-events.jsonl                 # Append-only immutable audit trail
 ```
 
 ## Project Output
@@ -114,7 +157,7 @@ Available scaffolds: `go-service`, `react-vite`, `python-fastapi`, `go-library`.
 LLD defines modules with scaffold references (`go-service`, `react-vite`, etc.). `/genops-code` loads the scaffold's STRUCTURE.yaml + build templates, generates deterministic project files with entity stubs, tests, and cross-module config. Add a new tech stack by adding a scaffold directory — no skill changes needed.
 
 ### Pre-Flight Validation
-Every skill validates its dependencies before executing. Missing upstream? Corrupt state? Uninitialized? The agent halts with the exact command to fix it.
+Every skill validates its dependencies before executing via `python .agents/scripts/genops.py validate`. Missing upstream? Corrupt state? Uninitialized? The agent halts with the exact command to fix it.
 
 ### Per-File Staleness Detection
 Change one PRD file and the agent identifies exactly which downstream files are affected — precision targeting, not binary stale/not-stale.
@@ -124,22 +167,23 @@ PRD→HLD: every user story maps to a component. ADR→LLD: every technology dec
 
 ### Pipeline Presets
 ```bash
-/genops-init --preset software-spec    # prd → hld → adr → lld → code (default)
-/genops-init --preset research         # lit-review → hypothesis → experiment → report
-/genops-init --preset design           # brief → wireframes → mockups → prototype
-/genops-init --preset custom           # Define your own stages interactively
+python .agents/scripts/genops.py init --preset software-spec    # prd → hld → adr → lld → code (default)
+python .agents/scripts/genops.py init --preset research         # lit-review → hypothesis → experiment → report
+python .agents/scripts/genops.py init --preset design           # brief → wireframes → mockups → prototype
 ```
 
-### State Machine
-Every stage: `absent → drafting → generated → approved → stale`. Per-file hashes detect staleness. Combined hashes drive cascade detection.
+### State Machine v2.0
+Every stage: `absent → drafting → generated → approved → stale`. Per-file LF-normalized hashes detect staleness. Combined hashes drive cascade detection. State tracked in `docs/.genops-state.json` and logged to `docs/.genops-events.jsonl`.
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────┐
-│  genops.yaml       Pipeline Config    │  Declarative stage definition
+│  genops.yaml       Pipeline Config    │  Declarative stage definition + schema
 ├──────────────────────────────────────┤
-│  AGENTS.md         Entry Point        │  Agent discovers GenOps here
+│  AGENTS.md/CLAUDE  Entry Points       │  Universal multi-agent instructions
+├──────────────────────────────────────┤
+│  genops.py         CLI & MCP Server   │  LF-hashing, validation, scaffolding, MCP
 ├──────────────────────────────────────┤
 │  genops/SKILL.md   Engine             │  Orchestrator + state manager
 ├──────────────────────────────────────┤
@@ -148,7 +192,7 @@ Every stage: `absent → drafting → generated → approved → stale`. Per-fil
 │  genops-{prd,hld,  Stage Skills      │  Thin wrappers (read template → execute)
 │   adr,lld,code}/                       │
 ├──────────────────────────────────────┤
-│  .agents/templates/ Templates         │  Interview questions + output structure
+│  .agents/templates/ Templates         │  YAML frontmatter + interview + output
 ├──────────────────────────────────────┤
 │  .agents/scaffolds/ Scaffolds         │  Build templates per tech stack
 ├──────────────────────────────────────┤
@@ -158,41 +202,10 @@ Every stage: `absent → drafting → generated → approved → stale`. Per-fil
 └──────────────────────────────────────┘
 ```
 
-## Adding a Scaffold
-
-1. Create `.agents/scaffolds/<name>/STRUCTURE.yaml`
-2. Add build templates (go.mod, package.json, etc.)
-3. Reference in LLD's `## Project Structure`
-
-```yaml
-# .agents/scaffolds/rust-actix/STRUCTURE.yaml
-name: "Rust Actix Service"
-language: "Rust"
-framework: "Actix Web"
-directories: [src/, src/handlers/, src/models/, tests/]
-templates:
-  Cargo.toml.template: "{module}/Cargo.toml"
-  main.rs.template: "{module}/src/main.rs"
-entity_stubs:
-  handler: "src/handlers/{entity_lower}.rs"
-  model: "src/models/{entity_lower}.rs"
-```
-
-## Token Efficiency
-
-| Component | Lines | Load Frequency |
-|-----------|-------|---------------|
-| genops-stage (protocol) | 61 | Every stage invocation |
-| genops (engine) | 33 | Orchestration |
-| Stage skills | 16-20 avg | Once per stage |
-| **Hot-path total** | **~114 lines** | 43% under 200-line budget |
-| Templates | 23-59 | Only during GENERATE |
-| Scaffolds | Per-module | Only during code stage GENERATE |
-
 ## Requirements
 
-- Any AI coding agent that supports AGENTS.md and SKILL.md (Claude CLI, OpenCode, Gemini CLI)
-- No runtime dependencies, no package installation
+- Any AI coding agent (Claude Code, Cursor, Antigravity, GitHub Copilot, Windsurf, OpenCode)
+- Python 3.8+ (standard library only, zero external pip dependencies)
 
 ## License
 

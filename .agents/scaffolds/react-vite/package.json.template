@@ -1,5 +1,5 @@
 {
-  "name": "{module_name}",
+  "name": "{module_kebab}",
   "private": true,
   "version": "0.1.0",
   "type": "module",

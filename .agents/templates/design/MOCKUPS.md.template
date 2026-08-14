@@ -9,6 +9,21 @@
 
 ## Output
 
+---
+id: MOCK-{NNN}-{slug}
+domain: {domain}
+stage: mockups
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["WIRE-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, design, mockups]
+---
+
+# {Project} — Mockups
+
 ## Visual Design System
 ### Color Palette
 | Color | Hex | Usage |

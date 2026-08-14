@@ -17,6 +17,21 @@ Questions asked ONE at a time.
 
 ## Output
 
+---
+id: HLD-{NNN}-{slug}
+domain: {domain}
+stage: hld
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["PRD-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, hld, architecture]
+---
+
+# {Domain} — High-Level Design
+
 ## System Overview
 <!-- One paragraph describing the system at a high level -->
 

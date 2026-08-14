@@ -1,7 +1,7 @@
 [project]
-name = "{module_name}"
+name = "{module_kebab}"
 version = "0.1.0"
-description = ""
+description = "{module_name} API service"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110.0",

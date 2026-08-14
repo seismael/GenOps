@@ -1,46 +1,4 @@
-# GenOps — Cascading Specification Pipeline
-
-This project uses **GenOps**, a separation-of-concerns agent-native pipeline engine that decomposes complex software work into isolated, cascading specification stages. Each stage is a scoped native skill backed by a deterministic CLI helper.
-
-## Pipeline Overview
-
-```
-/genops-prd ──cascade──> /genops-hld ──cascade──> /genops-adr ──cascade──> /genops-lld ──cascade──> /genops-code
-     │                       │                       │                       │                       │
-     v                       v                       v                       v                       v
-docs/prd/               docs/hld/           docs/architecture/          docs/lld/               src/**/*
-```
-
-The pipeline is defined declaratively in `genops.yaml`. Each stage produces files into its output directory with standardized YAML frontmatter headers.
-
-## Document Organization
-
-Files use **domain-split** naming: `{STAGE}-{NNN}-{descriptive-slug}.md`
-
-```
-docs/
-├── prd/PRD-001-taskflow-requirements.md     ← Single domain = 1 file
-├── hld/HLD-001-system-architecture.md       ← Single domain = 1 file
-├── architecture/
-│   ├── ADR-001-go-language.md               ← One per decision
-│   ├── ADR-002-sqlite-storage.md
-│   └── ADR-003-cobra-cli-framework.md
-├── lld/LLD-001-taskflow-design.md           ← Single domain = 1 file
-└── code/
-    ├── CODE-001-core-domain.md              ← Multiple files per domain
-    ├── CODE-002-storage-layer.md
-    └── CODE-003-cli-commands.md
-```
-
-For multi-domain projects (e.g., e-commerce: catalog, cart, payments):
-
-```
-docs/prd/PRD-001-product-catalog.md
-docs/prd/PRD-002-shopping-cart.md
-docs/prd/PRD-003-checkout-payment.md
-```
-
-The domain slug in the filename IS the agent's navigation system. `grep docs/ payment` finds all files across all layers related to "payment". Versioning is handled by git.
+# GENOPS Instructions
 
 <!-- GENOPS:START — managed by genops-init, edit pipeline stages via genops.yaml -->
 

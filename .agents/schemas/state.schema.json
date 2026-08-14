@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GenOpsState",
+  "description": "Schema for docs/.genops-state.json state tracking file",
+  "type": "object",
+  "required": ["version", "pipeline", "stages"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "enum": ["2.0"]
+    },
+    "pipeline": {
+      "type": "string",
+      "description": "Path to the genops.yaml file governing this state"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["state", "last_run", "requires_hash", "combined_hash", "files"],
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["absent", "drafting", "generated", "approved", "stale", "skipped"]
+          },
+          "last_run": {
+            "type": "string"
+          },
+          "requires_hash": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "domain_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "combined_hash": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "object",
+            "description": "Granular mapping from generated file to specific upstream files",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "approved_by": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

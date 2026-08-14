@@ -9,6 +9,21 @@
 
 ## Output
 
+---
+id: RPRT-{NNN}-{slug}
+domain: {domain}
+stage: report
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["EXPR-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, research, report]
+---
+
+# {Topic} — Research Report
+
 ## Abstract
 
 ## Introduction

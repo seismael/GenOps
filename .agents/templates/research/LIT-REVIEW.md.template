@@ -9,6 +9,21 @@
 
 ## Output
 
+---
+id: LIT-REVIEW-{NNN}-{slug}
+domain: {domain}
+stage: lit-review
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: []
+downstream_refs: []
+tags: [{domain}, research, lit-review]
+---
+
+# {Topic} — Literature Review
+
 ## Research Question
 
 ## Search Strategy

@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GenOpsPipelineConfig",
+  "description": "Schema for genops.yaml pipeline configuration files",
+  "type": "object",
+  "required": ["pipeline"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URI to the JSON schema"
+    },
+    "pipeline": {
+      "type": "object",
+      "required": ["name", "stages"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable name of the pipeline"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional detailed overview of the pipeline purpose"
+        },
+        "stages": {
+          "type": "array",
+          "description": "Ordered list of pipeline stages",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "focus", "requires", "outputs", "next"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$",
+                "description": "Unique stage identifier (e.g. prd, hld, adr)"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable name of the stage"
+              },
+              "focus": {
+                "type": "string",
+                "description": "Scope and domain focus description"
+              },
+              "requires": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of prerequisite directories or files required before running"
+              },
+              "outputs": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string" },
+                "description": "List of output directories or file patterns produced by this stage"
+              },
+              "file_pattern": {
+                "type": "string",
+                "description": "Naming convention for generated files (e.g. PRD-{NNN}-{slug}.md)"
+              },
+              "template": {
+                "type": "string",
+                "description": "Path to template relative to .agents/templates/"
+              },
+              "next": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of valid subsequent stage IDs (empty if terminal)"
+              }
+            }
+          }
+        },
+        "validation_rules": {
+          "type": "array",
+          "description": "Cross-layer validation rules evaluated between stages",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "rule"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string",
+                "description": "Source stage ID"
+              },
+              "to": {
+                "type": "string",
+                "description": "Target stage ID"
+              },
+              "rule": {
+                "type": "string",
+                "description": "Assertion rule to verify integrity between stages"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

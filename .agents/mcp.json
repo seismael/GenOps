@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "genops": {
+      "command": "python",
+      "args": [".agents/scripts/genops.py", "mcp"],
+      "description": "GenOps Cascading Specification Pipeline & Deterministic State Engine"
+    }
+  }
+}

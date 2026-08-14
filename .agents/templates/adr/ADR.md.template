@@ -11,7 +11,22 @@ ONE decision at a time. After each decision, ask if another is needed.
 
 ## Output
 
-**Status**: <!-- Proposed / Accepted / Deprecated / Superseded -->
+---
+id: ADR-{NNN}-{slug}
+domain: {domain}
+stage: adr
+version: 1.0.0
+status: accepted
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["HLD-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, adr, decision]
+---
+
+# {Decision Topic} — Architecture Decision Record
+
+**Status**: <!-- Proposed / Accepted / Deprecated / Superseded -->  
 **Date**: <!-- YYYY-MM-DD -->
 
 ## Context
@@ -30,5 +45,7 @@ ONE decision at a time. After each decision, ask if another is needed.
 ### Neutral
 
 ## Related Decisions
+<!-- References to other ADR-XXX files -->
 
 ## References
+<!-- External URLs, benchmarks, documentation -->

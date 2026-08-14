@@ -16,6 +16,21 @@ Start by listing ADR decisions. "ADR-001 says X, ADR-002 says Y. Confirm these s
 
 ## Output
 
+---
+id: LLD-{NNN}-{slug}
+domain: {domain}
+stage: lld
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: ["HLD-{NNN}-{slug}", "ADR-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, lld, detailed-design]
+---
+
+# {Domain} — Low-Level Design
+
 ## Entities & Interfaces
 ### {Entity Name}
 ```<!-- language -->

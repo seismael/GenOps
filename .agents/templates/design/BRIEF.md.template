@@ -9,6 +9,21 @@
 
 ## Output
 
+---
+id: BRIEF-{NNN}-{slug}
+domain: {domain}
+stage: brief
+version: 1.0.0
+status: approved
+created_at: {TIMESTAMP}
+updated_at: {TIMESTAMP}
+upstream_refs: []
+downstream_refs: []
+tags: [{domain}, design, brief]
+---
+
+# {Project} — Design Brief
+
 ## Project Overview
 
 ## Target Audience

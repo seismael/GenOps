@@ -12,8 +12,9 @@ pipeline:
       focus: "Product vision, user stories, success metrics, scope boundaries"
       requires: []
       outputs:
-        - "docs/PRD.md"
-      template: "PRD.md.template"
+        - "docs/prd/"
+      file_pattern: "PRD-{NNN}-{slug}.md"
+      template: "prd/PRD-domain.md.template"
       next:
         - hld
 
@@ -21,10 +22,11 @@ pipeline:
       name: "High-Level Design"
       focus: "System topology, component boundaries, data flow, integration points"
       requires:
-        - "docs/PRD.md"
+        - "docs/prd/"
       outputs:
-        - "docs/HLD.md"
-      template: "HLD.md.template"
+        - "docs/hld/"
+      file_pattern: "HLD-{NNN}-{slug}.md"
+      template: "hld/HLD-domain.md.template"
       next:
         - adr
 
@@ -32,10 +34,11 @@ pipeline:
       name: "Architecture Decisions"
       focus: "Architectural trade-offs, technology selection, design pattern choices"
       requires:
-        - "docs/HLD.md"
+        - "docs/hld/"
       outputs:
-        - "docs/architecture/adr-*.md"
-      template: "ADR.md.template"
+        - "docs/architecture/"
+      file_pattern: "ADR-{NNN}-{slug}.md"
+      template: "adr/ADR.md.template"
       next:
         - lld
 
@@ -43,20 +46,37 @@ pipeline:
       name: "Low-Level Design"
       focus: "Class diagrams, database schemas, API contracts, module structure"
       requires:
-        - "docs/HLD.md"
-        - "docs/architecture/adr-*.md"
+        - "docs/hld/"
+        - "docs/architecture/"
       outputs:
-        - "docs/LLD.md"
-      template: "LLD.md.template"
+        - "docs/lld/"
+      file_pattern: "LLD-{NNN}-{slug}.md"
+      template: "lld/LLD-domain.md.template"
       next:
         - code
 
     - id: code
       name: "Implementation"
-      focus: "Implementation plan, file scaffolding, test alignment"
+      focus: "Scaffold project from LLD design using scaffold templates"
       requires:
-        - "docs/LLD.md"
+        - "docs/lld/"
       outputs:
-        - "src/**/*"
-      template: "CODE.md.template"
+        - "src/"
       next: []
+
+  validation_rules:
+    - from: prd
+      to: hld
+      rule: "Verify each Key Capability from PRD maps to ≥1 HLD component or data flow"
+    - from: hld
+      to: adr
+      rule: "Verify all Technology items marked 'Needs ADR' in HLD have matching ADRs"
+    - from: adr
+      to: lld
+      rule: "Verify each ADR decision is reflected in LLD entities, schema, or contracts"
+    - from: hld
+      to: lld
+      rule: "Verify LLD module structure matches HLD component descriptions"
+    - from: lld
+      to: code
+      rule: "Verify Code scaffold modules match LLD Project Structure modules. All entities have stubs."

@@ -41,12 +41,20 @@ default_files:                         # Always generated, no entity needed
   - "{module}/path/to/file.ext"
 ```
 
-### Template Variables
+### Supported Template Variables & Casing Transforms
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `{module}` | Module directory name | `user-service` |
-| `{module_path}` | Go-style module path | `github.com/project/user-service` |
-| `{module_name}` | Human-readable name | `User Service` |
-| `{entity}` | Entity name (PascalCase) | `User` |
-| `{entity_lower}` | Entity name (lowercase) | `user` |
+| Variable | Transform | Example (`User Account`) |
+|----------|-----------|--------------------------|
+| `{module}` | Raw module identifier | `user-account` |
+| `{module_name}` | Human-readable title | `User Account` |
+| `{module_path}` | Go-style import path | `github.com/project/user-account` |
+| `{module_kebab}` | Lowercase hyphenated | `user-account` |
+| `{module_snake}` | Lowercase underscored | `user_account` |
+| `{module_camel}` | camelCase | `userAccount` |
+| `{module_pascal}` | PascalCase | `UserAccount` |
+| `{entity}` / `{Entity}` | PascalCase | `UserAccount` |
+| `{entity_lower}` | Lowercase continuous | `useraccount` |
+| `{entity_kebab}` | Lowercase hyphenated | `user-account` |
+| `{entity_snake}` | Lowercase underscored | `user_account` |
+| `{entity_camel}` | camelCase | `userAccount` |
+| `{entity_screaming_snake}` | UPPERCASE underscored | `USER_ACCOUNT` |
