@@ -1,0 +1,23 @@
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+
+#[get("/health")]
+async fn health() -> impl Responder {
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "healthy",
+        "service": "{module_name}"
+    }))
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    tracing_subscriber::fmt::init();
+    println!("Starting {module_name} on http://0.0.0.0:8080");
+
+    HttpServer::new(|| {
+        App::new()
+            .service(health)
+    })
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
+}

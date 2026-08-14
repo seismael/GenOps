@@ -1,0 +1,20 @@
+name: "Node.js TypeScript Service"
+description: "TypeScript microservice with Express, Fastify, or NestJS"
+language: "TypeScript"
+framework: "Express"
+build: "npm run build"
+directories:
+  - "src"
+  - "src/controllers"
+  - "src/models"
+  - "src/services"
+  - "tests"
+templates:
+  package.json.template: "{module_kebab}/package.json"
+  index.ts.template: "{module_kebab}/src/index.ts"
+  Dockerfile.template: "{module_kebab}/Dockerfile"
+entity_stubs:
+  controller: "src/controllers/{entity_kebab}.controller.ts"
+  model: "src/models/{entity_kebab}.model.ts"
+  service: "src/services/{entity_kebab}.service.ts"
+  test: "tests/{entity_kebab}.test.ts"

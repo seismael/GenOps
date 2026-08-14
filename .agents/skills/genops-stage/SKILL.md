@@ -16,7 +16,7 @@ Do NOT skip APPROVE. Do NOT transition without user approval unless --flow or --
 ## 0. PRE-FLIGHT — Validate dependencies
 
 Halt on first failure with error + fix command.
-Run `python .agents/scripts/genops.py validate` if available.
+Run `python .agents/scripts/genops.py validate` (or MCP tool `genops_validate`) if available; otherwise perform file-based inspection.
 
 **Init check:** AGENTS.md has `<!-- GENOPS:START -->`. genops.yaml exists. "Run /genops-init first." if missing.
 

@@ -1,0 +1,24 @@
+# GenOps Pre-Commit Hooks
+repos:
+  - repo: local
+    hooks:
+      - id: genops-validate
+        name: GenOps Config & Spec Validation
+        entry: python .agents/scripts/genops.py validate
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: genops-check-rules
+        name: GenOps Cross-Layer Semantic Rules
+        entry: python .agents/scripts/genops.py check-rules
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: genops-drift
+        name: GenOps Anti-Drift Enforcer
+        entry: python .agents/scripts/genops.py drift
+        language: system
+        pass_filenames: false
+        always_run: true

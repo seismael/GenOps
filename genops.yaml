@@ -1,7 +1,8 @@
-# GenOps Pipeline Configuration
-# Stages execute sequentially. Each stage reads its template which defines
-# both interview questions (## Interview) and output structure (## Output).
-# Terminal stage (code) scaffolds actual project files from LLD design.
+# GenOps Pipeline Configuration — Software Specification
+#
+# Preset: software-spec
+# Use with: /genops-init --preset software-spec
+# Stages: prd → hld → adr → lld → code
 
 pipeline:
   name: "Software Specification Pipeline"
@@ -10,43 +11,57 @@ pipeline:
       name: "Product Requirements"
       focus: "Product vision, user stories, success metrics, scope boundaries"
       requires: []
-      outputs: ["docs/prd/"]
+      outputs:
+        - "docs/prd/"
       file_pattern: "PRD-{NNN}-{slug}.md"
       template: "prd/PRD-domain.md.template"
-      next: [hld]
+      next:
+        - hld
 
     - id: hld
       name: "High-Level Design"
       focus: "System topology, component boundaries, data flow, integration points"
-      requires: ["docs/prd/"]
-      outputs: ["docs/hld/"]
+      requires:
+        - "docs/prd/"
+      outputs:
+        - "docs/hld/"
       file_pattern: "HLD-{NNN}-{slug}.md"
       template: "hld/HLD-domain.md.template"
-      next: [adr]
+      next:
+        - adr
 
     - id: adr
       name: "Architecture Decisions"
       focus: "Architectural trade-offs, technology selection, design pattern choices"
-      requires: ["docs/hld/"]
-      outputs: ["docs/architecture/"]
+      requires:
+        - "docs/hld/"
+      outputs:
+        - "docs/architecture/"
       file_pattern: "ADR-{NNN}-{slug}.md"
       template: "adr/ADR.md.template"
-      next: [lld]
+      next:
+        - lld
 
     - id: lld
       name: "Low-Level Design"
       focus: "Class diagrams, database schemas, API contracts, module structure"
-      requires: ["docs/hld/", "docs/architecture/"]
-      outputs: ["docs/lld/"]
+      requires:
+        - "docs/hld/"
+        - "docs/architecture/"
+      outputs:
+        - "docs/lld/"
       file_pattern: "LLD-{NNN}-{slug}.md"
       template: "lld/LLD-domain.md.template"
-      next: [code]
+      next:
+        - code
 
     - id: code
       name: "Implementation"
       focus: "Scaffold project from LLD design using scaffold templates"
-      requires: ["docs/lld/"]
-      outputs: ["src/"]
+      requires:
+        - "docs/lld/"
+      outputs:
+        - "src/"
       next: []
 
   validation_rules:

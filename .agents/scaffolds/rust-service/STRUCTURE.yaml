@@ -1,0 +1,19 @@
+name: "Rust Microservice"
+description: "High-performance asynchronous Rust microservice with Actix Web or Axum"
+language: "Rust"
+framework: "Actix Web"
+build: "cargo build"
+directories:
+  - "src"
+  - "src/handlers"
+  - "src/models"
+  - "src/services"
+  - "tests"
+templates:
+  Cargo.toml.template: "{module_kebab}/Cargo.toml"
+  main.rs.template: "{module_kebab}/src/main.rs"
+  Dockerfile.template: "{module_kebab}/Dockerfile"
+entity_stubs:
+  handler: "src/handlers/{entity_snake}.rs"
+  model: "src/models/{entity_snake}.rs"
+  test: "tests/{entity_snake}_test.rs"

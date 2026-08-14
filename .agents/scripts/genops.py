@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """
-GenOps Deterministic Pipeline Engine & Universal Agent Interface
+GenOps Deterministic Pipeline Engine, Anti-Drift Gate, Traceability Matrix & Universal Agent Interface
 Zero-dependency Python 3.8+ utility supporting:
-- Deterministic LF-normalized SHA-256 state tracking
+- Deterministic LF-normalized SHA-256 state tracking & atomic lockfile
 - Multi-agent entrypoint generator (AGENTS.md, CLAUDE.md, Cursor, Copilot, Windsurf, Gemini)
 - Native Model Context Protocol (MCP) stdio server for tool-calling agents
-- Cross-platform tech-stack scaffolding with multi-casing transformations
+- Bidirectional Requirements Traceability Matrix (RTM) engine
+- Monorepo selective DAG context graph slicer
+- Self-contained HTML executive report dashboard generator
+- Brownfield codebase reverse-engineering & ingestion
+- Cross-layer semantic rule checking & referential integrity graph
+- Automated CI/CD anti-drift detector
+- Cross-platform tech-stack scaffolding (Go, Python, React, Rust) with multi-casing transforms
 """
 
 import argparse
@@ -16,6 +22,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -98,8 +105,89 @@ def compute_requires_hash(requires_list: List[str], base_dir: Path) -> Tuple[str
 
 
 # ----------------------------------------------------------------------
-# YAML Minimal Parser
+# Concurrency State Lock
 # ----------------------------------------------------------------------
+class StateLock:
+    """Lightweight atomic file lock for safe multi-agent / parallel updates."""
+    def __init__(self, lock_path: Path, timeout: float = 10.0):
+        self.lock_path = lock_path
+        self.timeout = timeout
+        self.fd: Optional[int] = None
+
+    def __enter__(self) -> "StateLock":
+        start_time = time.time()
+        self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+        while True:
+            try:
+                # Open with O_CREAT | O_EXCL for atomic creation
+                self.fd = os.open(str(self.lock_path), os.O_CREAT | os.O_EXCL | os.O_RDWR)
+                return self
+            except FileExistsError:
+                if time.time() - start_time > self.timeout:
+                    # Stale lock recovery if lock file is older than timeout
+                    try:
+                        mtime = os.path.getmtime(self.lock_path)
+                        if time.time() - mtime > self.timeout:
+                            os.remove(self.lock_path)
+                            continue
+                    except Exception:
+                        pass
+                    raise TimeoutError(f"Could not acquire GenOps state lock at {self.lock_path} within {self.timeout}s")
+                time.sleep(0.05)
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if self.fd is not None:
+            try:
+                os.close(self.fd)
+            except Exception:
+                pass
+            try:
+                if self.lock_path.exists():
+                    os.remove(self.lock_path)
+            except Exception:
+                pass
+
+
+# ----------------------------------------------------------------------
+# YAML Minimal Parser & Frontmatter Extractor
+# ----------------------------------------------------------------------
+def parse_yaml_frontmatter(file_path: Path) -> Tuple[Dict[str, Any], str]:
+    """Extract and parse YAML frontmatter block from markdown document."""
+    if not file_path.is_file():
+        return {}, ""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception:
+        return {}, ""
+
+    if not content.startswith("---"):
+        return {}, content
+
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return {}, content
+
+    fm_raw = parts[1]
+    body = parts[2]
+
+    fm_dict: Dict[str, Any] = {}
+    for line in fm_raw.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" in line:
+            k, v = line.split(":", 1)
+            k = k.strip()
+            v = v.strip().strip('"\'')
+            if v.startswith("[") and v.endswith("]"):
+                fm_dict[k] = [x.strip().strip('"\'') for x in v[1:-1].split(",") if x.strip()]
+            else:
+                fm_dict[k] = v
+
+    return fm_dict, body
+
+
 def load_yaml_file(path: Path) -> Dict[str, Any]:
     """Parse YAML file using PyYAML if available, or lightweight native fallback."""
     try:
@@ -281,8 +369,10 @@ This project uses **GenOps**, a separation-of-concerns pipeline engine that deco
 | Mode | Command Example | Description |
 |---|---|---|
 | **SoC (Default)** | `/genops-prd` | One stage at a time. Solicits human approval before offering next. |
+| **Targeted** | `/genops-prd --domain <slug>` | Scopes execution or modification exclusively to specified domain. |
 | **Flow** | `/genops-prd --flow` | Completes stage, then automatically cascades to next stage. |
 | **Nonstop** | `/genops-prd --nonstop` | Runs full cascade with approval gates at each stage. |
+| **Incremental** | `/genops --from adr --domain <slug>` | Starts incremental cascade for a single domain. |
 | **Status** | `/genops --status` | Shows live pipeline health and stale downstream flags. |
 
 ### Separation of Concerns Protocol
@@ -311,7 +401,6 @@ def sync_agent_file(file_path: Path, new_block: str) -> bool:
         else:
             updated = content.rstrip() + "\n\n" + new_block + "\n"
     else:
-        # Default header for fresh files
         title = file_path.stem.upper()
         updated = f"# {title} Instructions\n\n{new_block}\n"
 
@@ -327,7 +416,6 @@ def cmd_init(args: argparse.Namespace, root_dir: Path) -> None:
     preset_name = args.preset
     agent_target = args.agent or "all"
 
-    # 1. Apply preset if requested
     if preset_name:
         preset_file = root_dir / ".agents" / "presets" / f"{preset_name}.yaml"
         if not preset_file.exists():
@@ -366,8 +454,11 @@ def cmd_init(args: argparse.Namespace, root_dir: Path) -> None:
         files_to_update = [
             root_dir / "AGENTS.md",
             root_dir / "CLAUDE.md",
+            root_dir / "GEMINI.md",
             root_dir / ".cursor" / "rules" / "genops.mdc",
             root_dir / ".github" / "copilot-instructions.md",
+            root_dir / ".windsurfrules",
+            root_dir / "CONVENTIONS.md",
         ]
     elif agent_target in agent_targets_map:
         files_to_update = agent_targets_map[agent_target]
@@ -378,7 +469,6 @@ def cmd_init(args: argparse.Namespace, root_dir: Path) -> None:
         sync_agent_file(target_path, block)
         print(f"  [+] Synced agent instructions: {target_path.relative_to(root_dir).as_posix()}")
 
-    # Ensure state file initialized
     state_file = root_dir / "docs" / ".genops-state.json"
     if not state_file.exists():
         state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -557,6 +647,7 @@ def cmd_record(args: argparse.Namespace, root_dir: Path) -> None:
     stage_id = args.stage
     config_file = root_dir / "genops.yaml"
     state_file = root_dir / "docs" / ".genops-state.json"
+    lock_file = root_dir / "docs" / ".genops.lock"
     event_file = root_dir / "docs" / ".genops-events.jsonl"
 
     if not config_file.exists():
@@ -593,57 +684,59 @@ def cmd_record(args: argparse.Namespace, root_dir: Path) -> None:
     req_hash, req_files = compute_requires_hash(stage_conf.get("requires", []), root_dir)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
-    state_data: Dict[str, Any] = {
-        "version": "2.0",
-        "pipeline": "genops.yaml",
-        "updated_at": now_iso,
-        "stages": {},
-    }
-    if state_file.exists():
-        try:
-            with open(state_file, "r", encoding="utf-8") as sf:
-                state_data = json.load(sf)
-        except Exception:
-            pass
+    # Thread/Process safe atomic state recording
+    with StateLock(lock_file):
+        state_data: Dict[str, Any] = {
+            "version": "2.0",
+            "pipeline": "genops.yaml",
+            "updated_at": now_iso,
+            "stages": {},
+        }
+        if state_file.exists():
+            try:
+                with open(state_file, "r", encoding="utf-8") as sf:
+                    state_data = json.load(sf)
+            except Exception:
+                pass
 
-    state_data["version"] = "2.0"
-    state_data["updated_at"] = now_iso
-    state_data["stages"][stage_id] = {
-        "state": "approved",
-        "last_run": now_iso,
-        "requires_hash": req_hash,
-        "output_dir": stage_conf.get("outputs", [""])[0],
-        "domain_count": len(out_hashes),
-        "files": out_hashes,
-        "combined_hash": combined_out_hasher.hexdigest(),
-        "approved_by": args.actor or "user",
-    }
+        state_data["version"] = "2.0"
+        state_data["updated_at"] = now_iso
+        state_data["stages"][stage_id] = {
+            "state": "approved",
+            "last_run": now_iso,
+            "requires_hash": req_hash,
+            "output_dir": stage_conf.get("outputs", [""])[0],
+            "domain_count": len(out_hashes),
+            "files": out_hashes,
+            "combined_hash": combined_out_hasher.hexdigest(),
+            "approved_by": args.actor or "user",
+        }
 
-    for st in stages:
-        if st.get("id") != stage_id:
-            for req in st.get("requires", []):
-                for out_p in stage_conf.get("outputs", []):
-                    if out_p in req or req in out_p:
-                        if st.get("id") in state_data["stages"]:
-                            state_data["stages"][st.get("id")]["state"] = "stale"
+        for st in stages:
+            if st.get("id") != stage_id:
+                for req in st.get("requires", []):
+                    for out_p in stage_conf.get("outputs", []):
+                        if out_p in req or req in out_p:
+                            if st.get("id") in state_data["stages"]:
+                                state_data["stages"][st.get("id")]["state"] = "stale"
 
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(state_file, "w", encoding="utf-8") as sf:
-        json.dump(state_data, sf, indent=2)
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(state_file, "w", encoding="utf-8") as sf:
+            json.dump(state_data, sf, indent=2)
 
-    event_entry = {
-        "timestamp": now_iso,
-        "stage": stage_id,
-        "action": "APPROVED",
-        "actor": args.actor or "user",
-        "files_count": len(out_hashes),
-        "requires_hash": req_hash,
-        "output_hash": combined_out_hasher.hexdigest(),
-    }
-    with open(event_file, "a", encoding="utf-8") as ef:
-        ef.write(json.dumps(event_entry) + "\n")
+        event_entry = {
+            "timestamp": now_iso,
+            "stage": stage_id,
+            "action": "APPROVED",
+            "actor": args.actor or "user",
+            "files_count": len(out_hashes),
+            "requires_hash": req_hash,
+            "output_hash": combined_out_hasher.hexdigest(),
+        }
+        with open(event_file, "a", encoding="utf-8") as ef:
+            ef.write(json.dumps(event_entry) + "\n")
 
-    print(f"[OK] Stage '{stage_id}' state recorded successfully (v2.0 schema). Event logged to docs/.genops-events.jsonl.")
+    print(f"[OK] Stage '{stage_id}' state recorded safely (lock-protected v2.0 schema).")
 
 
 def cmd_scaffold(args: argparse.Namespace, root_dir: Path) -> None:
@@ -709,6 +802,8 @@ def cmd_scaffold(args: argparse.Namespace, root_dir: Path) -> None:
                         f.write(f"package {pkg}\n\n// {ent_casing['entity']} represents the {ent_casing['entity_name']} domain entity.\ntype {ent_casing['entity']} struct {{\n\tID string\n}}\n")
                     elif "python" in lang:
                         f.write(f"\"\"\"{ent_casing['entity']} domain model.\"\"\"\n\nclass {ent_casing['entity']}:\n    pass\n")
+                    elif "rust" in lang:
+                        f.write(f"//! {ent_casing['entity']} module\n\n#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]\npub struct {ent_casing['entity']} {{\n    pub id: String,\n}}\n")
                     elif "typescript" in lang or "react" in lang:
                         f.write(f"export interface {ent_casing['entity']} {{\n  id: string;\n}}\n")
                     else:
@@ -719,55 +814,356 @@ def cmd_scaffold(args: argparse.Namespace, root_dir: Path) -> None:
 
 
 # ----------------------------------------------------------------------
+# Lineage Graph, Cross-Layer Rule Checking & Anti-Drift Gate
+# ----------------------------------------------------------------------
+def collect_spec_documents(root_dir: Path) -> List[Dict[str, Any]]:
+    """Scan docs/ directory and parse frontmatter for all markdown specs."""
+    docs_dir = root_dir / "docs"
+    if not docs_dir.exists():
+        return []
+
+    specs: List[Dict[str, Any]] = []
+    for md in docs_dir.rglob("*.md"):
+        if md.name.startswith(".") or md.parent.name in ("eval", "evals"):
+            continue
+        fm, body = parse_yaml_frontmatter(md)
+        if not fm:
+            continue
+        rel_p = md.relative_to(root_dir).as_posix()
+        spec_id = fm.get("id") or md.stem
+        specs.append({
+            "id": spec_id,
+            "path": rel_p,
+            "stage": fm.get("stage", md.parent.name),
+            "domain": fm.get("domain", ""),
+            "version": fm.get("version", "1.0.0"),
+            "status": fm.get("status", "draft"),
+            "upstream_refs": fm.get("upstream_refs", []),
+            "downstream_refs": fm.get("downstream_refs", []),
+            "frontmatter": fm,
+            "body": body,
+        })
+    return specs
+
+
+def cmd_graph(args: argparse.Namespace, root_dir: Path) -> None:
+    """Build and render the causal lineage Directed Acyclic Graph (DAG)."""
+    specs = collect_spec_documents(root_dir)
+    print(f"\nGenOps Specification Lineage Graph ({len(specs)} documents indexed)")
+    print("=" * 70)
+
+    nodes: Dict[str, Dict[str, Any]] = {s["id"]: s for s in specs}
+    edges: List[Tuple[str, str]] = []
+
+    for s in specs:
+        sid = s["id"]
+        for up in s.get("upstream_refs", []):
+            edges.append((up, sid))
+        for down in s.get("downstream_refs", []):
+            edges.append((sid, down))
+
+    unique_edges = sorted(list(set(edges)))
+
+    # Output Mermaid definition
+    mermaid_lines = ["```mermaid", "graph TD"]
+    for sid, node in nodes.items():
+        stg = node.get("stage", "spec")
+        st = node.get("status", "approved")
+        mermaid_lines.append(f'  {sid}["{sid}<br/>({stg} • {st})"]')
+
+    for src, dst in unique_edges:
+        mermaid_lines.append(f"  {src} --> {dst}")
+    mermaid_lines.append("```")
+
+    print("\n".join(mermaid_lines))
+
+    # Save to docs/.genops-graph.json
+    graph_data = {
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "total_documents": len(specs),
+        "nodes": {s["id"]: {"path": s["path"], "stage": s["stage"], "status": s["status"]} for s in specs},
+        "edges": [{"from": e[0], "to": e[1]} for e in unique_edges],
+    }
+    graph_file = root_dir / "docs" / ".genops-graph.json"
+    graph_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(graph_file, "w", encoding="utf-8") as gf:
+        json.dump(graph_data, gf, indent=2)
+
+    print(f"\n[OK] Lineage graph persisted to docs/.genops-graph.json.")
+
+
+def cmd_check_rules(args: argparse.Namespace, root_dir: Path) -> None:
+    """Run semantic cross-layer validation rules across specifications."""
+    specs = collect_spec_documents(root_dir)
+    spec_ids = {s["id"] for s in specs}
+    print(f"Running Cross-Layer Semantic Rules Check on {len(specs)} specifications...")
+
+    violations: List[str] = []
+
+    for s in specs:
+        sid = s["id"]
+        fm = s["frontmatter"]
+        for rk in ["id", "stage", "status"]:
+            if rk not in fm:
+                violations.append(f"[{s['path']}] Missing required frontmatter key: '{rk}'")
+
+        for up in s.get("upstream_refs", []):
+            if up not in spec_ids:
+                violations.append(f"[{s['path']}] Broken upstream_ref: '{up}' not found in docs/")
+
+        for down in s.get("downstream_refs", []):
+            if down not in spec_ids:
+                violations.append(f"[{s['path']}] Broken downstream_ref: '{down}' not found in docs/")
+
+        if s["stage"] == "adr":
+            adr_st = s["status"].lower()
+            if adr_st in ("rejected", "deprecated") and s.get("downstream_refs"):
+                violations.append(f"[{s['path']}] Rejected/Deprecated ADR has active downstream references")
+
+    if violations:
+        print(f"\n[!] {len(violations)} RULE VIOLATIONS FOUND:")
+        for v in violations:
+            print(f"  - {v}")
+        sys.exit(1)
+    else:
+        print("\n[OK] All cross-layer semantic validation rules PASSED.")
+
+
+def cmd_drift(args: argparse.Namespace, root_dir: Path) -> None:
+    """CI/CD Anti-Drift Gate: Verify that code stubs match LLD entity definitions."""
+    lld_dir = root_dir / "docs" / "lld"
+    src_dir = root_dir / "src"
+
+    if not lld_dir.exists():
+        print("[OK] No LLD specs present; skipping drift check.")
+        return
+
+    print("Running Anti-Drift Integrity Gate (LLD vs. Source Code)...")
+    drift_items: List[str] = []
+
+    for lld_file in lld_dir.glob("*.md"):
+        with open(lld_file, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        module_matches = re.findall(r"\|\s*`?([a-zA-Z0-9_\-]+)`?\s*\|\s*`?([a-zA-Z0-9_\-]+)`?\s*\|\s*`?([a-zA-Z0-9_,\s]+)`?\s*\|", content)
+        for m_name, m_scaff, m_entities in module_matches:
+            if m_name.lower() in ("module", "---", "name"):
+                continue
+            mod_path = src_dir / m_name
+            if not mod_path.exists():
+                drift_items.append(f"Missing scaffolded module directory: src/{m_name}/ (declared in {lld_file.name})")
+                continue
+
+            ents = [e.strip() for e in m_entities.split(",") if e.strip()]
+            for ent in ents:
+                ent_kebab = to_kebab_case(ent)
+                ent_snake = to_snake_case(ent)
+                ent_lower = ent.lower().replace("-", "").replace("_", "")
+
+                matched_files = list(mod_path.rglob(f"*{ent_kebab}*")) + \
+                                list(mod_path.rglob(f"*{ent_snake}*")) + \
+                                list(mod_path.rglob(f"*{ent_lower}*"))
+
+                if not matched_files:
+                    drift_items.append(f"Module src/{m_name}/ missing implementation stub for entity '{ent}' (declared in {lld_file.name})")
+
+    if drift_items:
+        print(f"\n[X] DRIFT DETECTED ({len(drift_items)} issues):")
+        for d in drift_items:
+            print(f"  - {d}")
+        sys.exit(1)
+    else:
+        print("\n[OK] Anti-Drift Gate: All LLD modules and entity stubs are synchronized with src/.")
+
+
+# ----------------------------------------------------------------------
+# Enterprise Capabilities: RTM, Selective Context, HTML Report, Ingest
+# ----------------------------------------------------------------------
+def cmd_rtm(args: argparse.Namespace, root_dir: Path) -> None:
+    """Generate granular Requirements Traceability Matrix (RTM)."""
+    specs = collect_spec_documents(root_dir)
+    print(f"\nGenOps Requirements Traceability Matrix (RTM)")
+    print("=" * 80)
+
+    rows: List[Dict[str, str]] = []
+    for s in specs:
+        if s["stage"] == "prd":
+            # Extract capabilities from table
+            matches = re.findall(r"\|\s*(P\d+)\s*\|\s*([^\|]+)\|\s*([^\|]+)\|\s*([^\|]+)\|\s*([^\|]+)\|", s["body"])
+            for prio, persona, want, so_that, criteria in matches:
+                if prio.lower() in ("priority", "---"):
+                    continue
+                rows.append({
+                    "req_id": f"{s['id']}:{want.strip()[:25]}...",
+                    "prd": s["id"],
+                    "priority": prio.strip(),
+                    "downstream": ", ".join(s.get("downstream_refs", [])) or "UNMAPPED",
+                })
+
+    if not rows:
+        print("No PRD requirements found to trace.")
+        return
+
+    print(f"{'Requirement':<35} | {'PRD':<20} | {'Priority':<8} | {'Downstream Design':<20}")
+    print("-" * 90)
+    for r in rows:
+        print(f"{r['req_id']:<35} | {r['prd']:<20} | {r['priority']:<8} | {r['downstream']:<20}")
+
+    coverage = len([r for r in rows if r['downstream'] != 'UNMAPPED']) / max(len(rows), 1) * 100
+    print(f"\nRequirements Coverage: {coverage:.1f}% ({len(rows)} requirements tracked)")
+
+
+def cmd_context(args: argparse.Namespace, root_dir: Path) -> None:
+    """Extract targeted upstream DAG lineage slice for a specific domain."""
+    domain = args.domain
+    specs = collect_spec_documents(root_dir)
+
+    target_specs = [s for s in specs if s["domain"] == domain or domain in s["id"] or domain in str(s.get("upstream_refs", []))]
+    if not target_specs:
+        print(f"No specifications found for domain: '{domain}'", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"# Context Lineage Slice for Domain: {domain}\n")
+    for s in target_specs:
+        print(f"## [{s['stage'].upper()}] {s['id']} ({s['path']})")
+        print(s["body"].strip())
+        print("\n" + "=" * 60 + "\n")
+
+
+def cmd_report(args: argparse.Namespace, root_dir: Path) -> None:
+    """Generate self-contained executive HTML dashboard."""
+    specs = collect_spec_documents(root_dir)
+    state_file = root_dir / "docs" / ".genops-state.json"
+    state_data: Dict[str, Any] = {"stages": {}}
+    if state_file.exists():
+        try:
+            state_data = json.load(open(state_file, "r", encoding="utf-8"))
+        except Exception:
+            pass
+
+    out_html = root_dir / (args.html or "docs/report.html")
+    out_html.parent.mkdir(parents=True, exist_ok=True)
+
+    stage_cards_html = ""
+    for stg, sinfo in state_data.get("stages", {}).items():
+        st_state = sinfo.get("state", "unknown")
+        color = "#10b981" if st_state == "approved" else "#f59e0b"
+        stage_cards_html += f"""
+        <div class="card">
+            <h3>{stg.upper()}</h3>
+            <p><span class="badge" style="background:{color}">{st_state}</span></p>
+            <p><small>Last Run: {sinfo.get('last_run', 'Never')[:19]}</small></p>
+            <p><small>Files: {sinfo.get('domain_count', 0)}</small></p>
+        </div>"""
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GenOps Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({{startOnLoad:true, theme:'dark'}});</script>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0e17; color: #f8fafc; margin: 0; padding: 2rem; }}
+        h1, h2 {{ color: #00f0ff; }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }}
+        .card {{ background: rgba(18, 26, 43, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem; }}
+        .badge {{ padding: 4px 8px; border-radius: 4px; font-weight: bold; color: black; }}
+        .mermaid {{ background: rgba(18, 26, 43, 0.8); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1); }}
+    </style>
+</head>
+<body>
+    <h1>GenOps Executive Specification Dashboard</h1>
+    <p>Generated on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+    
+    <h2>Pipeline Stages</h2>
+    <div class="grid">
+        {stage_cards_html or "<p>No stage data recorded yet.</p>"}
+    </div>
+
+    <h2>Specification Lineage DAG</h2>
+    <div class="mermaid">
+    graph TD
+    """
+    for s in specs:
+        html_content += f'      {s["id"]}["{s["id"]}<br/>({s["stage"]})"]\n'
+        for down in s.get("downstream_refs", []):
+            html_content += f"      {s['id']} --> {down}\n"
+
+    html_content += """
+    </div>
+</body>
+</html>"""
+
+    with open(out_html, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    print(f"[OK] Self-contained executive report generated at {out_html.relative_to(root_dir).as_posix()}.")
+
+
+def cmd_ingest(args: argparse.Namespace, root_dir: Path) -> None:
+    """Brownfield codebase ingestion & baseline spec generator."""
+    src_target = root_dir / args.src
+    if not src_target.exists():
+        print(f"ERROR: Source directory {src_target} does not exist.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Ingesting brownfield codebase from {src_target.relative_to(root_dir).as_posix()}...")
+    detected_modules: List[str] = []
+    for item in src_target.iterdir():
+        if item.is_dir() and not item.name.startswith("."):
+            detected_modules.append(item.name)
+
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    lld_dest = root_dir / "docs" / "lld" / "LLD-001-baseline.md"
+    lld_dest.parent.mkdir(parents=True, exist_ok=True)
+
+    module_rows = "\n".join([f"| `{m}` | `custom` | `BaselineEntity` | Auto-ingested baseline module |" for m in detected_modules])
+
+    baseline_lld = f"""---
+id: LLD-001-baseline
+domain: baseline
+stage: lld
+version: 1.0.0
+status: approved
+created_at: {now_iso}
+updated_at: {now_iso}
+upstream_refs: []
+downstream_refs: []
+tags: [brownfield, baseline, lld]
+---
+
+# Brownfield Ingested Baseline — Low-Level Design
+
+## Project Structure
+### Modules
+| Module | Scaffold | Entities | Description |
+|---|---|---|---|
+{module_rows}
+"""
+    with open(lld_dest, "w", encoding="utf-8") as f:
+        f.write(baseline_lld)
+
+    print(f"[OK] Brownfield baseline LLD generated at {lld_dest.relative_to(root_dir).as_posix()} with {len(detected_modules)} detected modules.")
+
+
+# ----------------------------------------------------------------------
 # Lightweight JSON-RPC stdio MCP Server Implementation
 # ----------------------------------------------------------------------
 def run_mcp_server(root_dir: Path) -> None:
     """Run lightweight JSON-RPC 2.0 stdio MCP server for agent tool invocation."""
     tools_spec = [
-        {
-            "name": "genops_validate",
-            "description": "Validate GenOps configuration, presets, templates, and scaffolds.",
-            "inputSchema": {"type": "object", "properties": {}},
-        },
-        {
-            "name": "genops_status",
-            "description": "Retrieve current status of all GenOps pipeline stages and detect staleness.",
-            "inputSchema": {"type": "object", "properties": {}},
-        },
-        {
-            "name": "genops_hash",
-            "description": "Compute LF-normalized SHA-256 hash for a specific file or directory.",
-            "inputSchema": {
-                "type": "object",
-                "required": ["target"],
-                "properties": {"target": {"type": "string", "description": "Relative path to file or directory"}},
-            },
-        },
-        {
-            "name": "genops_record",
-            "description": "Record stage approval and output hashes into state v2.",
-            "inputSchema": {
-                "type": "object",
-                "required": ["stage"],
-                "properties": {
-                    "stage": {"type": "string", "description": "Stage identifier"},
-                    "actor": {"type": "string", "default": "agent"},
-                },
-            },
-        },
-        {
-            "name": "genops_scaffold",
-            "description": "Deterministically scaffold a module from a scaffold template.",
-            "inputSchema": {
-                "type": "object",
-                "required": ["module", "scaffold"],
-                "properties": {
-                    "module": {"type": "string", "description": "Module directory name"},
-                    "scaffold": {"type": "string", "description": "Scaffold identifier"},
-                    "entities": {"type": "string", "description": "Comma-separated list of entities"},
-                },
-            },
-        },
+        {"name": "genops_validate", "description": "Validate GenOps configuration, presets, templates, and scaffolds.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "genops_status", "description": "Retrieve current status of all GenOps pipeline stages and detect staleness.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "genops_hash", "description": "Compute LF-normalized SHA-256 hash for a specific file or directory.", "inputSchema": {"type": "object", "required": ["target"], "properties": {"target": {"type": "string"}}}},
+        {"name": "genops_record", "description": "Record stage approval and output hashes into state v2.", "inputSchema": {"type": "object", "required": ["stage"], "properties": {"stage": {"type": "string"}, "actor": {"type": "string", "default": "agent"}}}},
+        {"name": "genops_scaffold", "description": "Deterministically scaffold a module from a scaffold template.", "inputSchema": {"type": "object", "required": ["module", "scaffold"], "properties": {"module": {"type": "string"}, "scaffold": {"type": "string"}, "entities": {"type": "string"}}}},
+        {"name": "genops_graph", "description": "Generate specification lineage graph and DAG visualization.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "genops_drift", "description": "Run CI/CD anti-drift check between LLD specifications and source code.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "genops_check_rules", "description": "Run semantic cross-layer validation rules across specifications.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "genops_rtm", "description": "Generate Requirements Traceability Matrix (RTM).", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "genops_context", "description": "Extract targeted upstream DAG lineage slice for a domain.", "inputSchema": {"type": "object", "required": ["domain"], "properties": {"domain": {"type": "string"}}}},
+        {"name": "genops_report", "description": "Generate executive HTML report dashboard.", "inputSchema": {"type": "object", "properties": {"html": {"type": "string", "default": "docs/report.html"}}}},
     ]
 
     while True:
@@ -790,7 +1186,7 @@ def run_mcp_server(root_dir: Path) -> None:
                     "result": {
                         "protocolVersion": "2024-11-05",
                         "capabilities": {"tools": {}},
-                        "serverInfo": {"name": "genops-engine", "version": "2.0.0"},
+                        "serverInfo": {"name": "genops-engine", "version": "2.1.0"},
                     },
                 }
             elif method in ("notifications/initialized", "ping"):
@@ -834,6 +1230,24 @@ def run_mcp_server(root_dir: Path) -> None:
                 elif name == "genops_scaffold":
                     cmd_scaffold(argparse.Namespace(module=args.get("module"), scaffold=args.get("scaffold"), entities=args.get("entities", "")), root_dir)
                     out_text = f"Module {args.get('module')} scaffolded successfully."
+                elif name == "genops_graph":
+                    cmd_graph(argparse.Namespace(), root_dir)
+                    out_text = "Graph generated in docs/.genops-graph.json."
+                elif name == "genops_drift":
+                    cmd_drift(argparse.Namespace(), root_dir)
+                    out_text = "Anti-Drift check completed."
+                elif name == "genops_check_rules":
+                    cmd_check_rules(argparse.Namespace(), root_dir)
+                    out_text = "Cross-layer rules check completed."
+                elif name == "genops_rtm":
+                    cmd_rtm(argparse.Namespace(), root_dir)
+                    out_text = "Requirements Traceability Matrix generated."
+                elif name == "genops_context":
+                    cmd_context(argparse.Namespace(domain=args.get("domain")), root_dir)
+                    out_text = f"Context slice extracted for {args.get('domain')}."
+                elif name == "genops_report":
+                    cmd_report(argparse.Namespace(html=args.get("html", "docs/report.html")), root_dir)
+                    out_text = "HTML Executive Report generated."
                 else:
                     out_text = f"Unknown tool: {name}"
                     is_error = True
@@ -892,8 +1306,32 @@ def main() -> None:
     # scaffold
     p_scaff = subparsers.add_parser("scaffold", help="Deterministically scaffold a module from a scaffold template")
     p_scaff.add_argument("--module", required=True, help="Module directory name")
-    p_scaff.add_argument("--scaffold", required=True, help="Scaffold identifier (e.g. go-service, react-vite)")
+    p_scaff.add_argument("--scaffold", required=True, help="Scaffold identifier (e.g. go-service, react-vite, rust-service)")
     p_scaff.add_argument("--entities", default="", help="Comma-separated list of entities")
+
+    # graph
+    subparsers.add_parser("graph", help="Generate specification lineage DAG graph and visualization")
+
+    # check-rules
+    subparsers.add_parser("check-rules", help="Verify semantic cross-layer validation rules and references")
+
+    # drift
+    subparsers.add_parser("drift", help="Run CI/CD anti-drift check between LLD specs and source files")
+
+    # rtm
+    subparsers.add_parser("rtm", help="Generate Requirements Traceability Matrix (RTM)")
+
+    # context
+    p_ctx = subparsers.add_parser("context", help="Extract targeted upstream DAG lineage slice for a domain")
+    p_ctx.add_argument("--domain", required=True, help="Domain slug (e.g. checkout, ingestion)")
+
+    # report
+    p_rep = subparsers.add_parser("report", help="Generate self-contained executive HTML report dashboard")
+    p_rep.add_argument("--html", default="docs/report.html", help="Output HTML filepath")
+
+    # ingest
+    p_ing = subparsers.add_parser("ingest", help="Brownfield codebase reverse engineering")
+    p_ing.add_argument("--src", default="src", help="Source directory to analyze")
 
     # mcp
     subparsers.add_parser("mcp", help="Run JSON-RPC stdio MCP server for agent tool-calling")
@@ -913,6 +1351,20 @@ def main() -> None:
         cmd_record(args, root_dir)
     elif args.command == "scaffold":
         cmd_scaffold(args, root_dir)
+    elif args.command == "graph":
+        cmd_graph(args, root_dir)
+    elif args.command == "check-rules":
+        cmd_check_rules(args, root_dir)
+    elif args.command == "drift":
+        cmd_drift(args, root_dir)
+    elif args.command == "rtm":
+        cmd_rtm(args, root_dir)
+    elif args.command == "context":
+        cmd_context(args, root_dir)
+    elif args.command == "report":
+        cmd_report(args, root_dir)
+    elif args.command == "ingest":
+        cmd_ingest(args, root_dir)
     elif args.command == "mcp":
         run_mcp_server(root_dir)
 

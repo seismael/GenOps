@@ -7,8 +7,10 @@ Scaffold templates define how `/genops-code` generates project structures from L
 | Scaffold | Language | Framework | Use Case |
 |----------|----------|-----------|----------|
 | `go-service` | Go | gin | Microservice with clean architecture |
-| `react-vite` | TypeScript | React 19 + Vite | Frontend application |
-| `python-fastapi` | Python | FastAPI | REST API service |
+| `python-fastapi` | Python | FastAPI | Async REST API service |
+| `react-vite` | TypeScript | React 19 + Vite | Modern frontend SPA |
+| `rust-service` | Rust | Actix Web / Tokio | High-throughput async microservice |
+| `node-service` | TypeScript | Express / Vitest | Node.js backend service |
 | `go-library` | Go | stdlib | Shared Go library |
 
 ## Creating a New Scaffold

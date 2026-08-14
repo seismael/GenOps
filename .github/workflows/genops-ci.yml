@@ -1,0 +1,31 @@
+name: GenOps Specification & Anti-Drift CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  validate-specifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate GenOps Configurations & Presets
+        run: python .agents/scripts/genops.py validate
+
+      - name: Check Cross-Layer Semantic Rules
+        run: python .agents/scripts/genops.py check-rules
+
+      - name: Enforce Anti-Drift Gate (Specs vs. Code)
+        run: python .agents/scripts/genops.py drift
+
+      - name: Verify Specification Lineage Graph
+        run: python .agents/scripts/genops.py graph

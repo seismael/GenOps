@@ -1,0 +1,14 @@
+import express, { Request, Response } from 'express';
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'healthy', service: '{module_name}' });
+});
+
+app.listen(port, () => {
+  console.log(`{module_name} running on http://localhost:${port}`);
+});

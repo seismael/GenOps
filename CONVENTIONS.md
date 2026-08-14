@@ -1,4 +1,4 @@
-# GENOPS Instructions
+# CONVENTIONS Instructions
 
 <!-- GENOPS:START — managed by genops-init, edit pipeline stages via genops.yaml -->
 

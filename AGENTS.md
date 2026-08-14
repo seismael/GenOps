@@ -64,8 +64,10 @@ This project uses **GenOps**, a separation-of-concerns pipeline engine that deco
 | Mode | Command Example | Description |
 |---|---|---|
 | **SoC (Default)** | `/genops-prd` | One stage at a time. Solicits human approval before offering next. |
+| **Targeted** | `/genops-prd --domain <slug>` | Scopes execution or modification exclusively to specified domain. |
 | **Flow** | `/genops-prd --flow` | Completes stage, then automatically cascades to next stage. |
 | **Nonstop** | `/genops-prd --nonstop` | Runs full cascade with approval gates at each stage. |
+| **Incremental** | `/genops --from adr --domain <slug>` | Starts incremental cascade for a single domain. |
 | **Status** | `/genops --status` | Shows live pipeline health and stale downstream flags. |
 
 ### Separation of Concerns Protocol

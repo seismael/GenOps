@@ -34,9 +34,11 @@ Run `python .agents/scripts/genops.py status`. Outputs table: stage | state | la
 | Invocation | Behavior |
 |-----------|----------|
 | `/genops-<stage>` | SoC: one stage. After approve → "Run next or save?" |
+| `/genops-<stage> --domain <slug>` | Targeted: Execute or modify only specified domain |
 | `/genops-<stage> --flow` | Stage → auto-start next (one hop) |
 | `/genops-<stage> --nonstop` | Stage → full cascade with approval gates |
 | `/genops --from <id>` | Start at stage. Validate all upstream. |
+| `/genops --from <id> --domain <slug>` | Incremental cascade for single domain. |
 | `/genops --nonstop` | Run remaining with --nonstop. |
 | `/genops --status` | Pipeline health dashboard. |
 

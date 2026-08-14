@@ -1,6 +1,7 @@
 ---
 id: RFC-001-contextops-architecture
 title: "ContextOps: The Docs-as-Context Framework for Agent-Native Software Engineering"
+stage: architecture
 status: Accepted
 date: 2026-08-14
 authors: ["Antigravity Architecture Team"]
@@ -15,13 +16,40 @@ Modern AI coding agents fail predominantly due to **monolithic prompt collapse**
 
 **GenOps** formalizes the **Docs-as-Context (ContextOps)** paradigm through a cascading, separation-of-concerns (SoC) specification pipeline:
 
-$$\text{PRD} \xrightarrow{\text{cascade}} \text{HLD} \xrightarrow{\text{cascade}} \text{ADR} \xrightarrow{\text{cascade}} \text{LLD} \xrightarrow{\text{cascade}} \text{Code}$$
+```mermaid
+flowchart LR
+    PRD["<b>PRD</b><br/>Product Requirements"] -->|"Cascades into"| HLD["<b>HLD</b><br/>System Topology"]
+    HLD -->|"Cascades into"| ADR["<b>ADR</b><br/>Tech Decisions"]
+    ADR -->|"Cascades into"| LLD["<b>LLD</b><br/>Contracts & Schemas"]
+    LLD -->|"Scaffolds into"| CODE["<b>Code</b><br/>Deterministic Source"]
 
-Each stage is isolated in scope, produces machine-readable artifacts with YAML frontmatter, and detects upstream changes via LF-normalized SHA-256 hash tracking.
+    classDef stageBox fill:#0f172a,stroke:#00f0ff,stroke-width:2px,color:#f8fafc;
+    class PRD,HLD,ADR,LLD,CODE stageBox;
+```
+
+Each stage is isolated in scope, produces machine-readable artifacts with YAML frontmatter, and detects upstream changes via LF-normalized SHA-256 hash tracking:
+
+$$\text{State}(\text{Stage}_i) = f\left(\text{Hash}_{\text{LF}}(\text{Requires}(\text{Stage}_i)), \text{Approved}(\text{Stage}_{i-1})\right)$$
 
 ---
 
 ## 2. The 6 Pillars of ContextOps
+
+```mermaid
+flowchart TB
+    subgraph Pillars ["The 6 Pillars of the ContextOps Paradigm"]
+        direction TB
+        P1["1. Strict Downward Traceability (PRD → Code)"]
+        P2["2. Token Efficiency via Domain-Split Files"]
+        P3["3. Deterministic Machine Indexing (YAML Frontmatter)"]
+        P4["4. Anti-Drift Enforcement (LF-Hash & CI Gates)"]
+        P5["5. Automated Pass/Fail Verification Loops"]
+        P6["6. Multi-Stack Scaffolding Determinism"]
+    end
+
+    classDef pBox fill:#1e1e38,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
+    class P1,P2,P3,P4,P5,P6 pBox;
+```
 
 | Pillar | Mechanism | Value for Humans & AI Agents |
 |---|---|---|
@@ -38,22 +66,29 @@ Each stage is isolated in scope, produces machine-readable artifacts with YAML f
 
 Applying the full four-tier stack to every simple script creates unnecessary friction. GenOps scales dynamically across three tiers:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      ARCHITECTURE DOCUMENTATION SPECTRUM                    │
-├─────────────────┬───────────────────────────────┬───────────────────────────┤
-│ Tier            │ Cascade Pipeline              │ Recommended Use Cases     │
-├─────────────────┼───────────────────────────────┼───────────────────────────┤
-│ Tier 1: Full    │ PRD → HLD → ADR → LLD → Code  │ Core infrastructure,      │
-│ Stack           │                               │ distributed systems,      │
-│                 │                               │ multi-service platforms   │
-├─────────────────┼───────────────────────────────┼───────────────────────────┤
-│ Tier 2: Standard│ HLD → ADR → Code              │ REST/gRPC microservices,  │
-│ Service         │                               │ web backends, ETL jobs    │
-├─────────────────┼───────────────────────────────┼───────────────────────────┤
-│ Tier 3: Light   │ README → ADR → Code           │ Internal developer tools, │
-│ Utility         │                               │ CLI scripts, prototypes   │
-└─────────────────┴───────────────────────────────┴───────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph Tier1 ["Tier 1: Full Enterprise Stack"]
+        direction TB
+        T1_PRD["PRD"] --> T1_HLD["HLD"] --> T1_ADR["ADR"] --> T1_LLD["LLD"] --> T1_CODE["Code"]
+    end
+
+    subgraph Tier2 ["Tier 2: Standard Service"]
+        direction TB
+        T2_HLD["HLD"] --> T2_ADR["ADR"] --> T2_CODE["Code"]
+    end
+
+    subgraph Tier3 ["Tier 3: Light Tool / Prototype"]
+        direction TB
+        T3_README["README"] --> T3_ADR["ADR"] --> T3_CODE["Code"]
+    end
+
+    classDef t1 fill:#0f172a,stroke:#00f0ff,stroke-width:2px,color:#f8fafc;
+    classDef t2 fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
+    classDef t3 fill:#1e1e38,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
+    class T1_PRD,T1_HLD,T1_ADR,T1_LLD,T1_CODE t1;
+    class T2_HLD,T2_ADR,T2_CODE t2;
+    class T3_README,T3_ADR,T3_CODE t3;
 ```
 
 ---
