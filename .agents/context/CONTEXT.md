@@ -1,6 +1,6 @@
 # Living Project Context
 
-> Auto-compacted by GenOps Engine on 2026-08-18 20:57:18 UTC.
+> Auto-compacted by GenOps Engine on 2026-08-18 21:04:19 UTC.
 > Loaded natively by every GenOps agent skill during Step 1 (LOAD).
 
 ## Project Overview

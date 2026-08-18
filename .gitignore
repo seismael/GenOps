@@ -18,3 +18,5 @@ node_modules/
 
 # Evaluation reports (keep for reference, ignore if desired)
 # docs/eval/
+
+examples/

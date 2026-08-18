@@ -1,1 +1,57 @@
-{"version":"2.0","pipeline":"genops.yaml","stages":{}}
+{
+  "version": "2.0",
+  "pipeline": "genops.yaml",
+  "stages": {
+    "prd": {
+      "state": "approved",
+      "last_run": "2026-08-18T21:00:15.049786+00:00",
+      "requires_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_dir": "docs/prd/",
+      "domain_count": 1,
+      "files": {
+        "PRD-001-url-shortener.md": "64ac2115cc95e9d948a9e76e231c32cc1233de6889ac3e677bcc6130ca27b102"
+      },
+      "combined_hash": "dde9a358e08e4dc65784c6e9f95f04329fb8230b5d404ff041f5e216909ca635",
+      "approved_by": "tester"
+    },
+    "hld": {
+      "state": "approved",
+      "last_run": "2026-08-18T21:00:40.032595+00:00",
+      "requires_hash": "21163e79c1b8c5ef23579324f18864b018fba386fb9223905d3684d6a5d99d04",
+      "output_dir": "docs/hld/",
+      "domain_count": 1,
+      "files": {
+        "HLD-001-url-shortener.md": "69f0339430ffd7b9eb4b21c4fc92ac3a121ed054e0c97f83ade90edb0a4ab46c"
+      },
+      "combined_hash": "de523a62a0f4f5ed4eb7a60edae56f8c828e6e9d197330157f4e48b13c316d2a",
+      "approved_by": "tester"
+    },
+    "adr": {
+      "state": "approved",
+      "last_run": "2026-08-18T21:01:06.337346+00:00",
+      "requires_hash": "2eafdc7f1bedd3439c570402e92333f6c1fd88a077bcc9b5586cfa0478872c4c",
+      "output_dir": "docs/architecture/",
+      "domain_count": 3,
+      "files": {
+        "ADR-001-storage-engine.md": "77e667499b79fc022761013c1004acc4d6b8301d4e8462999b1738a2dfc58efa",
+        "ADR-002-short-code-generation.md": "3d641b872e4cb077b88d3bcb513b236b596da6fec1a22b6da264f7bc0ee53caf",
+        "RFC-001-contextops-architecture.md": "6c70557f955e2cec52ef279ce4a595a1387bb96ce906d0959797ff1b60fff0ee"
+      },
+      "combined_hash": "ce8481a3966978810ca73fe2ecc02609ca3d78e06a6ee4be836432102f592bcc",
+      "approved_by": "tester"
+    },
+    "lld": {
+      "state": "approved",
+      "last_run": "2026-08-18T21:01:25.452151+00:00",
+      "requires_hash": "993d981fe67dbfd83cb0edbd3d8c02753f35b73bce02eb76327b34e142825498",
+      "output_dir": "docs/lld/",
+      "domain_count": 1,
+      "files": {
+        "LLD-001-url-shortener.md": "53afaec3b093aab3c2f1b78acc6d6dc1bfc9d9e3105e3b0c2262a17952265739"
+      },
+      "combined_hash": "2edc12aa2f510f6eefbdea236c7ac64a26772453f8ed542537898a2b8f0a0da3",
+      "approved_by": "tester"
+    }
+  },
+  "updated_at": "2026-08-18T21:01:25.452151+00:00"
+}
