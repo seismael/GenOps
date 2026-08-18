@@ -594,6 +594,13 @@ class TestMCPServer(unittest.TestCase):
         v_out, v_err = server.dispatch("genops_verify", {})
         self.assertFalse(v_err)
 
+    def test_mcp_dispatch_ingest(self) -> None:
+        (self.root_dir / "src" / "legacy-app").mkdir(parents=True)
+        server = genops.MCPServer(self.root_dir)
+        out, is_err = server.dispatch("genops_ingest", {"src": "src"})
+        self.assertFalse(is_err)
+        self.assertIn("Brownfield baseline LLD generated", out)
+
     def test_mcp_dispatch_unknown(self) -> None:
         server = genops.MCPServer(self.root_dir)
         out, is_err = server.dispatch("unknown_tool", {})

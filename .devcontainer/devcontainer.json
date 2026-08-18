@@ -1,0 +1,31 @@
+{
+  "name": "GenOps Polyglot Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.22"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "rust-lang.rust-analyzer",
+        "ms-python.python",
+        "dbaeumer.vscode-eslint",
+        "biomejs.biome",
+        "bierner.markdown-mermaid"
+      ]
+    }
+  },
+  "postCreateCommand": "python .agents/scripts/genops.py init --agent all && git config core.hooksPath .githooks"
+}

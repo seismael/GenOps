@@ -1,35 +1,73 @@
-name: GenOps Specification & Anti-Drift CI
+name: GenOps Continuous Governance & Anti-Drift CI
 
 on:
   push:
-    branches: [master, main]
+    branches: [main, master, release/*]
   pull_request:
-    branches: [master, main]
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  validate-specifications:
+  governance-gate:
+    name: Deterministic Governance & Anti-Drift Gate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Codebase
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python 3.12 (Zero-Dependency Engine)
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
-      - name: Run Engine Unit & Integration Tests
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: 1. Validate JSON Schemas, Presets & Scaffolds
+        run: |
+          python .agents/scripts/genops.py validate
 
-      - name: Validate GenOps Configurations & Presets
-        run: python .agents/scripts/genops.py validate
+      - name: 2. Verify Cross-Layer Semantic Rules
+        run: |
+          python .agents/scripts/genops.py check-rules
 
-      - name: Check Cross-Layer Semantic Rules
-        run: python .agents/scripts/genops.py check-rules
+      - name: 3. Execute CI/CD Anti-Drift Gate (LLD to Code Sync)
+        run: |
+          python .agents/scripts/genops.py drift
 
-      - name: Enforce Anti-Drift Gate (Specs vs. Code)
-        run: python .agents/scripts/genops.py drift
+      - name: 4. Check Pipeline Health Status
+        run: |
+          python .agents/scripts/genops.py status
 
-      - name: Verify Specification Lineage Graph
-        run: python .agents/scripts/genops.py graph
+      - name: 5. Generate & Verify Requirements Traceability Matrix (RTM)
+        run: |
+          python .agents/scripts/genops.py rtm
 
+      - name: 6. Run Unit & Regression Test Suite
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
+
+  compiler-matrix:
+    name: Polyglot Compiler & Linter Verification
+    needs: governance-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go Toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js Toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Multi-Stack Compiler Check (genops verify)
+        run: |
+          python .agents/scripts/genops.py verify

@@ -2,62 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GenOps Executive Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:true, theme:'dark'});</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenOps Pipeline Executive Audit Dashboard</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0e17; color: #f8fafc; margin: 0; padding: 2rem; }
-        h1, h2 { color: #00f0ff; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .card { background: rgba(18, 26, 43, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; color: black; }
-        .mermaid { background: rgba(18, 26, 43, 0.8); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.1); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; background: #0f172a; color: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1, h2, h3 { color: #38bdf8; }
+        .card { background: #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 24px; border: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #334155; font-size: 14px; }
+        th { background: #0f172a; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 12px; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .badge-green { background: #065f46; color: #34d399; }
+        .badge-amber { background: #78350f; color: #fbbf24; }
+        .alert { padding: 14px 18px; border-radius: 6px; margin-bottom: 20px; }
+        .alert-success { background: #064e3b; border: 1px solid #059669; color: #a7f3d0; }
+        .alert-danger { background: #7f1d1d; border: 1px solid #dc2626; color: #fecaca; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #0f172a; padding: 2px 6px; border-radius: 4px; color: #38bdf8; }
     </style>
 </head>
 <body>
-    <h1>GenOps Executive Specification Dashboard</h1>
-    <p>Generated on 2026-08-18 23:31:13</p>
-    
-    <h2>Pipeline Stages</h2>
-    <div class="grid">
+    <div class="container">
+        <h1>GenOps Specification Pipeline & Audit Dashboard</h1>
+        <p style="color: #94a3b8;">Generated on: 2026-08-18 23:35:11 UTC | State Version: 2.0 (LF-Normalized SHA-256)</p>
         
-            <div class="card">
-                <h3>PRD</h3>
-                <p><span class="badge" style="background:#f59e0b">absent</span></p>
-                <p><small>Last Run: Never</small></p>
-                <p><small>Files: 0</small></p>
-            </div>
-            <div class="card">
-                <h3>HLD</h3>
-                <p><span class="badge" style="background:#f59e0b">absent</span></p>
-                <p><small>Last Run: Never</small></p>
-                <p><small>Files: 0</small></p>
-            </div>
-            <div class="card">
-                <h3>ADR</h3>
-                <p><span class="badge" style="background:#f59e0b">absent</span></p>
-                <p><small>Last Run: Never</small></p>
-                <p><small>Files: 0</small></p>
-            </div>
-            <div class="card">
-                <h3>LLD</h3>
-                <p><span class="badge" style="background:#f59e0b">absent</span></p>
-                <p><small>Last Run: Never</small></p>
-                <p><small>Files: 0</small></p>
-            </div>
-            <div class="card">
-                <h3>CODE</h3>
-                <p><span class="badge" style="background:#f59e0b">absent</span></p>
-                <p><small>Last Run: Never</small></p>
-                <p><small>Files: 0</small></p>
-            </div>
-    </div>
+        <div class='alert alert-success'><strong>✓ Anti-Drift Gate:</strong> 100% of LLD modules and entity stubs are synchronized with <code>src/</code>.</div>
 
-    <h2>Specification Lineage DAG</h2>
-    <div class="mermaid">
-    graph TD
-          RFC-001-contextops-architecture["RFC-001-contextops-architecture<br/>(architecture)"]
+        <div class="card">
+            <h2>1. Pipeline Stage Governance Health</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stage</th>
+                        <th>State</th>
+                        <th>Last Execution</th>
+                        <th>Output Hash</th>
+                        <th>Artifacts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><strong>PRD</strong></td>
+                <td><span class="badge badge-green">approved</span></td>
+                <td>2026-08-18T21:00:15</td>
+                <td><code>dde9a358e08e...</code></td>
+                <td>1 files</td>
+            </tr>
+            
+            <tr>
+                <td><strong>HLD</strong></td>
+                <td><span class="badge badge-green">approved</span></td>
+                <td>2026-08-18T21:00:40</td>
+                <td><code>de523a62a0f4...</code></td>
+                <td>1 files</td>
+            </tr>
+            
+            <tr>
+                <td><strong>ADR</strong></td>
+                <td><span class="badge badge-green">approved</span></td>
+                <td>2026-08-18T21:01:06</td>
+                <td><code>ce8481a39669...</code></td>
+                <td>3 files</td>
+            </tr>
+            
+            <tr>
+                <td><strong>LLD</strong></td>
+                <td><span class="badge badge-green">approved</span></td>
+                <td>2026-08-18T21:01:25</td>
+                <td><code>2edc12aa2f51...</code></td>
+                <td>1 files</td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
 
+        <div class="card">
+            <h2>2. Specification Document Registry (1 Indexed Documents)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stage</th>
+                        <th>Document ID</th>
+                        <th>File Location</th>
+                        <th>Status</th>
+                        <th>Upstream Dependencies</th>
+                        <th>Downstream Dependents</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td><code>ARCHITECTURE</code></td>
+                <td><strong>RFC-001-contextops-architecture</strong></td>
+                <td>docs/architecture/RFC-001-contextops-architecture.md</td>
+                <td>Accepted</td>
+                <td>-</td>
+                <td>-</td>
+            </tr>
+            
+                </tbody>
+            </table>
+        </div>
     </div>
 </body>
 </html>

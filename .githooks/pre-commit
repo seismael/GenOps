@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# GenOps Pre-Commit Gate: Runs deterministic validation and memory compaction before git commit
+
+set -e
+
+echo "=== [GenOps] Executing Pre-Commit Validation ==="
+
+# 1. Validate Schemas & Presets
+python .agents/scripts/genops.py validate
+
+# 2. Check Semantic Integrity
+python .agents/scripts/genops.py check-rules
+
+# 3. Check for Anti-Drift between LLD and src/
+python .agents/scripts/genops.py drift
+
+# 4. Auto-compact living context memory
+python .agents/scripts/genops.py compact
+
+# Auto-stage compacted CONTEXT.md if modified
+if git status --porcelain | grep -q ".agents/context/CONTEXT.md"; then
+    echo "  [+] Staging updated .agents/context/CONTEXT.md"
+    git add .agents/context/CONTEXT.md
+fi
+
+echo "=== [GenOps] All Pre-Commit Gates PASSED ==="
+exit 0

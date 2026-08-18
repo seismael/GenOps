@@ -1,0 +1,60 @@
+version: '3'
+
+tasks:
+  init:
+    desc: "Initialize GenOps across all agent entrypoint files"
+    cmds:
+      - python .agents/scripts/genops.py init --preset software-spec --agent all
+
+  validate:
+    desc: "Validate schemas, presets, and scaffolds"
+    cmds:
+      - python .agents/scripts/genops.py validate
+
+  status:
+    desc: "Display live cryptographic pipeline status"
+    cmds:
+      - python .agents/scripts/genops.py status
+
+  impact:
+    desc: "Simulate change impact blast radius (Usage: task impact SPEC=PRD-001)"
+    cmds:
+      - python .agents/scripts/genops.py impact {{.SPEC}}
+
+  drift:
+    desc: "Execute CI anti-drift verification between LLD and src/"
+    cmds:
+      - python .agents/scripts/genops.py drift
+
+  verify:
+    desc: "Run multi-language compiler and linter diagnostics"
+    cmds:
+      - python .agents/scripts/genops.py verify
+
+  compact:
+    desc: "Compact living context memory into CONTEXT.md"
+    cmds:
+      - python .agents/scripts/genops.py compact
+
+  rtm:
+    desc: "Generate Requirements Traceability Matrix"
+    cmds:
+      - python .agents/scripts/genops.py rtm
+
+  report:
+    desc: "Generate self-contained executive HTML report"
+    cmds:
+      - python .agents/scripts/genops.py report --html docs/report.html
+
+  test:
+    desc: "Run all unit tests"
+    cmds:
+      - python -m unittest discover -s tests -p "test_*.py" -v
+
+  ci:
+    desc: "Run complete local CI gate sequence"
+    cmds:
+      - task: validate
+      - task: drift
+      - task: verify
+      - task: test

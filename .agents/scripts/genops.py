@@ -713,8 +713,10 @@ class ContextCompactor:
                     "choice": s.id,
                     "reason": f"Formally accepted in {s.path}"
                 })
-                if "## 6. Downstream Directives" in s.body:
-                    directives_block = s.body.split("## 6. Downstream Directives")[1].split("##")[0]
+                # Resilient regex for downstream directives section
+                match = re.search(r"##\s*(\d+\.\s*)?Downstream Directives.*?\n(.*?)(?=\n##|\Z)", s.body, re.DOTALL | re.IGNORECASE)
+                if match:
+                    directives_block = match.group(2)
                     for line in directives_block.splitlines():
                         line = line.strip()
                         if line.startswith(("-", "*", "1.", "2.", "3.", "4.", "5.")):
@@ -1057,11 +1059,11 @@ class AntiDriftService:
                             words = ScaffoldingService.split_words(ent)
                             ent_kebab = "-".join(w.lower() for w in words)
                             ent_snake = "_".join(w.lower() for w in words)
-                            ent_lower = ent.lower().replace("-", "").replace("_", "")
+                            ent_pascal = "".join(w.capitalize() for w in words)
 
-                            matched = list(mod_path.rglob(f"*{ent_kebab}*")) + \
-                                      list(mod_path.rglob(f"*{ent_snake}*")) + \
-                                      list(mod_path.rglob(f"*{ent_lower}*"))
+                            matched = list(mod_path.rglob(f"*{ent_snake}*")) + \
+                                      list(mod_path.rglob(f"*{ent_kebab}*")) + \
+                                      list(mod_path.rglob(f"*{ent_pascal}*"))
 
                             if not matched:
                                 drift_items.append(f"Module src/{m_name}/ missing implementation stub for entity '{ent}' (declared in {lld_file.name})")
@@ -1318,28 +1320,25 @@ class StateRepository:
         if not stage_conf:
             raise ValueError(f"Stage '{stage_id}' not found in genops.yaml.")
 
-        out_hashes: Dict[str, str] = {}
-        combined_out_hasher = hashlib.sha256()
-
-        for out_p in stage_conf.get("outputs", []):
-            target = self.root_dir / out_p
-            if target.is_dir():
-                _, f_hashes = DeterministicHasher.hash_directory(target)
-                for rel, h in f_hashes.items():
-                    out_hashes[rel] = h
-                    combined_out_hasher.update(rel.encode("utf-8"))
-                    combined_out_hasher.update(h.encode("utf-8"))
-            elif target.is_file():
-                rel = Path(out_p).name
-                h = DeterministicHasher.hash_file(target)
-                out_hashes[rel] = h
-                combined_out_hasher.update(rel.encode("utf-8"))
-                combined_out_hasher.update(h.encode("utf-8"))
-
-        req_hash, req_files = DeterministicHasher.hash_requirements(stage_conf.get("requires", []), self.root_dir)
         now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
+        # All cryptographic hashing, Merkle calculations, and state writes occur inside the lock
         with StateLock(self.lock_file):
+            out_hashes: Dict[str, str] = {}
+            for out_p in stage_conf.get("outputs", []):
+                target = self.root_dir / out_p
+                if target.is_dir():
+                    _, f_hashes = DeterministicHasher.hash_directory(target)
+                    for rel, h in f_hashes.items():
+                        out_hashes[rel] = h
+                elif target.is_file():
+                    rel = Path(out_p).name
+                    h = DeterministicHasher.hash_file(target)
+                    out_hashes[rel] = h
+
+            req_hash, _ = DeterministicHasher.hash_requirements(stage_conf.get("requires", []), self.root_dir)
+            combined_root = MerkleTree.compute_root(out_hashes)
+
             state_data = self.load_state()
             state_data["version"] = "2.0"
             state_data["updated_at"] = now_iso
@@ -1352,16 +1351,18 @@ class StateRepository:
                 "output_dir": stage_conf.get("outputs", [""])[0],
                 "domain_count": len(out_hashes),
                 "files": out_hashes,
-                "combined_hash": combined_out_hasher.hexdigest(),
+                "combined_hash": combined_root,
                 "approved_by": actor,
             }
 
-            # Selective Invalidation
+            # Boundary-safe Selective Invalidation
+            stage_out_paths = [Path(p).as_posix().rstrip("/") for p in stage_conf.get("outputs", [])]
             for st in stages:
                 if st.get("id") != stage_id:
-                    for req in st.get("requires", []):
-                        for out_p in stage_conf.get("outputs", []):
-                            if out_p in req or req in out_p:
+                    st_req_paths = [Path(p).as_posix().rstrip("/") for p in st.get("requires", [])]
+                    for out_p in stage_out_paths:
+                        for req_p in st_req_paths:
+                            if out_p == req_p or req_p.startswith(f"{out_p}/") or out_p.startswith(f"{req_p}/"):
                                 if st.get("id") in state_data["stages"]:
                                     state_data["stages"][st.get("id")]["state"] = "stale"
 
@@ -1376,13 +1377,13 @@ class StateRepository:
                 "actor": actor,
                 "files_count": len(out_hashes),
                 "requires_hash": req_hash,
-                "output_hash": combined_out_hasher.hexdigest(),
+                "output_hash": combined_root,
             }
             with open(self.event_file, "a", encoding="utf-8") as ef:
                 ef.write(json.dumps(event_entry) + "\n")
 
-        # Compact Living Memory
-        ContextCompactor.compact(self.root_dir)
+            # Compact Living Memory inside lock
+            ContextCompactor.compact(self.root_dir)
 
 
 class LineageGraphService:
@@ -1458,6 +1459,7 @@ class MCPServer:
         {"name": "genops_rtm", "description": "Generate Requirements Traceability Matrix (RTM).", "inputSchema": {"type": "object", "properties": {}}},
         {"name": "genops_context", "description": "Extract targeted upstream DAG lineage slice for a domain.", "inputSchema": {"type": "object", "required": ["domain"], "properties": {"domain": {"type": "string"}}}},
         {"name": "genops_report", "description": "Generate self-contained executive HTML dashboard.", "inputSchema": {"type": "object", "properties": {"html": {"type": "string", "default": "docs/report.html"}}}},
+        {"name": "genops_ingest", "description": "Brownfield codebase reverse engineering & baseline spec generator.", "inputSchema": {"type": "object", "properties": {"src": {"type": "string", "default": "src"}}}},
     ]
 
     def __init__(self, root_dir: Path):
@@ -1557,6 +1559,11 @@ class MCPServer:
                 out_html = self.root_dir / args.get("html", "docs/report.html")
                 ReportService.generate_html_report(self.root_dir, out_html)
                 return f"Report generated at {out_html.relative_to(self.root_dir).as_posix()}.", False
+
+            elif name == "genops_ingest":
+                src_dir = args.get("src", "src")
+                dest, count = BrownfieldIngestionService.ingest_codebase(self.root_dir, src_dir)
+                return f"Brownfield baseline LLD generated at {dest.relative_to(self.root_dir).as_posix()} with {count} detected modules.", False
 
             return f"Unknown tool: {name}", True
         except Exception as e:

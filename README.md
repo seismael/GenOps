@@ -283,6 +283,7 @@ Exposed MCP tools:
 - `genops_rtm`: Generates bidirectional Requirements Traceability Matrix.
 - `genops_context`: Slices the DAG for domain-targeted prompt loading.
 - `genops_report`: Generates executive self-contained HTML dashboard.
+- `genops_ingest`: Reverse-engineers legacy un-architected codebases into baseline LLD specifications.
 
 ---
 

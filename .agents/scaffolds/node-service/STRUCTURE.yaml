@@ -15,6 +15,7 @@ directories:
 
 templates:
   package.json.template: "{module_kebab}/package.json"
+  tsconfig.json.template: "{module_kebab}/tsconfig.json"
   index.ts.template: "{module_kebab}/src/index.ts"
   Dockerfile.template: "{module_kebab}/Dockerfile"
 
