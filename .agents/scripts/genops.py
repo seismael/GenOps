@@ -426,19 +426,172 @@ class MarkdownParser:
 # Domain IV: Configuration, Living Memory & Change-Impact Simulator
 # ==============================================================================
 
+class SimpleYamlParser:
+    """Lightweight zero-dependency indentation-based YAML parser supporting mappings, sequences, and scalars."""
+
+    @classmethod
+    def parse(cls, text: str) -> Any:
+        lines: List[Tuple[int, str]] = []
+        for raw_line in text.splitlines():
+            line_no_comment = ""
+            in_quote: Optional[str] = None
+            for char in raw_line:
+                if char in ('"', "'"):
+                    if in_quote == char:
+                        in_quote = None
+                    elif in_quote is None:
+                        in_quote = char
+                elif char == "#" and in_quote is None:
+                    break
+                line_no_comment += char
+
+            stripped = line_no_comment.rstrip()
+            if not stripped:
+                continue
+            indent = len(stripped) - len(stripped.lstrip(" "))
+            lines.append((indent, stripped.strip()))
+
+        if not lines:
+            return {}
+
+        res, _ = cls._parse_node(lines, 0, lines[0][0])
+        return res if res is not None else {}
+
+    @classmethod
+    def _parse_node(cls, lines: List[Tuple[int, str]], idx: int, current_indent: int) -> Tuple[Any, int]:
+        if idx >= len(lines):
+            return None, idx
+        indent, line = lines[idx]
+        if line.startswith("- "):
+            return cls._parse_seq(lines, idx, indent)
+        else:
+            return cls._parse_map(lines, idx, indent)
+
+    @classmethod
+    def _parse_seq(cls, lines: List[Tuple[int, str]], idx: int, current_indent: int) -> Tuple[List[Any], int]:
+        res: List[Any] = []
+        while idx < len(lines):
+            indent, line = lines[idx]
+            if indent < current_indent:
+                break
+            if indent == current_indent and line.startswith("- "):
+                item_str = line[2:].strip()
+                if ":" in item_str and not item_str.startswith("{") and not item_str.startswith("["):
+                    k, v = item_str.split(":", 1)
+                    k = k.strip()
+                    v = v.strip()
+                    item_dict: Dict[str, Any] = {}
+                    if v:
+                        item_dict[k] = cls._parse_scalar(v)
+                        idx += 1
+                    else:
+                        if idx + 1 < len(lines) and lines[idx + 1][0] > indent:
+                            sub_res, idx = cls._parse_node(lines, idx + 1, lines[idx + 1][0])
+                            item_dict[k] = sub_res
+                        else:
+                            item_dict[k] = {}
+                            idx += 1
+
+                    while idx < len(lines) and lines[idx][0] > current_indent:
+                        s_ind, s_line = lines[idx]
+                        if s_line.startswith("- "):
+                            break
+                        if ":" in s_line:
+                            sk, sv = s_line.split(":", 1)
+                            sk = sk.strip()
+                            sv = sv.strip()
+                            if sv:
+                                item_dict[sk] = cls._parse_scalar(sv)
+                                idx += 1
+                            else:
+                                if idx + 1 < len(lines) and lines[idx + 1][0] > s_ind:
+                                    sub_val, idx = cls._parse_node(lines, idx + 1, lines[idx + 1][0])
+                                    item_dict[sk] = sub_val
+                                else:
+                                    item_dict[sk] = {}
+                                    idx += 1
+                        else:
+                            idx += 1
+                    res.append(item_dict)
+                else:
+                    if item_str:
+                        res.append(cls._parse_scalar(item_str))
+                        idx += 1
+                    else:
+                        if idx + 1 < len(lines) and lines[idx + 1][0] > indent:
+                            sub_res, idx = cls._parse_node(lines, idx + 1, lines[idx + 1][0])
+                            res.append(sub_res)
+                        else:
+                            res.append(None)
+                            idx += 1
+            else:
+                break
+        return res, idx
+
+    @classmethod
+    def _parse_map(cls, lines: List[Tuple[int, str]], idx: int, current_indent: int) -> Tuple[Dict[str, Any], int]:
+        res: Dict[str, Any] = {}
+        while idx < len(lines):
+            indent, line = lines[idx]
+            if indent < current_indent:
+                break
+            if indent == current_indent:
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    k = k.strip()
+                    v = v.strip()
+                    if v:
+                        res[k] = cls._parse_scalar(v)
+                        idx += 1
+                    else:
+                        if idx + 1 < len(lines) and lines[idx + 1][0] > indent:
+                            sub_res, idx = cls._parse_node(lines, idx + 1, lines[idx + 1][0])
+                            res[k] = sub_res
+                        else:
+                            res[k] = {}
+                            idx += 1
+                else:
+                    idx += 1
+            else:
+                break
+        return res, idx
+
+    @classmethod
+    def _parse_scalar(cls, val: str) -> Any:
+        val = val.strip()
+        if not val:
+            return ""
+        if val.startswith("[") and val.endswith("]"):
+            inner = val[1:-1].strip()
+            if not inner:
+                return []
+            return [cls._parse_scalar(x) for x in inner.split(",") if x.strip()]
+        if val.startswith("{") and val.endswith("}"):
+            try:
+                return json.loads(val)
+            except Exception:
+                pass
+        if val.lower() == "true":
+            return True
+        if val.lower() == "false":
+            return False
+        if val.lower() in ("null", "~"):
+            return None
+        if re.match(r"^-?\d+$", val):
+            return int(val)
+        if re.match(r"^-?\d+\.\d+$", val):
+            return float(val)
+        if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+            return val[1:-1]
+        return val
+
+
 class ConfigManager:
     """Manages YAML/JSON configuration files and multi-agent instructions."""
 
     @staticmethod
     def load_yaml(path: Path) -> Dict[str, Any]:
-        """Parse YAML file using PyYAML if available, or native fallback."""
-        try:
-            import yaml
-            with open(path, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f) or {}
-        except ImportError:
-            pass
-
+        """Parse YAML file using native zero-dependency SimpleYamlParser (or PyYAML if installed)."""
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
 
@@ -447,57 +600,18 @@ class ConfigManager:
         except json.JSONDecodeError:
             pass
 
-        result: Dict[str, Any] = {}
-        in_pipeline = False
-        in_stages = False
-        stages_list: List[Dict[str, Any]] = []
-        current_stage: Optional[Dict[str, Any]] = None
+        try:
+            import yaml
+            parsed = yaml.safe_load(content)
+            if isinstance(parsed, dict):
+                return parsed
+        except ImportError:
+            pass
 
-        for line in content.splitlines():
-            stripped = line.strip()
-            if not stripped or stripped.startswith("#"):
-                continue
-
-            if stripped == "pipeline:":
-                in_pipeline = True
-                result["pipeline"] = {"name": "", "stages": [], "validation_rules": []}
-                continue
-
-            if in_pipeline and stripped == "stages:":
-                in_stages = True
-                continue
-
-            if in_stages and stripped.startswith("- id:"):
-                current_stage = {"id": stripped.split(":", 1)[1].strip().strip('"\''), "requires": [], "outputs": [], "next": []}
-                stages_list.append(current_stage)
-                result["pipeline"]["stages"] = stages_list
-                continue
-
-            if current_stage is not None:
-                for prop in ("name", "focus", "template", "file_pattern"):
-                    if stripped.startswith(f"{prop}:"):
-                        current_stage[prop] = stripped.split(":", 1)[1].strip().strip('"\'')
-                for list_prop in ("requires", "outputs", "next"):
-                    if stripped.startswith(f"{list_prop}:"):
-                        raw = stripped.split(":", 1)[1].strip()
-                        if raw.startswith("[") and raw.endswith("]"):
-                            current_stage[list_prop] = [x.strip().strip('"\'') for x in raw[1:-1].split(",") if x.strip()]
-
-        if in_pipeline:
-            return result
-
-        out_dict: Dict[str, Any] = {}
-        for line in content.splitlines():
-            s = line.strip()
-            if ":" in s and not s.startswith("#"):
-                k, v = s.split(":", 1)
-                k = k.strip()
-                v = v.strip().strip('"\'')
-                if v.startswith("[") and v.endswith("]"):
-                    out_dict[k] = [x.strip().strip('"\'') for x in v[1:-1].split(",") if x.strip()]
-                else:
-                    out_dict[k] = v
-        return out_dict
+        parsed = SimpleYamlParser.parse(content)
+        if isinstance(parsed, dict):
+            return parsed
+        return {}
 
     @staticmethod
     def generate_agent_instructions(pipeline_name: str, stages: List[Dict[str, Any]]) -> str:
