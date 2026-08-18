@@ -1640,9 +1640,23 @@ class MCPServer:
 def cmd_init(args: argparse.Namespace, root_dir: Path) -> None:
     preset_name = args.preset
     agent_target = args.agent or "all"
+    pkg_dir = Path(__file__).resolve().parent.parent
+
+    # If target project doesn't have .agents/, populate it from bundled package
+    target_agents_dir = root_dir / ".agents"
+    if not target_agents_dir.exists() and pkg_dir.exists() and (pkg_dir / "presets").exists() and root_dir != pkg_dir:
+        import shutil
+        target_agents_dir.mkdir(parents=True, exist_ok=True)
+        for folder in ["presets", "schemas", "scaffolds", "templates", "skills", "scripts"]:
+            src_f = pkg_dir / folder
+            if src_f.exists() and not (target_agents_dir / folder).exists():
+                shutil.copytree(src_f, target_agents_dir / folder)
 
     if preset_name:
         preset_file = root_dir / ".agents" / "presets" / f"{preset_name}.yaml"
+        if not preset_file.exists() and (pkg_dir / "presets" / f"{preset_name}.yaml").exists():
+            preset_file = pkg_dir / "presets" / f"{preset_name}.yaml"
+
         if not preset_file.exists():
             print(f"ERROR: Preset '{preset_name}' not found at {preset_file}.", file=sys.stderr)
             sys.exit(1)
@@ -1940,7 +1954,14 @@ def main() -> None:
     subparsers.add_parser("mcp", help="Run JSON-RPC stdio MCP server for agent tool-calling")
 
     args = parser.parse_args()
-    root_dir = Path(__file__).resolve().parent.parent.parent
+    
+    # Dynamic project root discovery: search from CWD upward for genops.yaml or .git
+    curr_dir = Path.cwd().resolve()
+    root_dir = curr_dir
+    for candidate in [curr_dir] + list(curr_dir.parents):
+        if (candidate / "genops.yaml").exists() or (candidate / ".git").exists():
+            root_dir = candidate
+            break
 
     if args.command == "init":
         cmd_init(args, root_dir)
