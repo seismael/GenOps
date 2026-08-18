@@ -2,17 +2,17 @@
 
 ## Interview
 
-Questions asked ONE at a time. Required first, optional only if unclear.
+Questions asked ONE at a time. The agent operates as a Principal Product Manager, challenging assumptions and demanding numeric precision.
 
 **Required:**
-1. **Vision** — "What does success look like 6-12 months out for this domain?"
-2. **Stakeholders** — "Who are the primary users or stakeholders? What are their needs?"
-3. **Key Capabilities** — "What are the top 3-5 things users must be able to do? (As a <role>, I want <goal> so that <reason>)"
-4. **Success Criteria** — "How do we measure success? What metrics, what targets?"
+1. **Problem & North Star** — "What specific customer friction or business bottleneck are we solving? What is the single measurable North Star metric that defines success (including current baseline vs. target)?"
+2. **Target Personas & Access Boundaries** — "Who are the primary user personas interacting with this domain? What are their operational goals, permission levels, and primary constraints?"
+3. **Core User Stories (BDD Format)** — "What are the 3-5 critical capabilities required? For each capability, formulate as: As a <role>, I want <feature> so that <benefit>, with acceptance criteria in Given-When-Then format."
+4. **Scope Boundaries & Anti-Features** — "What is strictly IN-SCOPE for v1, and what are the explicit ANTI-FEATURES (items deliberately excluded to prevent scope creep)?"
 
-**Optional:**
-5. **Scope Boundaries** — "What is explicitly OUT of scope for the first iteration?"
-6. **Risks & Constraints** — "What assumptions are we making? What could go wrong?"
+**Optional / Operational:**
+5. **Scale, Latency & SLOs** — "What are the expected traffic baselines? (e.g., peak requests/sec, concurrent users, acceptable p99 latency threshold)?"
+6. **Compliance, Privacy & Security Constraints** — "Are there strict regulatory requirements (GDPR, SOC2, HIPAA, PCI-DSS) or data sovereignty constraints governing this domain?"
 
 ## Output
 
@@ -26,40 +26,67 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: []
 downstream_refs: []
-tags: [{domain}, prd]
+tags: [{domain}, prd, requirements]
 ---
 
-# {Domain} — Product Requirements
+# {Domain} — Product Requirements Document
 
-## Vision
-<!-- One sentence describing the aspirational goal for this domain -->
+## 1. Executive Summary & Problem Statement
+<!-- 2-3 sentences explaining the core problem, affected stakeholders, and the business rationale for the solution -->
 
-## Problem Statement
-<!-- What problem does this domain solve? Who experiences it? -->
+## 2. Business Goals & Measurable North Star
+| Metric | Baseline | Target | Measurement Method | Target Timeline |
+|---|---|---|---|---|
+| Primary (North Star) | <!-- e.g., 85% manual review --> | <!-- e.g., <5% manual review --> | <!-- Datadog / Analytics --> | <!-- 90 days post-launch --> |
+| Secondary Metric | <!-- e.g., 4.2s p95 latency --> | <!-- e.g., <500ms p95 latency --> | <!-- Prometheus APM --> | <!-- At launch --> |
 
-## Target Users
-<!-- Primary user personas for this domain. Who, what needs, constraints. -->
+## 3. User Personas & Permissions
+| Persona | Role Description | Key Motivations | Operational Constraints |
+|---|---|---|---|
+| Admin | System administrator managing policies | Full system access, audit visibility | Zero direct database write access |
+| End User | Primary consumer executing domain tasks | Low friction, predictable responses | Rate-limited per IP/Tenant |
 
-## Key Capabilities
-| Priority | As a... | I want to... | So that... | Acceptance Criteria |
-|----------|---------|--------------|------------|---------------------|
-| P1       |         |              |            |                     |
+## 4. Key Capabilities & User Stories (BDD Format)
 
-## Success Metrics
-| Metric | Baseline | Target | Measurement Method |
-|--------|----------|--------|--------------------|
-|        |          |        |                    |
+### US-{NNN}-01: {Feature Name}
+* **Story:** As an `{Actor}`, I want `{Action}` so that `{Business Outcome}`.
+* **Priority:** `P1` <!-- P1 (Must Have), P2 (Should Have), P3 (Nice to Have) -->
+* **Acceptance Criteria (Given-When-Then):**
+  * **Scenario 1 (Happy Path):**
+    * **Given:** `{System state or prerequisite}`
+    * **When:** `{Action is executed}`
+    * **Then:** `{Expected state transition and response payload}`
+  * **Scenario 2 (Edge Case / Failure Mode):**
+    * **Given:** `{Invalid input or degraded dependency}`
+    * **When:** `{Action is executed}`
+    * **Then:** `{Specific error response code and sanitized message returned}`
 
-## Scope
-### In Scope
-<!-- What is included in this domain -->
-### Out of Scope
-<!-- What is explicitly excluded and why -->
+## 5. Scope Boundaries
 
-## Assumptions & Dependencies
-<!-- Assumptions. External systems, teams, or decisions this depends on. -->
+### In Scope (v1 MVP)
+* <!-- Explicitly included capabilities -->
 
-## Risks
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-|      |            |        |            |
+### Anti-Features (Explicitly Out of Scope)
+* <!-- Deliberately excluded capabilities to prevent scope creep, with rationale -->
+
+## 6. Non-Functional Requirements (NFRs) & SLO Targets
+| Category | Requirement Specification | Strict Target Bound |
+|---|---|---|
+| **Latency** | End-to-end API response time | $p99 < 250\text{ms}$, $p50 < 50\text{ms}$ |
+| **Throughput** | Sustained load capability | $\ge 500\text{ req/sec}$ peak |
+| **Availability** | Multi-region uptime target | $99.95\%$ per calendar month |
+| **Data Retention** | Audit and event log lifecycle | 365 days encrypted retention |
+
+## 7. Assumptions, Dependencies & Risks
+
+### Strategic Assumptions
+* <!-- Key business and technical assumptions -->
+
+### System Dependencies
+* <!-- Upstream systems, external APIs, third-party authentication -->
+
+### Risk & Mitigation Matrix (STRIDE & Operational)
+| Risk Description | Severity | Likelihood | Mitigation Strategy |
+|---|---|---|---|
+| High API traffic spikes during event windows | High | Med | Implement distributed token-bucket rate limiting and circuit breaking |
+| Unauthorized access to sensitive tenant records | Critical | Low | Enforce mandatory ABAC / RBAC checks at the API gateway tier |

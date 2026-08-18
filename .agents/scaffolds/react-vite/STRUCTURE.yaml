@@ -1,34 +1,32 @@
-# React + Vite Scaffold
-# Used when LLD Project Structure maps a module to scaffold: react-vite
-
-name: "React + Vite Application"
-description: "React 19 with TypeScript, Vite build tool, component-based structure"
+name: "React 19 Frontend SPA"
+description: "Feature-based React 19 SPA with TypeScript, Tailwind design tokens, custom hooks, and API client adapters"
 language: "TypeScript"
 framework: "React 19"
-build: "vite build"
-package_manager: "pnpm"
+build: "npm run build"
+package_manager: "pnpm/npm"
 
 directories:
-  - src/components/
-  - src/pages/
-  - src/hooks/
-  - src/services/
-  - src/types/
-  - src/styles/
-  - public/
+  - "src/components/ui/"
+  - "src/features/{module_kebab}/components/"
+  - "src/features/{module_kebab}/hooks/"
+  - "src/features/{module_kebab}/services/"
+  - "src/features/{module_kebab}/types/"
+  - "src/styles/"
+  - "tests/"
 
 templates:
-  package.json.template: "{module}/package.json"
-  tsconfig.json.template: "{module}/tsconfig.json"
-  vite.config.ts.template: "{module}/vite.config.ts"
+  package.json.template: "{module_kebab}/package.json"
+  tsconfig.json.template: "{module_kebab}/tsconfig.json"
+  vite.config.ts.template: "{module_kebab}/vite.config.ts"
 
 entity_stubs:
-  component: "src/components/{Entity}.tsx"
-  page: "src/pages/{Entity}Page.tsx"
-  service: "src/services/{entity_lower}Service.ts"
-  type: "src/types/{entity_lower}.ts"
+  component: "src/features/{module_kebab}/components/{Entity}Card.tsx"
+  hook: "src/features/{module_kebab}/hooks/use{Entity}.ts"
+  service: "src/features/{module_kebab}/services/{entity_lower}Api.ts"
+  type: "src/features/{module_kebab}/types/{entity_lower}.ts"
+  test: "tests/{Entity}.test.tsx"
 
 default_files:
-  - "{module}/src/App.tsx"
-  - "{module}/src/main.tsx"
-  - "{module}/index.html"
+  - "{module_kebab}/src/App.tsx"
+  - "{module_kebab}/src/main.tsx"
+  - "{module_kebab}/index.html"

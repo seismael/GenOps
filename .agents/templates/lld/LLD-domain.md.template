@@ -2,17 +2,17 @@
 
 ## Interview
 
-Start by listing ADR decisions. "ADR-001 says X, ADR-002 says Y. Confirm these still stand?" Then ask ONE at a time.
+Start by confirming ADR decisions: *"ADR-001 mandates {Choice A}, ADR-002 mandates {Choice B}. Confirming these directives govern this design."* Questions are asked ONE at a time. The agent operates as a Lead Systems Engineer.
 
 **Required:**
-1. **Core Entities** — "What are the core entities or data structures? Attributes, relationships, validation rules?"
-2. **Schema or Structure** — "How is data organized? Tables, collections, indexes, schemas?"
-3. **Contracts or Interfaces** — "What are the API contracts, function signatures, or module interfaces?"
+1. **Domain Models & Aggregate Boundaries (DDD)** — "What are the Aggregate Roots, Entities, and Value Objects for this domain? For each: attributes with explicit types, invariants (business validation rules), and domain events emitted?"
+2. **Database Schema & DDL Migration** — "What is the concrete database schema? Provide raw SQL DDL (or document schema) including tables, column types, NOT NULL / DEFAULT constraints, foreign keys, and indexes."
+3. **API Contracts & Interface Signatures** — "What are the concrete API endpoints or RPC methods? Provide request/response shapes, header requirements, authentication scopes, and validation rules."
+4. **Project Structure & Scaffold Modules** — "What modules will be generated in `src/`? For each: module directory name, scaffold identifier (`go-service`, `python-fastapi`, `react-vite`, `rust-service`, `node-service`), and list of domain entities."
 
-**Optional:**
-4. **Module Organization** — "How is the code or structure organized? Directory tree, packages, namespaces?"
-5. **Error Strategy** — "How are errors categorized, propagated, logged, and surfaced?"
-6. **Testing Approach** — "What testing pyramid? What frameworks? Coverage targets?"
+**Optional / Operational:**
+5. **Error Taxonomy & HTTP/gRPC Status Codes** — "What is the domain error taxonomy? List domain error codes, client-facing messages, HTTP/gRPC status codes, and whether the client should retry."
+6. **Repository & Service Interface Signatures** — "What are the exact method signatures for the domain service and persistence repository interfaces?"
 
 ## Output
 
@@ -26,70 +26,233 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: ["HLD-{NNN}-{slug}", "ADR-{NNN}-{slug}"]
 downstream_refs: []
-tags: [{domain}, lld, detailed-design]
+tags: [{domain}, lld, detailed-design, contracts]
 ---
 
-# {Domain} — Low-Level Design
+# {Domain} — Low-Level Design Specification
 
-## Entities & Interfaces
-### {Entity Name}
-```<!-- language -->
-<!-- Definition -->
+## 1. Domain-Driven Design (DDD) Models
+
+### 1.1 Aggregate Root: `{AggregateName}`
+* **Description:** <!-- Core domain entity managing transaction consistency boundary -->
+* **Invariants & Validation Rules:**
+  * Invariant 1: <!-- e.g., Balance must never be negative -->
+  * Invariant 2: <!-- e.g., State transitions must follow: DRAFT -> ACTIVE -> CLOSED -->
+* **Domain Events Emitted:**
+  * `{AggregateName}CreatedEvent`
+  * `{AggregateName}UpdatedEvent`
+
+```typescript
+// Type Definition: Aggregate Root & Value Objects
+export interface {AggregateName} {
+  id: string; // UUIDv7
+  tenantId: string;
+  status: '{AggregateName}Status';
+  createdAt: string; // ISO 8601 UTC
+  updatedAt: string; // ISO 8601 UTC
+}
+
+export type {AggregateName}Status = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 ```
-- **Purpose**: <!-- What it represents -->
-- **Attributes**: <!-- Key fields and types -->
-- **Relationships**: <!-- How it relates -->
-- **Invariants**: <!-- Rules that always hold -->
 
-## Entity Relationship Diagram
+### 1.2 Entity Relationship Diagram
+
 ```mermaid
 erDiagram
+    TENANT ||--o{ AGGREGATE_ROOT : owns
+    AGGREGATE_ROOT ||--|{ CHILD_ENTITY : contains
+    AGGREGATE_ROOT {
+        uuid id PK
+        uuid tenant_id FK
+        string status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    CHILD_ENTITY {
+        uuid id PK
+        uuid aggregate_id FK
+        string name
+        numeric amount
+    }
 ```
 
-## Database Schema
-### {Table/Collection}
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-Indexes:
+---
+
+## 2. Database Schema & DDL Migrations
+
 ```sql
-<!-- Statements -->
+-- Migration: 000001_create_{domain}_tables.up.sql
+-- Dialect: PostgreSQL 16+
+
+CREATE TABLE IF NOT EXISTS {domain}_aggregates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS {domain}_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    aggregate_id UUID NOT NULL REFERENCES {domain}_aggregates(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity >= 0),
+    unit_price NUMERIC(12, 4) NOT NULL CHECK (unit_price >= 0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Optimization & Query Indexes
+CREATE INDEX IF NOT EXISTS idx_{domain}_aggregates_tenant_status 
+    ON {domain}_aggregates (tenant_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_{domain}_items_aggregate_id 
+    ON {domain}_items (aggregate_id);
 ```
 
-## Module Structure
+---
+
+## 3. API Contracts (OpenAPI 3.1 Specification)
+
+```yaml
+openapi: 3.1.0
+info:
+  title: {Domain} Service API
+  version: 1.0.0
+paths:
+  /api/v1/{domain}:
+    post:
+      summary: Create a new {domain} aggregate
+      operationId: create{Domain}
+      parameters:
+        - in: header
+          name: X-Idempotency-Key
+          schema:
+            type: string
+          required: false
+          description: Client-generated idempotency key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Create{Domain}Request'
+      responses:
+        '201':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/{Domain}Response'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+components:
+  schemas:
+    Create{Domain}Request:
+      type: object
+      required:
+        - tenantId
+        - name
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+    {Domain}Response:
+      type: object
+      required:
+        - id
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, ARCHIVED]
+        createdAt:
+          type: string
+          format: date-time
 ```
-<!-- Directory tree -->
+
+---
+
+## 4. Interfaces & Ports (Hexagonal / Clean Architecture)
+
+```go
+// Package ports defines the domain contracts and storage interfaces
+package ports
+
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrNotFound = errors.New("{domain}: entity not found")
+	ErrConflict = errors.New("{domain}: state conflict")
+)
+
+// DomainService specifies the core business operations
+type DomainService interface {
+	Create(ctx context.Context, req CreateDTO) (*DomainEntity, error)
+	GetByID(ctx context.Context, id string) (*DomainEntity, error)
+}
+
+// Repository specifies the persistence contract (Outbound Port)
+type Repository interface {
+	Save(ctx context.Context, entity *DomainEntity) error
+	FindByID(ctx context.Context, id string) (*DomainEntity, error)
+}
 ```
 
-## API Contracts
-### {Endpoint}
-```
-<METHOD> <path>
-```
-**Request/Response:** <!-- Shape -->
+---
 
-## Error Handling
-| Error Condition | Message | Code |
-|-----------------|---------|------|
+## 5. Error Taxonomy & Status Code Matrix
 
-## Testing Strategy
-| Layer | Scope | Framework | Target |
-|-------|-------|-----------|--------|
+| Error Identifier | Domain Condition | HTTP Status | gRPC Code | Client Retryable | User-Facing Message |
+|---|---|---|---|---|---|
+| `ERR_{DOMAIN}_NOT_FOUND` | Record does not exist for ID | 404 Not Found | `NOT_FOUND` | No | "The requested resource could not be found." |
+| `ERR_CONCURRENCY_CONFLICT` | Version conflict / state changed | 409 Conflict | `ABORTED` | Yes (with backoff) | "Resource was updated by another request. Please retry." |
+| `ERR_INVALID_PAYLOAD` | Validation invariant failed | 422 Unprocessable | `INVALID_ARGUMENT` | No | "Validation error: check input constraints." |
+| `ERR_RATE_LIMIT_EXCEEDED` | Token bucket depleted | 429 Too Many Requests | `RESOURCE_EXHAUSTED` | Yes (after delay) | "Rate limit exceeded. Please wait." |
 
-## Project Structure
+---
 
-<!-- /genops-code reads this section to scaffold the actual project -->
+## 6. Project Structure & Scaffolding Blueprint
 
 ### Modules
-| Module | Scaffold | Entities | Description |
-|--------|----------|----------|-------------|
-| &lt;name&gt; | &lt;scaffold-id&gt; | &lt;entity list&gt; | &lt;what this module does&gt; |
 
-Available scaffolds: `go-service`, `react-vite`, `python-fastapi`, `go-library`. See `.agents/scaffolds/` for full list.
+| Module | Scaffold | Entities | Description |
+|---|---|---|---|
+| {module-name} | {scaffold-id} | {Entity1,Entity2} | Core {domain} service handling application workflows |
+
+*Available scaffolds:* `go-service`, `python-fastapi`, `react-vite`, `rust-service`, `node-service`, `go-library`.
 
 ### Custom Overrides (optional)
+
 ```
-<!-- Override scaffold defaults with an exact directory tree if templates don't fit -->
+<!-- Custom file or directory overrides if scaffold defaults need modification -->
 ```
 
-### Cross-Module Configuration (optional)
-<!-- Docker-compose, CI pipeline, monorepo workspace, shared config -->
+### Cross-Module Configuration
+
+```yaml
+services:
+  {module-name}:
+    build:
+      context: ./src/{module-name}
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8080
+      - DATABASE_URL=postgres://user:password@db:5432/{domain}?sslmode=disable
+    ports:
+      - "8080:8080"
+```

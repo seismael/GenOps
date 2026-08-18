@@ -2,12 +2,17 @@
 
 ## Interview
 
-ONE decision at a time. After each decision, ask if another is needed.
+Questions asked ONE at a time. The agent operates as a Staff Systems Engineer, evaluating trade-offs, operational burden, and downstream compatibility constraints.
 
-1. **Decision Scope** — "What architectural decision needs to be made? (Scan upstream for unresolved technology items first.)"
-2. **Options Considered** — "What options were considered? For each: pros, cons."
-3. **Decision** — "Which option was chosen and why?"
-4. **Consequences** — "What becomes easier? What becomes harder? What constraints does this impose on later stages?"
+**Required:**
+1. **Decision Context & Problem Trigger** — "What specific problem or technical trade-off triggered this decision? (Reference upstream HLD component or 'Needs ADR' item)."
+2. **Options Considered & Weighted Matrix** — "What are the 2-4 viable candidate options? Let's evaluate them across Performance, Simplicity, Operational Burden, Ecosystem Maturity, and Infrastructure Cost (scored 1 to 5)."
+3. **The Chosen Option & Technical Justification** — "Which option is chosen and what is the primary technical and economic justification?"
+4. **Downstream Directives for LLD & Code** — "What non-negotiable rules, drivers, interfaces, or constraints does this decision impose on Stage 4 (LLD schemas/contracts) and Stage 5 (Code scaffolds)?"
+
+**Optional / Operational:**
+5. **Consequences & Accepted Technical Debt** — "What becomes easier with this choice? What becomes harder, and what specific limitations or operational risks are we consciously accepting?"
+6. **Rollback & Reversibility Strategy** — "If this choice fails in production or needs to be swapped in 12 months, what abstraction layer or migration strategy ensures reversibility?"
 
 ## Output
 
@@ -21,31 +26,76 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: ["HLD-{NNN}-{slug}"]
 downstream_refs: []
-tags: [{domain}, adr, decision]
+tags: [{domain}, adr, decision, architecture]
 ---
 
-# {Decision Topic} — Architecture Decision Record
+# ADR-{NNN}: {Decision Topic}
 
-**Status**: <!-- Proposed / Accepted / Deprecated / Superseded -->  
-**Date**: <!-- YYYY-MM-DD -->
+**Status:** `Accepted` <!-- Proposed | Accepted | Deprecated | Superseded by ADR-XXX -->  
+**Deciders:** Technical Leadership / Engineering Team  
+**Date:** <!-- YYYY-MM-DD -->  
+**Technical Domain:** `{Domain}`
 
-## Context
-<!-- Problem statement. Constraints. What triggered this? Reference upstream documents. -->
+---
 
-## Decision
-<!-- What was decided? Be specific. -->
+## 1. Context & Problem Statement
+<!-- 2-3 paragraphs describing the operational scenario, technical requirements, and forces driving this decision. Explicitly link to upstream HLD components. -->
 
-## Alternatives Considered
-| Option | Description | Pros | Cons | Why Rejected |
-|--------|-------------|------|------|--------------|
+## 2. Decision Driver Requirements & Constraints
+* **Performance / Latency SLA:** <!-- e.g., Must process write operations in <10ms -->
+* **Throughput Target:** <!-- e.g., Handle peak 5,000 req/sec horizontally -->
+* **Operational Complexity:** <!-- e.g., Prefer managed zero-ops services over self-hosted clusters -->
+* **Ecosystem Compatibility:** <!-- e.g., First-class SDK support for Go / Python -->
 
-## Consequences
-### Positive
-### Negative
-### Neutral
+## 3. Options Evaluated & Weighted Scoring Matrix
 
-## Related Decisions
-<!-- References to other ADR-XXX files -->
+### 3.1 Candidate Descriptions
+* **Option A ({Option A Name}):** <!-- Brief summary -->
+* **Option B ({Option B Name}):** <!-- Brief summary -->
+* **Option C ({Option C Name}):** <!-- Brief summary -->
 
-## References
-<!-- External URLs, benchmarks, documentation -->
+### 3.2 Weighted Evaluation Matrix (Scores 1 = Poor, 5 = Excellent)
+| Evaluation Criteria | Weight | Option A ({Name}) | Option B ({Name}) | Option C ({Name}) |
+|---|---|---|---|---|
+| **Raw Performance & Latency** | 25% | <!-- Score --> | <!-- Score --> | <!-- Score --> |
+| **Simplicity & Developer Ergonomics** | 20% | <!-- Score --> | <!-- Score --> | <!-- Score --> |
+| **Operational & Maintenance Burden** | 25% | <!-- Score --> | <!-- Score --> | <!-- Score --> |
+| **Ecosystem Maturity & Tooling** | 15% | <!-- Score --> | <!-- Score --> | <!-- Score --> |
+| **Total Cost of Ownership (TCO)** | 15% | <!-- Score --> | <!-- Score --> | <!-- Score --> |
+| **Weighted Total** | **100%** | **<!-- Calculated -->** | **<!-- Calculated -->** | **<!-- Calculated -->** |
+
+## 4. Decision & Technical Justification
+<!-- Clear, unambiguous statement of the decision. Explain why the winning option was chosen and why the alternatives were rejected. -->
+
+### Why Other Options Were Rejected
+* **Rejection of Option B:** <!-- Specific technical or operational reasons -->
+* **Rejection of Option C:** <!-- Specific technical or operational reasons -->
+
+## 5. Consequences & Trade-Off Analysis
+
+### Positive Consequences (What becomes easier)
+* <!-- e.g., Native connection pooling and JSONB indexing reduces relational overhead -->
+* <!-- e.g., Strong transactional guarantees prevent race conditions in payment state -->
+
+### Negative Consequences (What becomes harder & accepted debt)
+* <!-- e.g., Increased memory footprint requires higher instance sizing in Kubernetes -->
+* <!-- e.g., Team must establish strict migration linting in CI to avoid lock contention -->
+
+### Neutral / Operational Impact
+* <!-- e.g., Requires deploying an additional sidecar or managed cache instance -->
+
+## 6. Downstream Directives for LLD & Code (Mandatory Constraints)
+<!-- Concrete rules that Stage 4 (LLD) and Stage 5 (Code) MUST implement without deviation -->
+1. **Schema & Types:** <!-- e.g., All primary keys MUST use UUIDv7 or ULID; DDL must include created_at / updated_at with UTC timestamps -->
+2. **Interface Abstraction:** <!-- e.g., The domain layer MUST interface with persistence via a Repository interface; no raw driver leakage outside internal/store/ -->
+3. **Driver & Scaffolding:** <!-- e.g., Use pgx/v5 driver with connection pooling configured to max 25 connections per pod -->
+
+## 7. Reversibility & Rollback Plan
+<!-- How this decision can be undone or migrated if assumptions prove incorrect -->
+* **Abstraction Boundary:** <!-- e.g., Domain logic communicates solely via StoragePort interfaces -->
+* **Exit Strategy:** <!-- e.g., If read volume exceeds limits, add Redis read-aside cache before considering schema redesign -->
+
+## 8. Related Decisions
+* Upstream: `HLD-{NNN}-{slug}.md`
+* Supersedes: <!-- None or ADR-XXX -->
+* Blocks / Informs: <!-- LLD-XXX -->

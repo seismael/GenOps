@@ -18,6 +18,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Run Engine Unit & Integration Tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
       - name: Validate GenOps Configurations & Presets
         run: python .agents/scripts/genops.py validate
 
@@ -29,3 +32,4 @@ jobs:
 
       - name: Verify Specification Lineage Graph
         run: python .agents/scripts/genops.py graph
+

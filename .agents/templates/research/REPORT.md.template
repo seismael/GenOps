@@ -1,11 +1,10 @@
-# {Topic} — Research Report
+# {Topic} — Comprehensive Research Report
 
 ## Interview
 
-1. **Key Findings** — "What are the most important findings to highlight?"
-2. **Audience** — "Who is this report for? Conference, journal, internal?"
-3. **Implications** — "What are the practical or theoretical implications?"
-4. **Future Work** — "What should follow from this research?"
+1. **Abstract & Key Finding** — "Summarize the core problem, methodology, findings, and implications in 150-250 words."
+2. **Analysis & Discussion** — "What do the empirical findings demonstrate? What limitations or unexpected behaviors were observed?"
+3. **Future Research & Actionable Next Steps** — "What future engineering or academic directions does this work open?"
 
 ## Output
 
@@ -19,23 +18,28 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: ["EXPR-{NNN}-{slug}"]
 downstream_refs: []
-tags: [{domain}, research, report]
+tags: [{domain}, research, report, publication]
 ---
 
-# {Topic} — Research Report
+# {Topic} — Final Research Findings & Empirical Report
 
-## Abstract
+## 1. Abstract
+<!-- 150-250 word summary covering problem, methodology, key findings, and implications -->
 
-## Introduction
+## 2. Introduction & Motivation
+<!-- Contextual background, research question, and structural overview of the paper -->
 
-## Related Work
+## 3. Methodology & Apparatus
+<!-- Summary of experimental conditions, variables, and statistical models -->
 
-## Methodology
+## 4. Results & Empirical Analysis
+<!-- Data presentation, charts, significance testing, and ablation findings -->
 
-## Results
+## 5. Discussion & Limitations
+<!-- Interpretation of results, unexpected observations, and operational boundaries -->
 
-## Discussion
+## 6. Conclusion & Future Research Directions
+<!-- Summary of contributions and actionable future engineering explorations -->
 
-## Conclusion
-
-## References
+## 7. References
+<!-- Formal bibliographic entries -->

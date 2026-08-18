@@ -1,15 +1,34 @@
+"""Application entrypoint and dependency injection bootstrap for {module_name}."""
+
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="{module_name}", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Application startup: initialize database pools & event listeners
+    yield
+    # Application shutdown: close connections cleanly
+
+
+app = FastAPI(
+    title="{module_name} API",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+
+@app.get("/healthz", tags=["Observability"])
+async def health_check():
+    return {"status": "healthy", "service": "{module_kebab}"}

@@ -1,20 +1,29 @@
-name: "Node.js TypeScript Service"
-description: "TypeScript microservice with Express, Fastify, or NestJS"
+name: "Node.js TypeScript Clean Service"
+description: "TypeScript microservice with Express, Zod contract validation, ports & adapters, and Vitest"
 language: "TypeScript"
 framework: "Express"
-build: "npm run build"
+build: "npm test"
+
 directories:
-  - "src"
-  - "src/controllers"
-  - "src/models"
-  - "src/services"
-  - "tests"
+  - "src/domain/"
+  - "src/ports/"
+  - "src/services/"
+  - "src/adapters/"
+  - "src/controllers/"
+  - "tests/unit/"
+  - "tests/contract/"
+
 templates:
   package.json.template: "{module_kebab}/package.json"
   index.ts.template: "{module_kebab}/src/index.ts"
   Dockerfile.template: "{module_kebab}/Dockerfile"
+
 entity_stubs:
+  domain: "src/domain/{entity_kebab}.ts"
+  domain_test: "tests/unit/{entity_kebab}.test.ts"
   controller: "src/controllers/{entity_kebab}.controller.ts"
-  model: "src/models/{entity_kebab}.model.ts"
   service: "src/services/{entity_kebab}.service.ts"
-  test: "tests/{entity_kebab}.test.ts"
+
+default_files:
+  - "{module_kebab}/src/domain/errors.ts"
+  - "{module_kebab}/src/ports/repository.port.ts"

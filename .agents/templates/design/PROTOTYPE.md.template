@@ -1,11 +1,10 @@
-# {Project} — Prototype
+# {Project} — Prototype & Usability Verification
 
 ## Interview
 
-1. **Prototype Scope** — "Which screens and flows should be interactive?"
-2. **Interaction Detail** — "What interactions need specification? Transitions, animations, feedback?"
-3. **Testing Plan** — "How will the prototype be tested? Tasks, participants, success criteria?"
-4. **Iteration Focus** — "What specific feedback are you seeking?"
+1. **State Transition Triggers** — "What events trigger state transitions across views, modals, and overlays?"
+2. **Usability Testing Protocols** — "What moderated testing scenarios, participant cohorts, and success metrics validate this prototype?"
+3. **Remediation Plan** — "What are the priority iteration action items for usability friction?"
 
 ## Output
 
@@ -19,29 +18,27 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: ["MOCK-{NNN}-{slug}"]
 downstream_refs: []
-tags: [{domain}, design, prototype]
+tags: [{domain}, design, prototype, user-testing]
 ---
 
-# {Project} — Prototype
+# {Project} — Prototype Specification & Usability Validation
 
-## Scope
+## 1. State Transition Matrix
+| Trigger Event | Source Screen / State | Target Screen / State | Animation & Easing |
+|---|---|---|---|
+| Click `[+ New Item]` | Dashboard / Default | Drawer Modal / Open | Slide Left, $200\text{ms}$ `cubic-bezier(0.16, 1, 0.3, 1)` |
+| Click `[Submit]` | Drawer Modal / Valid | Drawer Modal / Submitting | Spinner fade in, $100\text{ms}$ |
+| Request Succeeds | Drawer / Submitting | Dashboard / Toast Notification | Fade out drawer, Toast slide up $150\text{ms}$ |
 
-## Interaction Patterns
-| Element | Trigger | Action | Feedback |
-|---------|---------|--------|----------|
+## 2. Moderated Usability Testing Protocol
+* **Participant Cohort:** $N = 8$ target users matching primary persona.
+* **Scenario 1:** "You need to find the latest high-priority task and assign it to a team member."
+  * *Success Path:* `Dashboard -> Filter -> Detail Modal -> Assign Dropdown -> Confirm`.
+  * *Direct Success Target:* $\ge 85\%$ completion without moderator hints.
+* **Scenario 2:** "Attempt to submit an invalid form and recover from the error state."
+  * *Success Path:* `Verify error banner renders at top with field-level inline error markers`.
 
-## Prototype Link
-<!-- URL or file path -->
-
-## User Testing Plan
-### Test Objectives
-### Tasks
-| Task | Expected Path | Success Criteria |
-|------|---------------|-----------------|
-### Participants
-
-## Findings
-| Finding | Severity | Recommendation |
-|---------|----------|----------------|
-
-## Iteration Plan
+## 3. Iteration Action Items
+| Finding Description | Severity | Remediation Action |
+|---|---|---|
+| Users missed the filter dropdown on mobile | High | Increase touch target to minimum $48\text{px}$ and add search bar prominence |

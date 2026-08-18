@@ -1,35 +1,31 @@
-# Python FastAPI Scaffold
-# Used when LLD Project Structure maps a module to scaffold: python-fastapi
-
-name: "Python FastAPI Service"
-description: "Python service with FastAPI, Pydantic models, clean architecture"
+name: "Python FastAPI Clean Service"
+description: "Hexagonal Python service with Pydantic v2 domain models, repository ports, SQLAlchemy async adapters, and FastAPI routers"
 language: "Python"
 framework: "FastAPI"
-build: "uvicorn"
-package_manager: "pip/poetry"
+build: "pytest"
+package_manager: "uv/pip"
 
 directories:
-  - app/
-  - app/routers/
-  - app/services/
-  - app/models/
-  - app/schemas/
-  - tests/
+  - "app/domain/"
+  - "app/ports/"
+  - "app/services/"
+  - "app/adapters/persistence/"
+  - "app/routers/"
+  - "tests/unit/"
+  - "tests/contract/"
 
 templates:
-  pyproject.toml.template: "{module}/pyproject.toml"
-  main.py.template: "{module}/app/main.py"
+  pyproject.toml.template: "{module_kebab}/pyproject.toml"
+  main.py.template: "{module_kebab}/app/main.py"
 
 entity_stubs:
-  router: "app/routers/{entity_lower}.py"
-  service: "app/services/{entity_lower}.py"
-  model: "app/models/{entity_lower}.py"
-  schema: "app/schemas/{entity_lower}.py"
-  test: "tests/test_{entity_lower}.py"
+  domain: "app/domain/{entity_snake}.py"
+  domain_test: "tests/unit/test_{entity_snake}_domain.py"
+  service: "app/services/{entity_snake}_service.py"
+  adapter: "app/adapters/persistence/{entity_snake}_repository.py"
+  router: "app/routers/{entity_snake}_router.py"
 
 default_files:
-  - "{module}/app/__init__.py"
-  - "{module}/app/routers/__init__.py"
-  - "{module}/app/services/__init__.py"
-  - "{module}/app/models/__init__.py"
-  - "{module}/tests/__init__.py"
+  - "{module_kebab}/app/__init__.py"
+  - "{module_kebab}/app/domain/exceptions.py"
+  - "{module_kebab}/app/ports/repository.py"

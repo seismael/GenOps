@@ -1,11 +1,10 @@
-# {Topic} — Literature Review
+# {Topic} — Systematic Literature Review
 
 ## Interview
 
-1. **Research Question** — "What is the central research question this review addresses?"
-2. **Search Scope** — "What databases, keywords, and date ranges?"
-3. **Key Themes** — "What are the major themes or schools of thought in this area?"
-4. **Gap Focus** — "What gap in the literature are you targeting?"
+1. **Research Question & Corpus** — "What is the primary research inquiry? What databases (IEEE, ACM, arXiv, Semantic Scholar), search queries, and inclusion criteria define the review?"
+2. **Prior Art & Taxonomies** — "What are the key benchmark papers, methodologies, and findings in the existing literature?"
+3. **Research Gap** — "What specific unanswered question, methodological limitation, or untested condition exists in current prior art?"
 
 ## Output
 
@@ -19,26 +18,22 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: []
 downstream_refs: []
-tags: [{domain}, research, lit-review]
+tags: [{domain}, research, literature-review, prisma]
 ---
 
-# {Topic} — Literature Review
+# {Topic} — Systematic Literature Review
 
-## Research Question
+## 1. Central Research Question & Methodology
+* **Core Question:** <!-- Formal research inquiry -->
+* **Search Corpus:** ACM Digital Library, IEEE Xplore, arXiv, Semantic Scholar.
+* **Date Range:** 2020 – 2026.
+* **Inclusion / Exclusion Criteria:** Peer-reviewed empirical evaluations or benchmarked open-source implementations only.
 
-## Search Strategy
-| Database | Keywords | Date Range | Results |
-|----------|----------|------------|---------|
+## 2. Prior Art Taxonomy & Comparative Matrix
+| Paper / Work | Authors & Year | Core Methodology | Key Contribution | Known Limitations |
+|---|---|---|---|---|
+| Paper A | Author et al. (2025) | Empirical Benchmark | 4x faster execution via vector quantization | Limited to static context lengths |
+| Paper B | Author et al. (2026) | State Space Models | Sub-quadratic scaling for long inputs | Degraded retrieval precision |
 
-## Key Papers
-### {Paper Title}
-- **Authors**: <!-- Authors, year -->
-- **Key Findings**: <!-- Main contributions -->
-- **Methodology**: <!-- How studied -->
-- **Limitations**: <!-- What not addressed -->
-- **Relevance**: <!-- Why matters -->
-
-## Gap Analysis
-<!-- What's missing across papers? Opportunity? -->
-
-## References
+## 3. Identified Research Gap
+<!-- Concrete statement of the unsolved problem or untested condition in the existing literature -->

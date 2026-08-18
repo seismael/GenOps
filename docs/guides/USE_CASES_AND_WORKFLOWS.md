@@ -14,9 +14,9 @@ flowchart LR
     subgraph TrackA ["Track A: Everyday Simplicity (Zero Friction)"]
         direction TB
         A1["1. One slash command per stage (/genops-prd)"]
-        A2["2. Interactive multiple-choice prompts"]
-        A3["3. Deterministic auto-scaffolding to src/"]
-        A4["4. Instant pipeline health status"]
+        A2["2. Socratic architectural probing & persona guidance"]
+        A3["3. Deterministic Clean Architecture scaffolds & TDD suites"]
+        A4["4. Instant pipeline health & living memory compaction"]
         A1 --> A2 --> A3 --> A4
     end
 
@@ -44,7 +44,7 @@ flowchart LR
 flowchart TB
     ROOT["<b>GenOps Enterprise Real-World Use Cases</b>"]
     
-    UC1["<b>1. Greenfield Multi-Service</b><br/>Concept to Scaffold in 15 mins (Go, Python, React, Rust)"]
+    UC1["<b>1. Greenfield Multi-Service</b><br/>Concept to Scaffold in 15 mins (Go, Python, React, Rust, Node)"]
     UC2["<b>2. Incremental Feature Addition</b><br/>Domain-targeted execution with zero drift on stable services"]
     UC3["<b>3. Architectural Migration</b><br/>ADR-driven database/queue swap with reactive cascade"]
     UC4["<b>4. Brownfield Legacy Ingestion</b><br/>Auto-generates baseline LLD & CI anti-drift protection"]
@@ -72,14 +72,14 @@ flowchart TB
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart LR
-    P["/genops-prd<br/>(ingestion, analytics)"] --> H["/genops-hld<br/>(topology, services)"]
-    H --> A["/genops-adr<br/>(Go, Python, React)"]
-    A --> L["/genops-lld<br/>(schemas, APIs)"]
-    L --> C["/genops-code<br/>(deterministic scaffolds)"]
+    P["/genops-prd<br/>(Principal PM)"] --> H["/genops-hld<br/>(Principal Architect)"]
+    H --> A["/genops-adr<br/>(Staff Engineer)"]
+    A --> L["/genops-lld<br/>(Lead Engineer)"]
+    L --> C["/genops-code<br/>(Principal SWE)"]
     
-    C --> S1["src/ingestion-service/ (Go)"]
-    C --> S2["src/analytics-worker/ (Python)"]
-    C --> S3["src/web-dashboard/ (React)"]
+    C --> S1["src/ingestion-service/ (Go Clean)"]
+    C --> S2["src/analytics-worker/ (Python Hexagonal)"]
+    C --> S3["src/web-dashboard/ (React 19)"]
 
     classDef stageBox fill:#f8fafc,stroke:#2563eb,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
     classDef codeBox fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d,rx:6px,ry:6px;
@@ -93,13 +93,13 @@ flowchart LR
    python .agents/scripts/genops.py init --preset software-spec
    ```
 2. **Define Product Requirements:**
-   User prompts `/genops-prd`. The agent interviews the user domain by domain (e.g. `ingestion`, `analytics`, `billing`), generating `PRD-001-ingestion.md`, `PRD-002-analytics.md`.
+   User prompts `/genops-prd`. The agent operates as a **Principal Product Manager**, interviewing the user domain by domain (e.g. `ingestion`, `analytics`), demanding BDD `Given-When-Then` criteria and defining explicit Anti-Features in `docs/prd/`.
 3. **Design Topology & Decisions:**
-   User prompts `/genops-hld` and `/genops-adr`. The team documents why Go was chosen for ingestion and Python for ML.
+   User prompts `/genops-hld` (Principal Architect) and `/genops-adr` (Staff Systems Engineer). The team documents system topology, failure domains, and weighted scoring matrices for technology selections.
 4. **Define Low-Level Contracts & Project Structure:**
-   User prompts `/genops-lld`. LLD defines entity schemas, API endpoints, and the `## Project Structure` table.
-5. **Deterministic Scaffolding:**
-   User prompts `/genops-code`. GenOps deterministically expands `go-service`, `python-fastapi`, and `react-vite` scaffolds into `src/` with entity stubs and `docker-compose.yml`.
+   User prompts `/genops-lld`. The Lead Systems Engineer defines DDD domain aggregates, PostgreSQL 16+ DDL migrations, OpenAPI 3.1 contracts, and the `### Modules` scaffolding table.
+5. **Deterministic Scaffolding & TDD Verification:**
+   User prompts `/genops-code`. GenOps deterministically expands Clean Architecture scaffolds into `src/`, creates failing unit test suites, verifies with `genops verify` compiler checks, and passes the anti-drift gate.
 
 ---
 
@@ -134,7 +134,6 @@ flowchart LR
 **Workflow:**
 1. **Create Domain PRD:**
    ```bash
-   # User prompts the agent:
    /genops-prd --domain subscriptions
    ```
    Agent creates only `docs/prd/PRD-003-subscriptions.md`.
@@ -285,6 +284,8 @@ flowchart LR
 | `python .agents/scripts/genops.py validate` | Verify project setup is healthy | Check custom scaffold or schema syntax |
 | `python .agents/scripts/genops.py status` | Check which stage to run next | Detect exactly which downstream docs are stale |
 | `python .agents/scripts/genops.py context --domain <slug>` | Load prompt context for single feature | 80% token reduction in large monorepos |
+| `python .agents/scripts/genops.py compact` | Compact active project memory into CONTEXT.md | Auto-extract domain entities and ADR choices |
+| `python .agents/scripts/genops.py verify` | Run compiler & linter diagnostics | Verify code compiles before human review |
 | `python .agents/scripts/genops.py drift` | Pre-commit sanity check | Automated PR gate in CI/CD pipeline |
 | `python .agents/scripts/genops.py rtm` | Trace requirements coverage | SOC2 / ISO compliance audit export |
 | `python .agents/scripts/genops.py report` | View visual dashboard | Export static HTML report for stakeholders |

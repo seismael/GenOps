@@ -1,11 +1,13 @@
-# {Project} — Design Brief
+# {Project} — Strategic Design Brief
 
 ## Interview
 
-1. **Project Goals** — "What are the project goals and objectives?"
-2. **Target Audience** — "Who are we designing for? Demographics, needs, context?"
-3. **Brand & Tone** — "What brand guidelines, tone of voice, visual identity direction?"
-4. **Constraints** — "What constraints exist? Timeline, budget, platform, technical?"
+Questions asked ONE at a time. The agent operates as a Principal Design Director.
+
+1. **Strategic Problem & User Need** — "What user frustration or market opportunity drives this design? Who is the primary target persona, their context of use, and emotional drivers?"
+2. **Brand Identity & Aesthetic Direction** — "What brand guidelines, personality attributes (e.g., 'trustworthy & calm' vs. 'energetic & playful'), and visual design principles govern this project?"
+3. **Accessibility & Regulatory Constraints** — "What accessibility standards are mandated (WCAG 2.1 AA or AAA)? What viewport targets (Mobile-first, Responsive Desktop) and platform limitations exist?"
+4. **Measurable Usability Metrics** — "What quantifiable UX metrics define success (e.g., System Usability Scale >80, Task Completion Rate >95%, Time-on-Task <45s)?"
 
 ## Output
 
@@ -19,23 +21,32 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: []
 downstream_refs: []
-tags: [{domain}, design, brief]
+tags: [{domain}, design, brief, strategy]
 ---
 
-# {Project} — Design Brief
+# {Project} — Design Brief & Strategy
 
-## Project Overview
+## 1. Executive Summary & Design Mission
+<!-- Clear statement of project vision and user-centric problem statement -->
 
-## Target Audience
+## 2. Target Audience & Mental Models
+| User Persona | Context of Use | Primary Goal | Pain Points & Anxieties |
+|---|---|---|---|
+| Primary User | Mobile on-the-go | Rapid task completion | Overwhelmed by excessive options |
 
-## Brand & Tone
+## 3. Brand Personality & Visual Principles
+* **Core Tone:** <!-- e.g., Minimal, High-Contrast, Professional, Approachable -->
+* **Design Principles:**
+  1. *Clarity over Cleverness:* Essential actions visible without cognitive load.
+  2. *Progressive Disclosure:* Surface advanced filters only on demand.
 
-## Success Metrics
-| Metric | Measurement | Target |
-|--------|-------------|--------|
+## 4. Accessibility & Platform Standards
+* **WCAG Target:** WCAG 2.1 Level AA Compliance (Minimum 4.5:1 text contrast ratio).
+* **Responsive Breakpoints:** Mobile ($390\text{px}$), Tablet ($768\text{px}$), Desktop ($1280\text{px}+$).
 
-## Deliverables
-
-## Constraints
-
-## References
+## 5. Quantitative Usability Goals
+| Usability Metric | Baseline | Target Goal | Evaluation Method |
+|---|---|---|---|
+| Task Completion Rate | 72% | $\ge 95\%$ | Moderated Usability Test |
+| Task Completion Time | 85s | $< 35\text{s}$ | Unmoderated Benchmark |
+| System Usability Score | 68 | $\ge 82\text{ (Grade A)}$| SUS Post-Test Survey |

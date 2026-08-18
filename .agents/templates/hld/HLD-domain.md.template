@@ -2,18 +2,18 @@
 
 ## Interview
 
-Questions asked ONE at a time.
+Questions asked ONE at a time. The agent operates as a Principal Systems Architect, enforcing structural decoupling, clean interfaces, and resilient distributed patterns.
 
 **Required:**
-1. **Architecture Pattern** — "What architecture fits best? A) Monolith B) Microservices C) Event-driven D) Modular monolith E) Other"
-2. **Core Components** — "What are the top 3-5 components? For each: responsibility, public interface, dependencies."
-3. **Critical Flow** — "Walk through the most important flow end-to-end. What touches what?"
-4. **Scale & Performance** — "Expected scale (users/requests per second)? Latency targets?"
+1. **System Topology & Architecture Pattern** — "What macro-architecture fits best (Modular Monolith, Event-Driven Microservices, Serverless, CQRS/Event Sourcing)? What is the primary justification against simpler alternatives?"
+2. **Component Boundaries & Core Responsibilities** — "What are the 3-5 primary components or services in this domain? For each: what is its single responsibility, what public interface does it expose, and what are its direct dependencies?"
+3. **End-to-End Critical Data Flows** — "Walk through the primary data flow and transaction path end-to-end. Which components interact synchronously (REST/gRPC) vs. asynchronously (Events/Queues)?"
+4. **Failure Domains & Resilience Strategy** — "What happens when a downstream dependency or database fails? What are the explicit timeout, retry, circuit breaker, and fallback strategies?"
 
-**Optional:**
-5. **Availability & Security** — "Uptime target? Authentication model? Data sensitivity?"
-6. **External Integrations** — "What external systems or services does this integrate with?"
-7. **Technology Direction** — "Any technology preferences or constraints? Flag unresolved items as 'Needs ADR'."
+**Optional / Operational:**
+5. **Data Storage & Consistency Model** — "What data consistency guarantees are required (Strict ACID, Eventual Consistency, Read-after-Write)? What storage paradigm fits (Relational, Document, Key-Value, Vector)?"
+6. **Cross-Cutting Concerns** — "What is the ingress/gateway strategy, authentication propagation model, and distributed tracing approach?"
+7. **Technology Candidates (Needs ADR)** — "What technologies, databases, frameworks, or external infrastructure are being considered that require an explicit Architecture Decision Record (ADR)?"
 
 ## Output
 
@@ -27,44 +27,118 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: ["PRD-{NNN}-{slug}"]
 downstream_refs: []
-tags: [{domain}, hld, architecture]
+tags: [{domain}, hld, architecture, topology]
 ---
 
-# {Domain} — High-Level Design
+# {Domain} — High-Level Design Specification
 
-## System Overview
-<!-- One paragraph describing the system at a high level -->
+## 1. System Overview & Architectural Approach
+<!-- 2-3 paragraphs describing the target architecture, structural boundaries, and architectural rationale -->
 
-## Architecture Diagram
+## 2. System Topology (C4 Context & Container)
+
+### 2.1 C4 System Context Diagram
 ```mermaid
 C4Context
-  title System Context Diagram
+  title System Context Diagram — {Domain}
+  
+  Person(user, "User / Client", "Interacts with {Domain} services")
+  System(domainSystem, "{Domain} System", "Handles core domain logic and workflows")
+  System_Ext(authProvider, "Identity Provider", "Validates JWT tokens & RBAC")
+  System_Ext(eventBus, "Message Broker / Event Bus", "Asynchronous domain event streaming")
+  
+  Rel(user, domainSystem, "Invokes APIs", "HTTPS / JSON")
+  Rel(domainSystem, authProvider, "Validates Auth", "OIDC / JWKS")
+  Rel(domainSystem, eventBus, "Publishes Events", "CloudEvents / Kafka")
 ```
 
-## Component Descriptions
-### {Component Name}
-- **Responsibility**: <!-- What it owns and does -->
-- **Public Interface**: <!-- What it exposes -->
-- **Dependencies**: <!-- What it depends on -->
+### 2.2 Component Container Boundaries
 
-## Data Flow
+```mermaid
+graph TB
+    subgraph ClientLayer ["Client & Ingress Layer"]
+        GW["API Gateway / Reverse Proxy"]
+    end
+
+    subgraph CoreDomain ["{Domain} Service Boundary"]
+        API["API Controller / Router"]
+        SVC["Domain Application Service"]
+        STORE["Persistence Store / Cache"]
+    end
+
+    subgraph External ["External Services & Infrastructure"]
+        DB[(Primary Database)]
+        QUEUE[("Event Broker / Kafka")]
+    end
+
+    GW -->|"gRPC / HTTPS"| API
+    API -->|"Invokes"| SVC
+    SVC -->|"Reads/Writes"| STORE
+    STORE -->|"SQL / TCP"| DB
+    SVC -->|"Publishes Async"| QUEUE
+```
+
+## 3. Component Specifications
+
+### 3.1 {Component Name}
+* **Single Responsibility:** 
+* **Public Interface:** 
+* **Dependencies:** 
+* **Statefulness:** Stateless | Stateful | Ephemeral Cache
+* **Failure Blast Radius:** 
+
+## 4. End-to-End Data Flow & Sequence
+
 ```mermaid
 sequenceDiagram
-  <!-- Primary flow -->
+    autonumber
+    actor Client as Client / Caller
+    participant GW as API Gateway
+    participant Svc as {Domain} Service
+    participant DB as Persistence Store
+    participant Broker as Event Broker
+
+    Client->>GW: POST /api/v1/{domain}/action (Bearer Token)
+    GW->>GW: Validate JWT & Rate Limits
+    GW->>Svc: Forward sanitized request
+    Svc->>DB: Begin Transaction & Query State
+    alt State Valid
+        Svc->>DB: Commit State Change
+        Svc-->>Broker: Emit {Domain}CreatedEvent (Async)
+        Svc-->>GW: 201 Created (Payload)
+        GW-->>Client: 201 Created
+    else Validation or Concurrency Conflict
+        Svc->>DB: Rollback
+        Svc-->>GW: 409 Conflict / 422 Unprocessable
+        GW-->>Client: Structured Error Response
+    end
 ```
 
-## Error Handling Strategy
-| Error Category | Handling | User-Facing Message | Severity |
-|---------------|----------|---------------------|----------|
+## 5. Failure Domains & Resiliency Framework
 
-## Integration Points
-| Integration | Type | Protocol | Direction | Description |
-|-------------|------|----------|-----------|-------------|
+| Integration Point | Failure Mode | Resilience Pattern | Fallback / Recovery Strategy |
+|---|---|---|---|
+| Primary Database | Connection Timeout / Pool Exhaustion | Exponential Backoff with Jitter | Return 503 with `Retry-After` header; alert APM |
+| Downstream Sync API | Network Partition / High Latency | Circuit Breaker (50% fail in 10s) | Serve degraded cached response or enqueue task |
+| Event Broker | Broker Unreachable on Publish | Outbox Pattern (Transactional Store) | Relay worker drains outbox once broker recovers |
 
-## Non-Functional Requirements
-| Category | Requirement | Target |
-|----------|-------------|--------|
+## 6. Integration Points & Protocols
 
-## Technology Constraints
-| Concern | Preference | Status |
-|---------|-----------|--------|
+| Integration Name | Protocol | Direction | Sync / Async | Payload Format | SLA Target |
+|---|---|---|---|---|---|
+| Ingress API | HTTPS | Inbound | Synchronous | JSON / Protobuf | $p99 < 150\text{ms}$ |
+| Domain Events | Kafka / AMQP | Outbound | Asynchronous | CloudEvents (JSON) | $< 50\text{ms}$ ack |
+| Database | TCP (Postgres Wire) | Outbound | Synchronous | Binary SQL | $p99 < 10\text{ms}$ |
+
+## 7. Non-Functional Requirements (NFR) Allocations
+* **Throughput & Scalability:** Support $\ge 1,000\text{ req/sec}$ horizontal scale with stateless compute nodes.
+* **Data Consistency:** Strict serializability for financial/inventory writes; eventual consistency ($< 500\text{ms}$) for analytics read replicas.
+* **Security & Auth:** TLS 1.3 in transit; mTLS between internal microservices; AES-256-GCM at rest.
+
+## 8. Technology Decisions Backlog (Needs ADR)
+
+| Area | Decision Item | Recommended Candidate | Alternatives to Evaluate | Status |
+|---|---|---|---|---|
+| Runtime / Language | Programming Language & Engine | Go 1.22+ | Rust, TypeScript (Node), Python | Needs ADR |
+| Persistence | Primary Datastore | PostgreSQL 16 | MySQL, MongoDB, DynamoDB | Needs ADR |
+| Transport Protocol | Inter-Service Communication | gRPC / HTTP2 | REST (HTTP/1.1), GraphQL | Needs ADR |

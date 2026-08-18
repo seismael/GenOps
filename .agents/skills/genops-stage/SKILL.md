@@ -1,88 +1,70 @@
 ---
 name: genops-stage
-description: Use when executing any GenOps pipeline stage. All GenOps stage skills follow this protocol.
+description: Use when executing any GenOps pipeline stage. Universal cognitive protocol for all GenOps stage skills.
 ---
 
-# GenOps Stage Protocol
+# GenOps Super Stage Protocol (v3.0)
 
-Template-driven protocol: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT → APPROVE → RECORD → TRANSITION.
+Template-driven cognitive protocol: PRE-FLIGHT → LOAD (Budget Guard) → DOMAINS → CHECK → INTERVIEW (Socratic) → GENERATE → VALIDATE (Red-Team & Critic Pass) → PRESENT → APPROVE → RECORD (Compact) → TRANSITION.
 
-The stage skill reads its template from `.agents/templates/<template>`. The template defines both interview questions (`## Interview` section) and output structure (`## Output` section). Generated files MUST include standard YAML frontmatter.
-
-<HARD-GATE>
-Do NOT skip APPROVE. Do NOT transition without user approval unless --flow or --nonstop.
-</HARD-GATE>
-
-## 0. PRE-FLIGHT — Validate dependencies
-
-Halt on first failure with error + fix command.
-Run `python .agents/scripts/genops.py validate` (or MCP tool `genops_validate`) if available; otherwise perform file-based inspection.
-
-**Init check:** AGENTS.md has `<!-- GENOPS:START -->`. genops.yaml exists. "Run /genops-init first." if missing.
-
-**Stage check:** This stage `id` exists in genops.yaml.
-
-**Template check:** `.agents/templates/<template>` exists and has both `## Interview` and `## Output` sections. "Template missing or incomplete. Run /genops-init."
-
-**State check:** `docs/.genops-state.json` readable. Create if missing. "State corrupted. Recover from git or run /genops-init."
-
-**Upstream check:** Each `requires` directory exists with ≥1 matching file. Upstream stage is `approved`. If absent/skipped: "Run /genops-<upstream> first." Stale: warn. Generated: warn.
-
-**Directory check:** Output directory exists.
+Hot-path protocol enforcing architectural integrity, executable specifications, and deterministic state tracking.
 
 <HARD-GATE>
-Do NOT proceed past PRE-FLIGHT if any required check fails.
+Do NOT skip APPROVE. Do NOT transition without explicit human approval unless --flow or --nonstop. "It looks fine" is NOT approval.
 </HARD-GATE>
 
-## 1. LOAD
-Read stage config from `genops.yaml`. Load all files from `requires` directories. Load template. Extract `## Interview` questions and `## Output` structure. Load `.agents/context/CONTEXT.md`.
+## 0. PRE-FLIGHT — Dependency & Health Verification
+Halt on first failure. Run `python .agents/scripts/genops.py validate` (or MCP `genops_validate`) if available.
+- **Init:** AGENTS.md has `<!-- GENOPS:START -->`. `genops.yaml` exists.
+- **Stage:** Current stage `id` defined in `genops.yaml`. Output directory exists.
+- **Template:** `.agents/templates/<template>` exists with `## Interview` and `## Output` sections.
+- **State:** `docs/.genops-state.json` exists (v2.0 schema).
+- **Upstream:** Every path in `requires` exists with ≥1 approved artifact.
 
-## 2. DOMAINS
-"Single-domain or multi-domain?" Single → one file per layer. Multi → one file per domain per layer. Match domains from upstream stage files. Auto-increment NNN from existing files in output directory.
+## 1. LOAD — Context Assembly & Token Budget Guard
+Read stage config from `genops.yaml`. Load all upstream documents from `requires` paths. Read stage template. Load `.agents/context/CONTEXT.md` for active system topology, glossary, and architectural constraints.
+- **Token Budget Guard:** If upstream documents exceed 60,000 characters (~15,000 tokens), invoke `genops context --domain <slug>` to extract only targeted domain slices, preventing context window saturation.
 
-## 3. CHECK — Staleness detection
-Compute LF-normalized SHA-256 hash of each upstream file (`python .agents/scripts/genops.py hash <file>`). Compare to stored per-file hashes. If changed → identify which file. If same combined hash → "Already complete. Re-run?"
+## 2. DOMAINS — Scope & Naming
+Enforce domain-split structure: `{STAGE}-{NNN}-{slug}.md`. Target single domain if `--domain <slug>` is specified; otherwise discover all domains from upstream. Auto-increment sequence prefix `NNN`.
 
-## 4. INTERVIEW — Template-driven
-For each domain, read questions from template's `## Interview` section. Ask ONE at a time. Prefer multiple-choice if template provides options. Use upstream docs + CONTEXT.md for context. Required questions first, optional if needed.
+## 3. CHECK — Cryptographic Staleness
+Compute live LF-normalized SHA-256 hash of all `requires` paths (`genops hash <path>`). Compare to recorded `requires_hash`. If identical and state is `approved`, prompt: "Stage already complete and consistent. Re-run?"
 
-## 5. GENERATE — Template-driven (or scaffold-driven for code stage)
-For non-code stages: generate output including standard YAML frontmatter (`id`, `domain`, `layer`, `version`, `status`, `upstream_refs`, `downstream_refs`, `tags`). Output: `<outputs>/<STAGE>-<NNN>-<slug>.md`. Show progress: "Generating domain X/Y: <domain>". No TBD, TODO, or placeholder sections.
+## 4. INTERVIEW — Socratic Architectural Challenger
+Ask template questions ONE at a time. Do NOT passively record answers:
+- **Challenge Premature Complexity:** If target scale/traffic is low, challenge distributed microservices or complex event buses; suggest simpler modular monoliths.
+- **Probe Failure Modes:** Demand explicit strategies for latency, network partitions, and data loss.
+- **Surface Trade-offs:** Present concrete trade-offs (e.g., Consistency vs. Availability, Latency vs. Throughput, Operational Cost).
 
-For code stage: execute `python .agents/scripts/genops.py scaffold --module <name> --scaffold <id> --entities <list>`. See genops-code SKILL.md for scaffold protocol.
+## 5. GENERATE — Executable Specification
+Generate `<outputs>/<STAGE>-<NNN>-<slug>.md` adhering strictly to template structure with standardized YAML frontmatter (`id`, `domain`, `stage`, `version`, `status`, `upstream_refs`, `downstream_refs`, `tags`).
+- Placeholders (`TODO`, `TBD`) are strictly prohibited.
+- Technical specs must include concrete schemas, DDL, OpenAPI/contracts, or Mermaid diagrams.
+- For `code` stage: execute `python .agents/scripts/genops.py scaffold`.
 
-## 6. VALIDATE — Cross-layer checks
-If `genops.yaml` defines `validation_rules` for this stage transition, run them. Generic pattern: verify items from upstream stage map to items in generated output. Flag uncovered items. Also verify: no upstream "Needs ADR" or "open question" items remain unresolved. Apply interface/structure consistency checks if defined.
+## 6. VALIDATE — Adversarial Red-Team & Multi-Perspective Critic Pass
+Run declarative `validation_rules` from `genops.yaml` and execute an internal Staff Review:
+1. **Adversarial Red-Team Stress-Test:** Generate and document mitigations for Concurrency Deadlocks, Latency Saturation Spikes, and Security/Tenancy Breaches.
+2. **Security Critic:** Assess STRIDE vectors, auth boundaries, input validation, and secret handling.
+3. **Resilience Critic:** Check timeout policies, retry backoffs, circuit breakers, and idempotency keys.
+4. **Observability Critic:** Verify OpenTelemetry tracing spans, health metrics, and audit logging.
+5. **Consistency:** Verify all upstream "Needs ADR" items are resolved and mapped downstream.
+If critical gaps are found, surface recommendations immediately before presentation.
 
-Report gaps: "Validation found N issues. Fix or proceed?"
+## 7. PRESENT — Preview & Change-Impact Analysis
+Display executive summary of generated artifacts, resolved decisions, and downstream impact map (invoke `genops impact <spec>` to highlight affected downstream files and modules).
 
-## 7. PRESENT
-Show summary of each generated file + downstream impact map. Mark downstream as "will become stale" if approved.
+## 8. APPROVE — Human Hard Gate
+Require explicit human confirmation ("approved", "proceed", "yes"). If changes are requested, apply delta modifications only and re-run Step 6 (VALIDATE).
 
-## 8. APPROVE
-Loop until explicit approval ("approved", "proceed", "yes"). Change request: apply only requested, re-PRESENT. Reject: "Re-interview or halt?"
+## 9. RECORD — Atomic State & Active Memory Compaction
+Execute `python .agents/scripts/genops.py record <stage-id> --actor <user|agent>`.
+- Updates `docs/.genops-state.json` and appends immutable event to `docs/.genops-events.jsonl`.
+- **Memory Compaction:** Extract new domain models, accepted technologies, and constraints; compact and update `.agents/context/CONTEXT.md`.
 
-<HARD-GATE>
-"It looks fine" is NOT approval.
-</HARD-GATE>
-
-## 9. RECORD — Per-file state
-Run `python .agents/scripts/genops.py record <stage-id> --actor user` to deterministically record state v2 and append event log in `docs/.genops-events.jsonl`.
-Mark downstream `stale`. Append key terms to CONTEXT.md.
-
-## 10. TRANSITION
-- `--nonstop` → next stage with `--nonstop`
-- `--flow` → next stage (SoC default)
-- Default → "Stage done. Run /genops-<next> now or save for later?"
-- Multiple `next`: list all options
-- `next: []` → "Pipeline complete."
-
-<HARD-GATE>
-SoC mode: wait for explicit user choice.
-</HARD-GATE>
-
-## State Machine
-```
-absent → drafting → generated → approved → stale → drafting
-absent → skipped
-```
+## 10. TRANSITION — Handoff
+- `--nonstop`: Automatically invoke next stage with `--nonstop`.
+- `--flow`: Automatically invoke next stage (SoC default).
+- Default: "Stage approved. Run /genops-<next> now or save for later?"
+- Terminal (`next: []`): "Pipeline complete. Scaffolding ready in src/."

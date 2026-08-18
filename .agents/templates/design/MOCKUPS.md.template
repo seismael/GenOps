@@ -1,11 +1,10 @@
-# {Project} — Mockups
+# {Project} — Visual Mockups & Design System
 
 ## Interview
 
-1. **Visual Direction** — "What visual style? Modern, minimal, playful, professional?"
-2. **Color Palette** — "Primary, secondary, accent colors? Any existing brand colors?"
-3. **Typography** — "Font preferences? Serif, sans-serif, display?"
-4. **Component Priority** — "Which UI components need detailed specs first? Buttons, forms, cards?"
+1. **Design Tokens & Color Semantics** — "What are the primary, surface, text, and state colors with semantic mappings and contrast ratios?"
+2. **Typography Scale** — "What font families, scale ratios, and weights are defined?"
+3. **Component States & Transitions** — "What are the default, hover, active, disabled, and loading states for key interactive components?"
 
 ## Output
 
@@ -19,24 +18,33 @@ created_at: {TIMESTAMP}
 updated_at: {TIMESTAMP}
 upstream_refs: ["WIRE-{NNN}-{slug}"]
 downstream_refs: []
-tags: [{domain}, design, mockups]
+tags: [{domain}, design, mockups, design-system]
 ---
 
-# {Project} — Mockups
+# {Project} — Visual Design System & UI Specifications
 
-## Visual Design System
-### Color Palette
-| Color | Hex | Usage |
-|-------|-----|-------|
-### Typography
-| Element | Font | Size | Weight |
-|---------|------|------|--------|
+## 1. Design Token Palette
+| Token Name | Hex Value | Semantic Usage | Contrast Ratio on Bg |
+|---|---|---|---|
+| `--color-primary-500` | `#2563EB` | Brand primary buttons, active links | 4.8:1 (Pass AA) |
+| `--color-surface-bg` | `#0F172A` | Global application background | - |
+| `--color-surface-card` | `#1E293B` | Elevated cards and modals | - |
+| `--color-text-primary` | `#F8FAFC` | Primary headings and body text | 14.2:1 (Pass AAA) |
+| `--color-danger-500` | `#EF4444` | Destructive actions, error states | 4.6:1 (Pass AA) |
 
-## Components
-### {Component Name}
-- **States**: Default, Hover, Active, Disabled, Error
-- **Specs**: <!-- dimensions, spacing, shadows -->
+## 2. Typography Hierarchy
+| Level | Font Family | Size / Line Height | Weight | Tracking |
+|---|---|---|---|---|
+| `Display Heading` | Inter, system-ui | $32\text{px} / 40\text{px}$ | Bold (700) | $-0.02\text{em}$ |
+| `Section Title` | Inter, system-ui | $20\text{px} / 28\text{px}$ | SemiBold (600) | $-0.01\text{em}$ |
+| `Body Regular` | Inter, system-ui | $14\text{px} / 20\text{px}$ | Regular (400) | Normal |
+| `Code / Mono` | JetBrains Mono | $12\text{px} / 16\text{px}$ | Medium (500) | Normal |
 
-## Screen Mockups
-### {Screen Name}
-<!-- Visual design applied -->
+## 3. Stateful Component Specifications
+
+### Component: Primary Button (`<Button variant="primary" />`)
+* **Default:** Background `--color-primary-500`, Text `--color-text-primary`, Padding $8\text{px } 16\text{px}$, Radius $6\text{px}$.
+* **Hover:** Background `#1D4ED8`, Scale $1.02$, Transition $150\text{ms}$ ease-out.
+* **Active / Pressed:** Background `#1E40AF`, Scale $0.98$.
+* **Disabled:** Background `#64748B`, Opacity $0.5$, Cursor `not-allowed`.
+* **Loading:** Spinner replacement with `aria-busy="true"` accessibility tag.

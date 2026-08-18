@@ -1,32 +1,27 @@
-# Project Context
+# Living Project Context
 
-> Shared domain language and conventions loaded by every GenOps stage.
-> Update this file as the pipeline progresses. Stages will populate it automatically.
+> Auto-compacted by GenOps Engine on 2026-08-18 20:57:18 UTC.
+> Loaded natively by every GenOps agent skill during Step 1 (LOAD).
 
-## Project Name
+## Project Overview
+* **System Domain:** GenOps Managed System
+* **Indexed Specifications:** 1 documents across 1 stages
+* **Core Domain Entities:** None indexed yet
 
-<!-- Replace with your project name -->
+## Domain Glossary & Personas
+| Term / Persona | Definition / Operational Scope |
+|---|---|
+| (Discovered during PRD) | (Definitions) |
 
-## Domain Glossary
+## Technology Selections (Accepted ADRs)
+| Concern | Selection | Status / Source |
+|---|---|---|
+| (Discovered during ADR) | (Selection) | (Trade-off context) |
 
-<!-- Define key terms used across this project -->
+## Active Architectural Constraints & Invariants
+- Constraints will be extracted from accepted ADRs.
 
-| Term | Definition |
-|------|------------|
-|      |            |
-
-## Technology Preferences
-
-<!-- Established technology choices (may be overridden by ADRs) -->
-
-| Concern | Preference | Reason |
-|---------|-----------|--------|
-|         |           |        |
-
-## Architecture Constraints
-
-<!-- Non-negotiable architectural rules -->
-
-## References
-
-<!-- Links to external docs, design systems, upstream repos -->
+## Referential Specification Index
+| Stage | Document ID | Path | Status |
+|---|---|---|---|
+| `ARCHITECTURE` | `RFC-001-contextops-architecture` | `docs/architecture/RFC-001-contextops-architecture.md` | `Accepted` |

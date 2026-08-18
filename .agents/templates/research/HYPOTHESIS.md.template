@@ -1,11 +1,10 @@
-# {Topic} — Hypothesis
+# {Topic} — Formal Hypothesis Formulation
 
 ## Interview
 
-1. **Hypothesis Statement** — "What is the testable hypothesis? 'We hypothesize that X causes Y under condition Z'"
-2. **Rationale** — "What evidence from the literature supports this hypothesis?"
-3. **Variables** — "What are the independent, dependent, and control variables?"
-4. **Prediction** — "What result would support the hypothesis? What would refute it?"
+1. **Hypothesis Formulation** — "What are the formal null ($H_0$) and alternative ($H_1$) hypotheses?"
+2. **Variable Operationalization** — "What are the independent, dependent, and controlled variables, along with their operational definitions and units?"
+3. **Statistical Testing Framework** — "What significance level ($\alpha$), sample size, and statistical tests (t-test, ANOVA, Mann-Whitney) will evaluate the hypothesis?"
 
 ## Output
 
@@ -22,21 +21,20 @@ downstream_refs: []
 tags: [{domain}, research, hypothesis]
 ---
 
-# {Topic} — Hypothesis
+# {Topic} — Formal Hypothesis Specification
 
-## Research Question
+## 1. Formal Hypotheses
+* **Null Hypothesis ($H_0$):** Application of {Technique X} yields no statistically significant improvement in {Metric Y} compared to baseline ($p \ge 0.05$).
+* **Alternative Hypothesis ($H_1$):** Application of {Technique X} achieves $\ge 20\%$ reduction in {Metric Y} with $p < 0.01$ under identical workloads.
 
-## Hypothesis
-<!-- Clear, testable statement -->
+## 2. Variable Operationalization
+| Variable Name | Variable Type | Operational Definition | Measurement Unit |
+|---|---|---|---|
+| Parameter Weight Quantization | Independent | Quantization precision (FP16, INT8, INT4) | Bit-width |
+| Inference Latency | Dependent | Time to First Token (TTFT) | Milliseconds ($p99\text{ ms}$) |
+| Batch Size | Controlled | Concurrency load held static at $B=32$ | Concurrent Streams |
 
-## Rationale
-<!-- Why based on literature -->
-
-## Variables
-| Variable | Type | Measurement |
-|----------|------|-------------|
-|          |      |             |
-
-## Predicted Outcome
-
-## Experiment Design Overview
+## 3. Statistical Power & Validation Criteria
+* **Alpha Level ($\alpha$):** $0.01$
+* **Statistical Test:** Two-tailed Welch's $t$-test / Mann-Whitney $U$ test.
+* **Sample Size:** $N \ge 1,000$ independent trials per condition.
