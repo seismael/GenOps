@@ -213,16 +213,26 @@ flowchart TB
 
 ## Quick Start
 
+**Option A — Use this repository as a template (recommended):** click **"Use this template"** on GitHub, then clone the newly created repo. GenOps comes pre-wired (`genops.yaml`, `.agents/`, agent entrypoints).
+
+**Option B — Clone directly:**
+
 ```bash
-git clone https://github.com/seismael/genops.git my-project
+git clone https://github.com/seismael/GenOps.git my-project
 cd my-project
 ```
 
-Initialize across all coding agent platforms in your repository:
+Initialize GenOps across all coding agent platforms in your repository (idempotent — safe to re-run):
 
 ```bash
 # Synchronize all agent entrypoints (AGENTS.md, CLAUDE.md, Cursor rules, Copilot, Windsurf)
 python .agents/scripts/genops.py init --agent all
+```
+
+Confirm everything is healthy, then drive the pipeline from your AI agent:
+
+```bash
+python .agents/scripts/genops.py doctor
 ```
 
 Execute the specification pipeline:
@@ -234,6 +244,8 @@ Execute the specification pipeline:
 /genops-lld            # 4. Detailed Contracts & Scaffolding Blueprint (Lead Engineer)
 /genops-code           # 5. Clean Architecture & TDD Suite Scaffolding (Principal SWE)
 ```
+
+See [Distribution](docs/DISTRIBUTION.md) for every way to obtain and publish GenOps.
 
 ---
 
