@@ -30,7 +30,7 @@ Fourth stage. Requires approved HLD and ADR specifications. Generates detailed d
    - Assign file naming: `docs/lld/LLD-{NNN}-{slug}.md`.
 
 4. **CHECK**
-   - Compute live LF-normalized hashes of `docs/hld/` and `docs/architecture/` via `genops hash`.
+   - Compute live LF-normalized hashes of `docs/hld/` and `docs/architecture/` via `python .agents/scripts/genops.py hash`.
    - Verify upstream dependencies are consistent and approved.
 
 5. **INTERVIEW (Socratic Lead Engineer)**

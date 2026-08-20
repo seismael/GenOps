@@ -13,10 +13,29 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Node modules (if node-based tools added later)
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node modules & build output
 node_modules/
+dist/
+.next/
+
+# GenOps generated state (machine outputs, regenerated on demand)
+docs/.genops-state.json
+docs/.genops-events.jsonl
+docs/.genops-graph.json
+docs/.genops.lock
+docs/report.html
+.agents/context/CONTEXT.md
+.genops-demo/
 
 # Evaluation reports (keep for reference, ignore if desired)
 # docs/eval/
-
-examples/

@@ -24,15 +24,19 @@ import argparse
 import datetime
 import glob
 import hashlib
+import html
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+__version__ = "3.1.0"
 
 # Ensure stdout and stderr handle utf-8 cleanly across Windows/Linux/macOS
 if sys.platform == "win32":
@@ -49,6 +53,21 @@ if sys.platform == "win32":
 
 class DeterministicHasher:
     """Handles cross-platform cryptographic hashing with mandatory LF normalization."""
+
+    # Directories and artifacts that must never be part of a deterministic hash.
+    EXCLUDED_DIR_NAMES = {
+        ".git", "__pycache__", ".venv", "venv", "node_modules",
+        ".pytest_cache", ".ruff_cache", ".mypy_cache", ".tox", ".nox",
+        "dist", "build", "target", ".next",
+    }
+    EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+
+    @classmethod
+    def _should_skip(cls, path: Path) -> bool:
+        """Skip bytecode/build artifacts and virtual environments for cross-platform determinism."""
+        if path.suffix.lower() in cls.EXCLUDED_SUFFIXES:
+            return True
+        return any(part in cls.EXCLUDED_DIR_NAMES for part in path.parts)
 
     @staticmethod
     def normalize_lf(data: bytes) -> bytes:
@@ -74,7 +93,8 @@ class DeterministicHasher:
         if not dir_path.is_dir():
             return "", {}
 
-        files = sorted([p for p in dir_path.rglob(pattern) if p.is_file() and not p.name.startswith(".")])
+        files = sorted([p for p in dir_path.rglob(pattern)
+                        if p.is_file() and not p.name.startswith(".") and not cls._should_skip(p)])
         file_hashes: Dict[str, str] = {}
         combined = hashlib.sha256()
 
@@ -354,8 +374,25 @@ class MarkdownParser:
     """Parses frontmatter and content from GenOps Markdown documents."""
 
     @staticmethod
+    def _parse_frontmatter_value(v: str) -> Any:
+        """Parse a single frontmatter scalar or inline [a, b] list."""
+        v = v.strip().strip('"\'')
+        if v.startswith("[") and v.endswith("]"):
+            inner = v[1:-1].strip()
+            if not inner:
+                return []
+            return [x.strip().strip('"\'') for x in inner.split(",") if x.strip()]
+        return v
+
+    @staticmethod
     def parse_frontmatter(file_path: Path) -> Tuple[Dict[str, Any], str]:
-        """Extract and parse YAML frontmatter block from markdown document."""
+        """Extract and parse YAML frontmatter block from markdown document.
+
+        Supports simple ``key: value`` pairs, inline ``[a, b]`` lists, and
+        indented multi-line lists. Raises ValueError on unsupported constructs
+        (block scalars, anchors/aliases/tags, malformed lines) instead of
+        silently corrupting the document index.
+        """
         if not file_path.is_file():
             return {}, ""
         try:
@@ -371,22 +408,52 @@ class MarkdownParser:
         if len(parts) < 3:
             return {}, content
 
-        fm_raw = parts[1]
+        fm_lines = parts[1].splitlines()
         body = parts[2]
         fm_dict: Dict[str, Any] = {}
 
-        for line in fm_raw.splitlines():
-            line = line.strip()
+        i = 0
+        while i < len(fm_lines):
+            line = fm_lines[i].strip()
             if not line or line.startswith("#"):
+                i += 1
                 continue
-            if ":" in line:
-                k, v = line.split(":", 1)
-                k = k.strip()
-                v = v.strip().strip('"\'')
-                if v.startswith("[") and v.endswith("]"):
-                    fm_dict[k] = [x.strip().strip('"\'') for x in v[1:-1].split(",") if x.strip()]
+            if line.startswith("- "):
+                raise ValueError(f"{file_path.name}: unexpected list item in frontmatter: '{line}'")
+            if ":" not in line:
+                raise ValueError(f"{file_path.name}: malformed frontmatter line (no ':'): '{line}'")
+
+            k, v = line.split(":", 1)
+            k = k.strip()
+            v = v.strip()
+
+            if v in ("|", ">") or v.startswith(("| ", "> ")):
+                raise ValueError(f"{file_path.name}: unsupported YAML block scalar for key '{k}' (multi-line scalars are not supported)")
+            if v.startswith(("&", "*", "!")):
+                raise ValueError(f"{file_path.name}: unsupported YAML construct for key '{k}' (anchors/aliases/tags are not supported)")
+
+            if v:
+                fm_dict[k] = MarkdownParser._parse_frontmatter_value(v)
+                i += 1
+            else:
+                # Empty value — this may be an indented multi-line list.
+                items: List[Any] = []
+                j = i + 1
+                while j < len(fm_lines):
+                    sub = fm_lines[j].strip()
+                    if not sub:
+                        j += 1
+                        continue
+                    if sub.startswith("- "):
+                        items.append(MarkdownParser._parse_frontmatter_value(sub[2:].strip()))
+                        j += 1
+                        continue
+                    break
+                if items:
+                    fm_dict[k] = items
+                    i = j
                 else:
-                    fm_dict[k] = v
+                    raise ValueError(f"{file_path.name}: key '{k}' has no value in frontmatter")
 
         return fm_dict, body
 
@@ -401,7 +468,11 @@ class MarkdownParser:
         for md in docs_dir.rglob("*.md"):
             if md.name.startswith(".") or md.parent.name in ("eval", "evals"):
                 continue
-            fm, body = cls.parse_frontmatter(md)
+            try:
+                fm, body = cls.parse_frontmatter(md)
+            except ValueError as e:
+                print(f"[WARN] Skipping unparseable frontmatter in {md.relative_to(root_dir).as_posix()}: {e}", file=sys.stderr)
+                continue
             if not fm:
                 continue
 
@@ -561,6 +632,10 @@ class SimpleYamlParser:
         val = val.strip()
         if not val:
             return ""
+        if val in ("|", ">") or val.startswith(("| ", "> ")):
+            raise ValueError(f"unsupported YAML block scalar '{val}' (multi-line scalars are not supported by the zero-dependency parser; install PyYAML or simplify the value)")
+        if val.startswith(("&", "*", "!")):
+            raise ValueError(f"unsupported YAML construct '{val}' (anchors/aliases/tags are not supported by the zero-dependency parser)")
         if val.startswith("[") and val.endswith("]"):
             inner = val[1:-1].strip()
             if not inner:
@@ -608,7 +683,10 @@ class ConfigManager:
         except ImportError:
             pass
 
-        parsed = SimpleYamlParser.parse(content)
+        try:
+            parsed = SimpleYamlParser.parse(content)
+        except ValueError as e:
+            raise ValueError(f"YAML parse error in {path}: {e}") from e
         if isinstance(parsed, dict):
             return parsed
         return {}
@@ -786,7 +864,7 @@ class ImpactSimulator:
         if not target_spec:
             raise FileNotFoundError(f"Target specification '{target_query}' not found in docs/.")
 
-        # Build adjacency graph
+        # Build adjacency graph from both reference directions for completeness
         downstream_adj: Dict[str, List[str]] = {s.id: [] for s in specs}
         spec_by_id: Dict[str, SpecDocument] = {s.id: s for s in specs}
 
@@ -794,12 +872,17 @@ class ImpactSimulator:
             for up in s.upstream_refs:
                 if up in downstream_adj:
                     downstream_adj[up].append(s.id)
+            for down in s.downstream_refs:
+                if down in downstream_adj:
+                    downstream_adj[s.id].append(down)
 
-        # Transitive downstream traversal
+        # Transitive downstream traversal (index-pointer queue avoids O(n^2) pop(0))
         visited: Set[str] = set()
         queue = [target_spec.id]
-        while queue:
-            curr = queue.pop(0)
+        idx = 0
+        while idx < len(queue):
+            curr = queue[idx]
+            idx += 1
             for child in downstream_adj.get(curr, []):
                 if child not in visited:
                     visited.add(child)
@@ -858,7 +941,7 @@ class CompilerVerifier:
         if not src_dir.exists():
             return results
 
-        # 1. Python Syntax / Ruff check
+        # 1. Python syntax + optional Ruff lint
         py_files = list(src_dir.rglob("*.py"))
         if py_files:
             try:
@@ -868,21 +951,58 @@ class CompilerVerifier:
                     results["errors"].append(f"Python compilation error: {res.stderr}")
                 else:
                     results["checks"].append(f"Python syntax verified ({len(py_files)} files)")
-            except Exception as e:
-                results["errors"].append(f"Python syntax check failed: {e}")
+            except OSError:
+                pass  # interpreter unavailable (rare); skip syntax check
 
-        # 2. Go build check if go.mod exists
+            # Optional Ruff lint (skipped when ruff is not installed)
+            try:
+                res = subprocess.run(["ruff", "check"] + [str(p) for p in py_files], capture_output=True, text=True)
+                if res.returncode == 0:
+                    results["checks"].append(f"Ruff lint passed ({len(py_files)} files)")
+                else:
+                    results["success"] = False
+                    results["errors"].append(f"Ruff lint issues:\n{res.stdout}\n{res.stderr}")
+            except OSError:
+                pass  # ruff not installed (optional)
+
+        # 2. Go vet + build checks if go.mod exists
         go_mods = list(src_dir.rglob("go.mod"))
         for gm in go_mods:
             try:
-                res = subprocess.run(["go", "vet", "./..."], cwd=gm.parent, capture_output=True, text=True)
-                if res.returncode == 0:
-                    results["checks"].append(f"Go vet passed: {gm.parent.relative_to(root_dir)}")
+                vet = subprocess.run(["go", "vet", "./..."], cwd=gm.parent, capture_output=True, text=True)
+                build = subprocess.run(["go", "build", "./..."], cwd=gm.parent, capture_output=True, text=True)
+                if vet.returncode == 0 and build.returncode == 0:
+                    results["checks"].append(f"Go vet+build passed: {gm.parent.relative_to(root_dir)}")
                 else:
                     results["success"] = False
-                    results["errors"].append(f"Go vet error in {gm.parent}: {res.stderr}")
-            except FileNotFoundError:
+                    detail = (vet.stderr or "") + (build.stderr or "")
+                    results["errors"].append(f"Go error in {gm.parent}: {detail}")
+            except OSError:
                 pass  # Go toolchain not installed on host
+
+        # 3. Rust cargo check
+        for ct in list(src_dir.rglob("Cargo.toml")):
+            try:
+                res = subprocess.run(["cargo", "check"], cwd=ct.parent, capture_output=True, text=True)
+                if res.returncode == 0:
+                    results["checks"].append(f"Rust cargo check passed: {ct.parent.relative_to(root_dir)}")
+                else:
+                    results["success"] = False
+                    results["errors"].append(f"Rust cargo check error in {ct.parent}: {res.stderr}")
+            except OSError:
+                pass  # Rust toolchain not installed on host
+
+        # 4. TypeScript/Node check via tsc --noEmit
+        for tsconfig in list(src_dir.rglob("tsconfig.json")):
+            try:
+                res = subprocess.run(["npx", "tsc", "--noEmit", "-p", str(tsconfig)], cwd=tsconfig.parent, capture_output=True, text=True)
+                if res.returncode == 0:
+                    results["checks"].append(f"TypeScript tsc --noEmit passed: {tsconfig.parent.relative_to(root_dir)}")
+                else:
+                    results["success"] = False
+                    results["errors"].append(f"TypeScript error in {tsconfig.parent}: {res.stderr}")
+            except OSError:
+                pass  # Node/npx not installed on host
 
         return results
 
@@ -942,6 +1062,22 @@ class ScaffoldingService:
         except ValueError:
             return False
 
+    @staticmethod
+    def _default_file_content(path: Path) -> str:
+        """Return a minimal, syntactically valid body for an unconditional boilerplate file."""
+        name = path.name
+        if name == "__init__.py":
+            return ""
+        if name.endswith(".go"):
+            return f"package {path.parent.name}\n"
+        if name.endswith((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")):
+            return "export {}\n"
+        if name.endswith(".py"):
+            return f'"""{name} boilerplate."""\n'
+        if name.endswith(".rs"):
+            return ""
+        return f"// {name} boilerplate\n"
+
     @classmethod
     def scaffold_module(cls, root_dir: Path, module: str, scaffold_id: str, entities: List[str]) -> None:
         """Execute deterministic template expansion for a designated module."""
@@ -990,6 +1126,22 @@ class ScaffoldingService:
                 with open(dest_path, "w", encoding="utf-8") as f:
                     f.write(tmpl_text)
                 print(f"  [+] Template:  {dest_path.relative_to(root_dir).as_posix()}")
+
+        # default_files: unconditional boilerplate files (e.g. errors.go, __init__.py)
+        for df_pattern in scaff.get("default_files", []):
+            df_rel = df_pattern
+            for k, v in casing.items():
+                df_rel = df_rel.replace(f"{{{k}}}", v)
+
+            df_path = src_dir / df_rel
+            if not cls.is_safe_subpath(df_path, src_dir):
+                raise ValueError(f"Path traversal detected in default file: {df_pattern}")
+
+            df_path.parent.mkdir(parents=True, exist_ok=True)
+            if not df_path.exists():
+                with open(df_path, "w", encoding="utf-8") as f:
+                    f.write(cls._default_file_content(df_path))
+                print(f"  [+] Default:   {df_path.relative_to(root_dir).as_posix()}")
 
         stubs_map = scaff.get("entity_stubs", {})
         for ent in entities:
@@ -1111,11 +1263,11 @@ class ReportService:
             badge = "badge-green" if sinfo.get("state") == "approved" else "badge-amber"
             stages_html += f"""
             <tr>
-                <td><strong>{sid.upper()}</strong></td>
-                <td><span class="badge {badge}">{sinfo.get('state')}</span></td>
-                <td>{sinfo.get('last_run', 'N/A')[:19]}</td>
-                <td><code>{sinfo.get('combined_hash', 'N/A')[:12]}...</code></td>
-                <td>{sinfo.get('domain_count', 0)} files</td>
+                <td><strong>{html.escape(sid.upper())}</strong></td>
+                <td><span class="badge {badge}">{html.escape(str(sinfo.get('state')))}</span></td>
+                <td>{html.escape(str(sinfo.get('last_run', 'N/A'))[:19])}</td>
+                <td><code>{html.escape(str(sinfo.get('combined_hash', 'N/A'))[:12])}...</code></td>
+                <td>{sinfo.get('file_count', 0)} files</td>
             </tr>
             """
 
@@ -1123,12 +1275,12 @@ class ReportService:
         for s in specs:
             specs_html += f"""
             <tr>
-                <td><code>{s.stage.upper()}</code></td>
-                <td><strong>{s.id}</strong></td>
-                <td>{s.path}</td>
-                <td>{s.status}</td>
-                <td>{', '.join(s.upstream_refs) or '-'}</td>
-                <td>{', '.join(s.downstream_refs) or '-'}</td>
+                <td><code>{html.escape(s.stage.upper())}</code></td>
+                <td><strong>{html.escape(s.id)}</strong></td>
+                <td>{html.escape(s.path)}</td>
+                <td>{html.escape(s.status)}</td>
+                <td>{html.escape(', '.join(s.upstream_refs) or '-')}</td>
+                <td>{html.escape(', '.join(s.downstream_refs) or '-')}</td>
             </tr>
             """
 
@@ -1136,7 +1288,7 @@ class ReportService:
         if drifts:
             drift_html = "<div class='alert alert-danger'><h3>CI Anti-Drift Violations Detected:</h3><ul>"
             for d in drifts:
-                drift_html += f"<li>{d}</li>"
+                drift_html += f"<li>{html.escape(d)}</li>"
             drift_html += "</ul></div>"
         else:
             drift_html = "<div class='alert alert-success'><strong>✓ Anti-Drift Gate:</strong> 100% of LLD modules and entity stubs are synchronized with <code>src/</code>.</div>"
@@ -1227,9 +1379,10 @@ class BrownfieldIngestionService:
 
         modules: Dict[str, Dict[str, Any]] = {}
         for item in sorted(src_path.iterdir()):
-            if item.is_dir() and not item.name.startswith("."):
+            if item.is_dir() and not item.name.startswith(".") and not DeterministicHasher._should_skip(item):
                 m_name = item.name
-                files = [p.relative_to(item).as_posix() for p in item.rglob("*") if p.is_file() and not p.name.startswith(".")]
+                files = [p.relative_to(item).as_posix() for p in item.rglob("*")
+                         if p.is_file() and not p.name.startswith(".") and not DeterministicHasher._should_skip(p)]
                 entities = set()
                 for f in files:
                     base = Path(f).stem
@@ -1349,7 +1502,7 @@ class StateRepository:
                 "last_run": now_iso,
                 "requires_hash": req_hash,
                 "output_dir": stage_conf.get("outputs", [""])[0],
-                "domain_count": len(out_hashes),
+                "file_count": len(out_hashes),
                 "files": out_hashes,
                 "combined_hash": combined_root,
                 "approved_by": actor,
@@ -1591,7 +1744,7 @@ class MCPServer:
                         "result": {
                             "protocolVersion": "2024-11-05",
                             "capabilities": {"tools": {}},
-                            "serverInfo": {"name": "genops-engine", "version": "3.0.0"},
+                            "serverInfo": {"name": "genops-engine", "version": __version__},
                         },
                     }
                 elif method in ("notifications/initialized", "ping"):
@@ -1645,7 +1798,6 @@ def cmd_init(args: argparse.Namespace, root_dir: Path) -> None:
     # If target project doesn't have .agents/, populate it from bundled package
     target_agents_dir = root_dir / ".agents"
     if not target_agents_dir.exists() and pkg_dir.exists() and (pkg_dir / "presets").exists() and root_dir != pkg_dir:
-        import shutil
         target_agents_dir.mkdir(parents=True, exist_ok=True)
         for folder in ["presets", "schemas", "scaffolds", "templates", "skills", "scripts"]:
             src_f = pkg_dir / folder
@@ -1718,13 +1870,30 @@ def cmd_init(args: argparse.Namespace, root_dir: Path) -> None:
     print(f"\n[OK] GenOps initialized successfully across {len(files_to_update)} agent interfaces.")
 
 
-def cmd_validate(args: argparse.Namespace, root_dir: Path) -> None:
-    config_file = root_dir / "genops.yaml"
-    if not config_file.exists():
-        print("ERROR: genops.yaml does not exist.", file=sys.stderr)
-        sys.exit(1)
+_UNSUPPORTED_SCHEMA_KEYWORDS = {
+    "$ref", "minLength", "maxLength", "minProperties", "maxProperties",
+    "uniqueItems", "oneOf", "anyOf", "allOf", "not", "const",
+    "multipleOf", "exclusiveMinimum", "exclusiveMaximum",
+    "patternProperties", "dependencies", "format",
+}
 
-    print("Running JSON Schema validation & integrity checks...")
+
+def _scan_schema_keywords(node: Any, warnings: List[str], where: str) -> None:
+    """Recursively detect JSON Schema keywords the built-in validator silently ignores."""
+    if isinstance(node, dict):
+        for k in node.keys():
+            if k in _UNSUPPORTED_SCHEMA_KEYWORDS:
+                warnings.append(f"{where}: uses unsupported keyword '{k}' (ignored by the built-in Draft-07 subset validator)")
+        for v in node.values():
+            _scan_schema_keywords(v, warnings, where)
+    elif isinstance(node, list):
+        for v in node:
+            _scan_schema_keywords(v, warnings, where)
+
+
+def _collect_validation(root_dir: Path) -> Tuple[List[str], List[str]]:
+    """Run all schema/integrity checks, returning (errors, warnings)."""
+    config_file = root_dir / "genops.yaml"
     errors: List[str] = []
     warnings: List[str] = []
 
@@ -1733,14 +1902,14 @@ def cmd_validate(args: argparse.Namespace, root_dir: Path) -> None:
     cfg = ConfigManager.load_yaml(config_file)
     if cfg_schema_path.exists():
         schema_data = json.load(open(cfg_schema_path, "r", encoding="utf-8"))
-        schema_errors = JsonSchemaValidator.validate(cfg, schema_data, "genops.yaml")
-        errors.extend(schema_errors)
+        errors.extend(JsonSchemaValidator.validate(cfg, schema_data, "genops.yaml"))
+        _scan_schema_keywords(schema_data, warnings, "genops.schema.json")
 
     pipeline = cfg.get("pipeline", {})
     stages = pipeline.get("stages", [])
     stage_ids = {s.get("id") for s in stages if "id" in s}
 
-    for idx, stg in enumerate(stages):
+    for stg in stages:
         sid = stg.get("id")
         if not sid:
             continue
@@ -1766,11 +1935,13 @@ def cmd_validate(args: argparse.Namespace, root_dir: Path) -> None:
             if nxt not in stage_ids:
                 errors.append(f"Stage '{sid}' references non-existent next stage '{nxt}'")
 
-    # 2. Validate scaffold STRUCTURE.yaml files against schema
+    # 2. Validate scaffold STRUCTURE.yaml files against schema and references
     scaff_schema_path = root_dir / ".agents" / "schemas" / "scaffold.schema.json"
     scaffold_dir = root_dir / ".agents" / "scaffolds"
+    known_casing_keys = set(ScaffoldingService.build_casing_map("module-name", "EntityName").keys())
     if scaffold_dir.exists() and scaff_schema_path.exists():
         scaff_schema = json.load(open(scaff_schema_path, "r", encoding="utf-8"))
+        _scan_schema_keywords(scaff_schema, warnings, "scaffold.schema.json")
         for sf in scaffold_dir.glob("*/STRUCTURE.yaml"):
             try:
                 s_data = ConfigManager.load_yaml(sf)
@@ -1778,18 +1949,62 @@ def cmd_validate(args: argparse.Namespace, root_dir: Path) -> None:
                 errors.extend(scaff_errors)
             except Exception as e:
                 errors.append(f"Failed to parse scaffold '{sf}': {e}")
+                continue
 
-    # 3. Validate state file if present
+            # Verify referenced template files exist
+            for tmpl_name in s_data.get("templates", {}):
+                if not (sf.parent / tmpl_name).exists():
+                    errors.append(f"Scaffold '{sf.parent.name}' references missing template '{tmpl_name}'")
+
+            # Verify all placeholders are known casing keys
+            def _check_placeholders(text: str, where: str) -> None:
+                for token in re.findall(r"\{(\w+)\}", str(text)):
+                    if token not in known_casing_keys:
+                        errors.append(f"Scaffold '{sf.parent.name}' uses unknown placeholder '{{{token}}}' in {where}")
+
+            for d in s_data.get("directories", []):
+                _check_placeholders(d, "directories")
+            for tmpl_name, dest in s_data.get("templates", {}).items():
+                _check_placeholders(dest, f"templates.{tmpl_name}")
+            for stub_type, stub_pat in s_data.get("entity_stubs", {}).items():
+                _check_placeholders(stub_pat, f"entity_stubs.{stub_type}")
+            for df in s_data.get("default_files", []):
+                _check_placeholders(df, "default_files")
+
+    # 3. Validate pipeline presets against the genops schema
+    presets_dir = root_dir / ".agents" / "presets"
+    if presets_dir.exists() and cfg_schema_path.exists():
+        preset_schema = json.load(open(cfg_schema_path, "r", encoding="utf-8"))
+        for preset_file in sorted(presets_dir.glob("*.yaml")):
+            try:
+                preset_data = ConfigManager.load_yaml(preset_file)
+                errors.extend(JsonSchemaValidator.validate(preset_data, preset_schema, preset_file.relative_to(root_dir).as_posix()))
+            except Exception as e:
+                errors.append(f"Failed to parse preset '{preset_file}': {e}")
+
+    # 4. Validate state file if present
     state_schema_path = root_dir / ".agents" / "schemas" / "state.schema.json"
     state_file = root_dir / "docs" / ".genops-state.json"
     if state_file.exists() and state_schema_path.exists():
         try:
             state_data = json.load(open(state_file, "r", encoding="utf-8"))
             state_schema = json.load(open(state_schema_path, "r", encoding="utf-8"))
-            state_errors = JsonSchemaValidator.validate(state_data, state_schema, "docs/.genops-state.json")
-            errors.extend(state_errors)
+            _scan_schema_keywords(state_schema, warnings, "state.schema.json")
+            errors.extend(JsonSchemaValidator.validate(state_data, state_schema, "docs/.genops-state.json"))
         except Exception as e:
             errors.append(f"Failed to parse state file: {e}")
+
+    return errors, warnings
+
+
+def cmd_validate(args: argparse.Namespace, root_dir: Path) -> None:
+    config_file = root_dir / "genops.yaml"
+    if not config_file.exists():
+        print("ERROR: genops.yaml does not exist.", file=sys.stderr)
+        sys.exit(1)
+
+    print("Running JSON Schema validation & integrity checks...")
+    errors, warnings = _collect_validation(root_dir)
 
     if warnings:
         print(f"\n[!] {len(warnings)} WARNINGS:")
@@ -1803,6 +2018,81 @@ def cmd_validate(args: argparse.Namespace, root_dir: Path) -> None:
         sys.exit(1)
     else:
         print("\n[OK] Zero-Dependency Schema Validation PASSED: All configs, templates, and scaffolds are VALID.")
+
+
+def cmd_doctor(args: argparse.Namespace, root_dir: Path) -> None:
+    """Run every governance gate in one shot and report a consolidated health check."""
+    config_file = root_dir / "genops.yaml"
+    if not config_file.exists():
+        print("ERROR: genops.yaml not found. Run `genops init` first.", file=sys.stderr)
+        sys.exit(1)
+
+    print("GenOps Doctor — comprehensive repository health check\n")
+    checks: List[Tuple[str, List[str], List[str]]] = []
+
+    v_errors, v_warnings = _collect_validation(root_dir)
+    checks.append(("validate (schemas, templates, scaffolds, presets)", v_errors, v_warnings))
+
+    specs = MarkdownParser.collect_specs(root_dir)
+    checks.append(("check-rules (cross-layer semantic integrity)", LineageGraphService.check_rules(specs), []))
+
+    checks.append(("drift (LLD <-> source sync)", AntiDriftService.check_drift(root_dir), []))
+
+    ver = CompilerVerifier.verify_workspace(root_dir)
+    ver_errors = [] if ver.get("success") else ver.get("errors", [])
+    checks.append(("verify (compiler/linter diagnostics)", ver_errors, []))
+
+    total = 0
+    for name, errs, warns in checks:
+        if errs:
+            print(f"[FAIL] {name} ({len(errs)} issue(s))")
+            for e in errs:
+                print(f"        - {e}")
+            total += len(errs)
+        else:
+            print(f"[PASS] {name}")
+        for w in warns:
+            print(f"        ! {w}")
+
+    print()
+    if total:
+        print(f"[X] Doctor found {total} issue(s). Fix them before relying on the pipeline.")
+        sys.exit(1)
+    print("[OK] All governance gates passed — GenOps is healthy.")
+
+
+def cmd_demo(args: argparse.Namespace, root_dir: Path) -> None:
+    """Scaffold a throwaway module and verify it, proving the pipeline end-to-end."""
+    scaffold_id = args.scaffold or "go-service"
+    module = args.module or "demo-svc"
+    entities = [e.strip() for e in (args.entities or "Ping").split(",") if e.strip()]
+
+    scaffold_src = root_dir / ".agents" / "scaffolds" / scaffold_id
+    if not scaffold_src.exists():
+        print(f"ERROR: scaffold '{scaffold_id}' not found at {scaffold_src}.", file=sys.stderr)
+        sys.exit(1)
+
+    demo_root = root_dir / ".genops-demo"
+    shutil.rmtree(demo_root, ignore_errors=True)
+    (demo_root / ".agents" / "scaffolds").mkdir(parents=True)
+    shutil.copytree(scaffold_src, demo_root / ".agents" / "scaffolds" / scaffold_id)
+
+    print(f"GenOps demo — scaffolding '{module}' ({scaffold_id}) and verifying...\n")
+    ScaffoldingService.scaffold_module(demo_root, module, scaffold_id, entities)
+
+    files = [p for p in (demo_root / "src").rglob("*") if p.is_file() and not p.name.startswith(".")]
+    print(f"\nGenerated {len(files)} files under .genops-demo/src/{module}/.")
+
+    result = CompilerVerifier.verify_workspace(demo_root)
+    for c in result.get("checks", []):
+        print(f"  [+] {c}")
+    for e in result.get("errors", []):
+        print(f"  [-] {e}")
+
+    shutil.rmtree(demo_root, ignore_errors=True)
+    print("\n[OK] Demo complete — throwaway workspace removed.")
+    if not result.get("success", False):
+        sys.exit(1)
 
 
 def cmd_impact(args: argparse.Namespace, root_dir: Path) -> None:
@@ -1888,6 +2178,7 @@ def cmd_status(args: argparse.Namespace, root_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="GenOps Deterministic Pipeline Engine")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # init
@@ -1901,6 +2192,9 @@ def main() -> None:
 
     # validate
     subparsers.add_parser("validate", help="Validate genops.yaml, presets, templates, and scaffolds")
+
+    # doctor
+    subparsers.add_parser("doctor", help="Run all governance gates (validate, check-rules, drift, verify) at once")
 
     # impact
     p_imp = subparsers.add_parser("impact", help="Simulate change impact blast radius across downstream specs and code")
@@ -1953,15 +2247,28 @@ def main() -> None:
     # mcp
     subparsers.add_parser("mcp", help="Run JSON-RPC stdio MCP server for agent tool-calling")
 
+    # demo
+    p_demo = subparsers.add_parser("demo", help="Scaffold a throwaway module and verify it (proves the pipeline end-to-end)")
+    p_demo.add_argument("--scaffold", default="go-service", help="Scaffold id (default: go-service)")
+    p_demo.add_argument("--module", default="demo-svc", help="Module name (default: demo-svc)")
+    p_demo.add_argument("--entities", default="Ping", help="Comma-separated entities")
+
     args = parser.parse_args()
     
     # Dynamic project root discovery: search from CWD upward for genops.yaml or .git
     curr_dir = Path.cwd().resolve()
     root_dir = curr_dir
+    found = False
     for candidate in [curr_dir] + list(curr_dir.parents):
         if (candidate / "genops.yaml").exists() or (candidate / ".git").exists():
             root_dir = candidate
+            found = True
             break
+
+    if not found and args.command != "init":
+        print("ERROR: no genops.yaml or .git found in this directory tree.", file=sys.stderr)
+        print("Run from a GenOps project, or bootstrap one with: genops init --preset software-spec", file=sys.stderr)
+        sys.exit(1)
 
     if args.command == "init":
         cmd_init(args, root_dir)
@@ -1980,6 +2287,10 @@ def main() -> None:
             sys.exit(1)
     elif args.command == "validate":
         cmd_validate(args, root_dir)
+    elif args.command == "doctor":
+        cmd_doctor(args, root_dir)
+    elif args.command == "demo":
+        cmd_demo(args, root_dir)
     elif args.command == "impact":
         cmd_impact(args, root_dir)
     elif args.command == "status":

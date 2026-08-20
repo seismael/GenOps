@@ -54,7 +54,9 @@ default_files:                         # Always generated, no entity needed
 | `{module_snake}` | Lowercase underscored | `user_account` |
 | `{module_camel}` | camelCase | `userAccount` |
 | `{module_pascal}` | PascalCase | `UserAccount` |
+| `{module_lower}` | Lowercase continuous | `useraccount` |
 | `{entity}` / `{Entity}` | PascalCase | `UserAccount` |
+| `{entity_name}` | Human-readable title | `User Account` |
 | `{entity_lower}` | Lowercase continuous | `useraccount` |
 | `{entity_kebab}` | Lowercase hyphenated | `user-account` |
 | `{entity_snake}` | Lowercase underscored | `user_account` |

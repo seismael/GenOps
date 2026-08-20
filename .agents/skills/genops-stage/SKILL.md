@@ -23,13 +23,13 @@ Halt on first failure. Run `python .agents/scripts/genops.py validate` (or MCP `
 
 ## 1. LOAD — Context Assembly & Token Budget Guard
 Read stage config from `genops.yaml`. Load all upstream documents from `requires` paths. Read stage template. Load `.agents/context/CONTEXT.md` for active system topology, glossary, and architectural constraints.
-- **Token Budget Guard:** If upstream documents exceed 60,000 characters (~15,000 tokens), invoke `genops context --domain <slug>` to extract only targeted domain slices, preventing context window saturation.
+- **Token Budget Guard:** If upstream documents exceed 60,000 characters (~15,000 tokens), invoke `python .agents/scripts/genops.py context --domain <slug>` to extract only targeted domain slices, preventing context window saturation.
 
 ## 2. DOMAINS — Scope & Naming
 Enforce domain-split structure: `{STAGE}-{NNN}-{slug}.md`. Target single domain if `--domain <slug>` is specified; otherwise discover all domains from upstream. Auto-increment sequence prefix `NNN`.
 
 ## 3. CHECK — Cryptographic Staleness
-Compute live LF-normalized SHA-256 hash of all `requires` paths (`genops hash <path>`). Compare to recorded `requires_hash`. If identical and state is `approved`, prompt: "Stage already complete and consistent. Re-run?"
+Compute live LF-normalized SHA-256 hash of all `requires` paths (`python .agents/scripts/genops.py hash <path>`). Compare to recorded `requires_hash`. If identical and state is `approved`, prompt: "Stage already complete and consistent. Re-run?"
 
 ## 4. INTERVIEW — Socratic Architectural Challenger
 Ask template questions ONE at a time. Do NOT passively record answers:
@@ -53,7 +53,7 @@ Run declarative `validation_rules` from `genops.yaml` and execute an internal St
 If critical gaps are found, surface recommendations immediately before presentation.
 
 ## 7. PRESENT — Preview & Change-Impact Analysis
-Display executive summary of generated artifacts, resolved decisions, and downstream impact map (invoke `genops impact <spec>` to highlight affected downstream files and modules).
+Display executive summary of generated artifacts, resolved decisions, and downstream impact map (invoke `python .agents/scripts/genops.py impact <spec>` to highlight affected downstream files and modules).
 
 ## 8. APPROVE — Human Hard Gate
 Require explicit human confirmation ("approved", "proceed", "yes"). If changes are requested, apply delta modifications only and re-run Step 6 (VALIDATE).

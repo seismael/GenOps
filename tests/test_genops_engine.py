@@ -58,6 +58,16 @@ class TestDeterministicHasher(unittest.TestCase):
         self.assertIn("a.md", file_hashes)
         self.assertIn("b.md", file_hashes)
 
+    def test_hash_directory_skips_build_artifacts(self) -> None:
+        sub_dir = self.base_path / "mod"
+        (sub_dir / "__pycache__").mkdir(parents=True)
+        (sub_dir / "keep.py").write_text("x = 1\n", encoding="utf-8")
+        (sub_dir / "__pycache__" / "keep.cpython-313.pyc").write_bytes(b"\x00\x01\x02\x03")
+
+        _, file_hashes = genops.DeterministicHasher.hash_directory(sub_dir)
+        self.assertIn("keep.py", file_hashes)
+        self.assertNotIn("__pycache__/keep.cpython-313.pyc", file_hashes)
+
 
 class TestMerkleTree(unittest.TestCase):
     """Tests for MerkleTree root calculation."""

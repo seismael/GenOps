@@ -18,8 +18,7 @@
       "description": "Path to the genops.yaml file governing this state"
     },
     "updated_at": {
-      "type": "string",
-      "format": "date-time"
+      "type": "string"
     },
     "stages": {
       "type": "object",
@@ -41,7 +40,7 @@
           "output_dir": {
             "type": "string"
           },
-          "domain_count": {
+          "file_count": {
             "type": "integer",
             "minimum": 0
           },

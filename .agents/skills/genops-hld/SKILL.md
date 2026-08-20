@@ -20,7 +20,7 @@ Second stage. Requires an approved PRD. Generates system design specifications i
 
 2. **LOAD & BUDGET CHECK**
    - Read all upstream `docs/prd/*.md` documents.
-   - **Token Budget Analyzer:** If total upstream character count exceeds 60,000 (~15,000 tokens), invoke `genops context --domain <slug>` to slice relevant upstream context.
+   - **Token Budget Analyzer:** If total upstream character count exceeds 60,000 (~15,000 tokens), invoke `python .agents/scripts/genops.py context --domain <slug>` to slice relevant upstream context.
    - Read `.agents/context/CONTEXT.md` for existing constraints, glossaries, and technology preferences.
    - Read `HLD-domain.md.template` to extract interview questions and output structure.
 

@@ -7,9 +7,13 @@ description: Use when scaffolding project structure, generating stub files, test
 
 Terminal stage in the software specification pipeline. Reads LLD specifications and scaffolds production-grade source code, domain models, and test harnesses into `src/`.
 
+<HARD-GATE>
+Do NOT skip APPROVE. Do NOT declare the code stage complete without explicit human approval unless --flow or --nonstop. "It looks fine" is NOT approval.
+</HARD-GATE>
+
 **Cognitive Role:** Principal Software Engineer. Clean Architecture purist, TDD practitioner, compiler-driven, and zero-drift enforcer.
 
-**Config:** `id: code`, `requires: [docs/lld/]`, `outputs: src/`, `template: code/CODE-domain.md.template`, `next: []`
+**Config:** `id: code`, `requires: [docs/lld/]`, `outputs: src/`, `next: []`
 
 ## Execution Protocol
 

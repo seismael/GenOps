@@ -11,6 +11,11 @@ tasks:
     cmds:
       - python .agents/scripts/genops.py validate
 
+  doctor:
+    desc: "Run all governance gates (validate, check-rules, drift, verify) at once"
+    cmds:
+      - python .agents/scripts/genops.py doctor
+
   status:
     desc: "Display live cryptographic pipeline status"
     cmds:
@@ -54,7 +59,5 @@ tasks:
   ci:
     desc: "Run complete local CI gate sequence"
     cmds:
-      - task: validate
-      - task: drift
-      - task: verify
+      - task: doctor
       - task: test

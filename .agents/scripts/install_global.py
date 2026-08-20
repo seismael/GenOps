@@ -1,98 +1,100 @@
+"""Install the GenOps CLI wrapper and MCP server config across common coding agents.
+
+Portable: derives the engine path from this script's own location and every
+user-config path from the home directory. No machine-specific hardcoded paths.
+"""
+
+from __future__ import annotations
+
 import json
-import os
 import shutil
 import sys
 from pathlib import Path
+from typing import Optional
 
-def install():
-    plugin_script = Path(r"C:\Users\firas\.gemini\config\plugins\genops\scripts\genops.py")
-    
-    # 1. Install CLI wrappers
-    cmd_content = f'@echo off\npython "{plugin_script}" %*\n'
-    ps1_content = f'& python "{plugin_script}" $args\n'
-    sh_content = f'#!/usr/bin/env bash\npython "{plugin_script.as_posix()}" "$@"\n'
 
-    for target in [Path(r"C:\Users\firas\go\bin"), Path(r"C:\Users\firas\AppData\Roaming\npm")]:
-        if target.exists():
-            (target / "genops.cmd").write_text(cmd_content, encoding="utf-8")
-            (target / "genops.ps1").write_text(ps1_content, encoding="utf-8")
-            (target / "genops").write_text(sh_content, encoding="utf-8")
-            print(f"[OK] Installed global genops CLI wrapper in {target}")
+def _load_json(path: Path) -> dict:
+    """Load JSON, returning {} on missing/corrupt file after backing the file up."""
+    if not path.exists():
+        return {}
+    shutil.copy2(path, path.with_suffix(path.suffix + ".genops-bak"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (json.JSONDecodeError, OSError):
+        return {}
 
-    # 2. Update Claude Code
-    claude_json = Path(r"C:\Users\firas\.claude.json")
-    if claude_json.exists():
-        with open(claude_json, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        data.setdefault("mcpServers", {})
-        data["mcpServers"]["genops"] = {
-            "type": "stdio",
-            "command": "python",
-            "args": [str(plugin_script), "mcp"],
-            "env": {}
-        }
-        with open(claude_json, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        print("[OK] Configured genops MCP in .claude.json")
 
-    # 3. Update OpenCode
-    opencode_mcp = Path(r"C:\Users\firas\.config\opencode\mcp.json")
-    if opencode_mcp.exists():
-        with open(opencode_mcp, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        data.setdefault("mcpServers", {})
-        data["mcpServers"]["genops"] = {
-            "command": "python",
-            "args": [str(plugin_script), "mcp"]
-        }
-        with open(opencode_mcp, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        print("[OK] Configured genops MCP in OpenCode mcp.json")
+def _save_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
-    opencode_skills = Path(r"C:\Users\firas\.config\opencode\skills")
-    if opencode_skills.exists():
-        src_skills = Path(r"C:\Users\firas\.gemini\config\plugins\genops\skills")
-        for s in src_skills.iterdir():
-            if s.is_dir():
-                dest = opencode_skills / s.name
-                if not dest.exists():
-                    shutil.copytree(s, dest)
-        print("[OK] Copied GenOps skills into OpenCode skills directory")
 
-    # 4. Update VS Code / Cline
-    cline_mcp = Path(r"C:\Users\firas\AppData\Roaming\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json")
-    if cline_mcp.exists():
-        with open(cline_mcp, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        data.setdefault("mcpServers", {})
-        data["mcpServers"]["genops"] = {
-            "command": "python",
-            "args": [str(plugin_script), "mcp"],
-            "disabled": False,
-            "autoApprove": [
-                "genops_status", "genops_validate", "genops_verify", 
-                "genops_drift", "genops_compact", "genops_report", "genops_rtm"
-            ]
-        }
-        with open(cline_mcp, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        print("[OK] Configured genops MCP in VS Code / Cline")
+def _set_mcp_server(data: dict, command: str, args: list, extra: Optional[dict] = None) -> dict:
+    servers = data.setdefault("mcpServers", {})
+    entry = {"command": command, "args": args}
+    if extra:
+        entry.update(extra)
+    servers["genops"] = entry
+    return data
 
-    # 5. Gemini / Antigravity
-    gemini_mcp = Path(r"C:\Users\firas\.gemini\config\mcp_config.json")
-    if gemini_mcp.exists():
-        with open(gemini_mcp, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        data.setdefault("mcpServers", {})
-        data["mcpServers"]["genops"] = {
-            "command": "python",
-            "args": [str(plugin_script), "mcp"]
-        }
-        with open(gemini_mcp, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        print("[OK] Configured genops MCP in Gemini mcp_config.json")
 
-    print("\n[SUCCESS] GenOps successfully installed across all AI coding tools and environments on this machine!")
+def install() -> int:
+    script = Path(__file__).resolve()
+    home = Path.home()
+
+    # 1. CLI wrappers into directories that are already on PATH
+    bin_dirs = [
+        home / "go" / "bin",
+        home / ".local" / "bin",
+        home / "AppData" / "Roaming" / "npm",  # Windows
+    ]
+    installed = 0
+    for target in bin_dirs:
+        if not target.is_dir():
+            continue
+        (target / "genops.cmd").write_text(f'@echo off\npython "{script}" %*\n', encoding="utf-8")
+        (target / "genops.ps1").write_text(f'& python "{script}" $args\n', encoding="utf-8")
+        (target / "genops").write_text(f'#!/usr/bin/env bash\npython "{script.as_posix()}" "$@"\n', encoding="utf-8")
+        installed += 1
+        print(f"[OK] Installed genops CLI wrapper in {target}")
+
+    if installed == 0:
+        print("[!] No standard bin directory found; skipping CLI wrappers.", file=sys.stderr)
+
+    # 2. MCP registrations (JSON-based configs only)
+    cline_settings = (
+        home / "AppData" / "Roaming" / "Code" / "User" / "globalStorage"
+        / "saoudrizwan.claude-dev" / "settings" / "cline_mcp_settings.json"
+    )
+    json_targets = [
+        home / ".claude.json",                       # Claude Code
+        home / ".config" / "opencode" / "mcp.json",  # OpenCode
+        home / ".gemini" / "config" / "mcp_config.json",  # Gemini / Antigravity
+        cline_settings,                              # VS Code / Cline
+    ]
+    for path in json_targets:
+        if not path.exists():
+            continue
+        data = _load_json(path)
+        if path == cline_settings:
+            _set_mcp_server(
+                data,
+                sys.executable,
+                [str(script), "mcp"],
+                {"disabled": False, "autoApprove": [
+                    "genops_status", "genops_validate", "genops_verify",
+                    "genops_drift", "genops_compact", "genops_report", "genops_rtm",
+                ]},
+            )
+        else:
+            _set_mcp_server(data, sys.executable, [str(script), "mcp"])
+        _save_json(path, data)
+        print(f"[OK] Configured genops MCP in {path}")
+
+    print("\n[SUCCESS] GenOps installed across detected coding tools on this machine.")
+    return 0
+
 
 if __name__ == "__main__":
-    install()
+    sys.exit(install())

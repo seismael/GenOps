@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.8+](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
 [![Zero External Dependencies](https://img.shields.io/badge/Dependencies-Zero%20External-brightgreen.svg)](#)
-[![Maturity Level](https://img.shields.io/badge/Maturity-v3.0%20Super%20Skills-purple.svg)](#current-state--maturity-level)
+[![Maturity Level](https://img.shields.io/badge/Maturity-v3.1.0-purple.svg)](#current-state--maturity-level)
 
 > **Declarative. Cascading. Executable. Socratic. 100% Agent-Native.**
 
@@ -66,15 +66,15 @@ flowchart LR
 
 ## Current State & Maturity Level
 
-GenOps has achieved the **v3.0 Super Skills** milestone:
+GenOps has achieved the **v3.1.0 Super Skills** milestone:
 
-| Capability Vector | Baseline (v2.0) | Current State (v3.0 Super Skills) | Operational Value |
+| Capability Vector | Baseline (v2.0) | Current State (v3.1.0 Super Skills) | Operational Value |
 |---|---|---|---|
 | **Elicitation Model** | Static question checklist | Socratic Challenger (probes NFRs, challenges premature complexity) | Eliminates architectural errors before drafting |
 | **Review Process** | Human approval gate only | Dual-Pass: Simulated Staff Critic (STRIDE/Resilience/Observability) + `<HARD-GATE>` | Catches failure modes and security vulnerabilities early |
 | **Specification Format** | Markdown tables & narrative text | Machine-executable OpenAPI 3.1 YAML, PostgreSQL 16+ DDL, Go/Python Ports | Zero-ambiguity contracts ready for compiler generation |
 | **Scaffolding Depth** | Empty struct stubs with IDs | Hexagonal / Clean Architecture (`domain/`, `ports/`, `adapters/`, `handlers/`, `tests/`) | Production-ready, decoupled polyglot baselines |
-| **Verification Loop** | Regex table drift checks | Compiler-in-the-loop diagnostics (`genops verify`) + CI anti-drift gate | Guarantees code compiles with 0 warnings |
+| **Verification Loop** | Regex table drift checks | Compiler-in-the-loop diagnostics (`genops verify`) + CI anti-drift gate | Verifies code compiles across Python/Go/Rust/TypeScript stacks |
 | **Living Context** | Static markdown placeholder | Active Living Memory Compactor (`ContextCompactor` $\to$ `CONTEXT.md`) | Prevents LLM context saturation and drift |
 | **Runtime Dependencies** | Standalone script | Zero external `pip` dependencies (pure Python 3.8+ stdlib) | 100% portable, agent-native, in-repo execution |
 
@@ -221,7 +221,7 @@ cd my-project
 Initialize across all coding agent platforms in your repository:
 
 ```bash
-# Synchronize all agent entrypoints (AGENTS.md, CLAUDE.md, Cursor rules, Copilot, Windsurf, Aider)
+# Synchronize all agent entrypoints (AGENTS.md, CLAUDE.md, Cursor rules, Copilot, Windsurf)
 python .agents/scripts/genops.py init --agent all
 ```
 
@@ -269,9 +269,12 @@ Any agent environment supporting MCP can run GenOps natively over `stdio`:
 }
 ```
 
+> On systems where the interpreter is `python3` (e.g. some Linux distros), use `"command": "python3"` instead. The MCP transport is **stdio** — the agent spawns the in-repo script locally; there is no network service.
+
 Exposed MCP tools:
 - `genops_validate`: Validates configuration, presets, templates, and scaffolds.
 - `genops_status`: Retrieves live pipeline health and staleness graph.
+- `genops_impact`: Simulates change impact blast radius across downstream specs and modules.
 - `genops_hash`: Computes cross-platform LF-normalized SHA-256 hashes.
 - `genops_record`: Atomically records stage state with lockfile safety and triggers memory compaction.
 - `genops_compact`: Synthesizes living project memory into `.agents/context/CONTEXT.md`.
@@ -321,10 +324,13 @@ Available built-in scaffolds (`.agents/scaffolds/`):
 |---|---|
 | `python .agents/scripts/genops.py init [--preset <p>] [--agent <a>]` | Initialize GenOps across agent entrypoint files |
 | `python .agents/scripts/genops.py validate` | Validate genops.yaml, presets, templates, and scaffolds |
+| `python .agents/scripts/genops.py doctor` | Run all governance gates (validate, check-rules, drift, verify) at once |
+| `python .agents/scripts/genops.py demo [--scaffold <s>] [--module <m>]` | Scaffold a throwaway module and verify it (proves the pipeline end-to-end) |
 | `python .agents/scripts/genops.py status` | Display pipeline health and cryptographic staleness status |
+| `python .agents/scripts/genops.py impact <spec>` | Simulate change-impact blast radius across downstream specs & code |
 | `python .agents/scripts/genops.py hash <path>` | Compute LF-normalized SHA-256 hash for file or directory |
 | `python .agents/scripts/genops.py record <stage> [--actor <a>]` | Atomically record stage approval into state v2.0 |
-| `python .agents/scripts/genops.py scaffold --module <m> --scaffold <s>` | Expand scaffold templates and entity stubs into `src/` |
+| `python .agents/scripts/genops.py scaffold --module <m> --scaffold <s> [--entities <e>]` | Expand scaffold templates and entity stubs into `src/` |
 | `python .agents/scripts/genops.py compact` | Compact active living project memory into `CONTEXT.md` |
 | `python .agents/scripts/genops.py verify` | Run compiler & linter diagnostics across source workspace |
 | `python .agents/scripts/genops.py drift` | CI/CD anti-drift check asserting 100% LLD-to-code sync |
@@ -335,6 +341,36 @@ Available built-in scaffolds (`.agents/scaffolds/`):
 | `python .agents/scripts/genops.py report [--html <path>]` | Generate self-contained executive HTML dashboard |
 | `python .agents/scripts/genops.py ingest [--src <path>]` | Brownfield legacy codebase reverse-engineering |
 | `python .agents/scripts/genops.py mcp` | Start JSON-RPC 2.0 stdio Model Context Protocol server |
+| `python .agents/scripts/genops.py --version` | Print the engine version |
+
+---
+
+## Examples & Live Demo
+
+Two complete, runnable projects demonstrate the full `PRD → HLD → ADR → LLD → Code` pipeline end-to-end. They are the fastest way to see the value GenOps produces.
+
+| Example | Stack | What it demonstrates |
+|---|---|---|
+| [`examples/url-shortener`](examples/url-shortener) | Python 3.11 · FastAPI · SQLite (WAL) | Clean/hexagonal architecture, SSRF-hardened domain, API-key auth, click analytics — a runnable HTTP API with 26 passing tests |
+| [`examples/url-shortener-cluster`](examples/url-shortener-cluster) | Go 1.22 microservices | Distributed Redis/Kafka/ClickHouse design with mocked adapters and 20k-goroutine concurrency tests |
+
+```bash
+# Run the FastAPI example's full test suite
+cd examples/url-shortener/src/url-shortener
+python -m unittest discover -s tests -p "test_*.py" -v
+
+# Serve the API and hit it
+python -m pip install "fastapi>=0.110" "pydantic>=2.6" "uvicorn>=0.27"
+uvicorn app.main:app --reload          # then open http://127.0.0.1:8000/healthz
+```
+
+```bash
+# Run the Go microservice tests (from each module root)
+cd examples/url-shortener-cluster/src/redirect-service && go test ./...
+cd ../analytics-service && go test ./...
+```
+
+Each example directory has its own `README.md` with the spec artifacts, architecture notes, and test instructions.
 
 ---
 

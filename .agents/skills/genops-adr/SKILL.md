@@ -21,7 +21,7 @@ Third stage. Requires an approved HLD. Generates modular decision records into `
 
 2. **LOAD & BUDGET CHECK**
    - Read all upstream `docs/hld/*.md` specifications.
-   - **Token Budget Analyzer:** If total upstream character count exceeds 60,000 (~15,000 tokens), invoke `genops context --domain <slug>` to slice relevant upstream context.
+   - **Token Budget Analyzer:** If total upstream character count exceeds 60,000 (~15,000 tokens), invoke `python .agents/scripts/genops.py context --domain <slug>` to slice relevant upstream context.
    - Read `.agents/context/CONTEXT.md` for existing Technology Preferences and Architecture Constraints.
    - Read `ADR.md.template` to extract interview questions and output structure.
 
