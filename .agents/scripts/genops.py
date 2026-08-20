@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-__version__ = "3.1.0"
+__version__ = "3.1.1"
 
 # Ensure stdout and stderr handle utf-8 cleanly across Windows/Linux/macOS
 if sys.platform == "win32":
@@ -396,7 +396,7 @@ class MarkdownParser:
         if not file_path.is_file():
             return {}, ""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8-sig") as f:
                 content = f.read()
         except OSError:
             return {}, ""
@@ -667,7 +667,7 @@ class ConfigManager:
     @staticmethod
     def load_yaml(path: Path) -> Dict[str, Any]:
         """Parse YAML file using native zero-dependency SimpleYamlParser (or PyYAML if installed)."""
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:
             content = f.read()
 
         try:
@@ -889,6 +889,9 @@ class ImpactSimulator:
                     queue.append(child)
 
         affected_specs = [spec_by_id[sid] for sid in visited if sid in spec_by_id]
+        _rank = {"prd": 0, "brief": 0, "lit-review": 0, "hld": 1, "wireframes": 1, "hypothesis": 1,
+                 "adr": 2, "mockups": 2, "experiment": 2, "lld": 3, "prototype": 3, "report": 3, "code": 4}
+        affected_specs.sort(key=lambda s: (_rank.get(s.stage, 99), s.stage, s.id))
 
         # Check affected code modules from LLD specs
         affected_modules: List[str] = []
@@ -936,7 +939,7 @@ class CompilerVerifier:
     def verify_workspace(cls, root_dir: Path) -> Dict[str, Any]:
         """Scan src/ and run detected compiler/linter toolchains."""
         src_dir = root_dir / "src"
-        results: Dict[str, Any] = {"success": True, "checks": [], "errors": []}
+        results: Dict[str, Any] = {"success": True, "checks": [], "errors": [], "skipped": []}
 
         if not src_dir.exists():
             return results
@@ -952,7 +955,7 @@ class CompilerVerifier:
                 else:
                     results["checks"].append(f"Python syntax verified ({len(py_files)} files)")
             except OSError:
-                pass  # interpreter unavailable (rare); skip syntax check
+                results["skipped"].append("Python syntax check skipped (interpreter unavailable)")
 
             # Optional Ruff lint (skipped when ruff is not installed)
             try:
@@ -963,7 +966,7 @@ class CompilerVerifier:
                     results["success"] = False
                     results["errors"].append(f"Ruff lint issues:\n{res.stdout}\n{res.stderr}")
             except OSError:
-                pass  # ruff not installed (optional)
+                results["skipped"].append("Ruff lint skipped (not installed)")
 
         # 2. Go vet + build checks if go.mod exists
         go_mods = list(src_dir.rglob("go.mod"))
@@ -978,7 +981,7 @@ class CompilerVerifier:
                     detail = (vet.stderr or "") + (build.stderr or "")
                     results["errors"].append(f"Go error in {gm.parent}: {detail}")
             except OSError:
-                pass  # Go toolchain not installed on host
+                results["skipped"].append(f"Go vet+build skipped: {gm.parent.relative_to(root_dir)} (toolchain not installed)")
 
         # 3. Rust cargo check
         for ct in list(src_dir.rglob("Cargo.toml")):
@@ -990,7 +993,7 @@ class CompilerVerifier:
                     results["success"] = False
                     results["errors"].append(f"Rust cargo check error in {ct.parent}: {res.stderr}")
             except OSError:
-                pass  # Rust toolchain not installed on host
+                results["skipped"].append(f"Rust cargo check skipped: {ct.parent.relative_to(root_dir)} (toolchain not installed)")
 
         # 4. TypeScript/Node check via tsc --noEmit
         for tsconfig in list(src_dir.rglob("tsconfig.json")):
@@ -1002,7 +1005,7 @@ class CompilerVerifier:
                     results["success"] = False
                     results["errors"].append(f"TypeScript error in {tsconfig.parent}: {res.stderr}")
             except OSError:
-                pass  # Node/npx not installed on host
+                results["skipped"].append(f"TypeScript tsc skipped: {tsconfig.parent.relative_to(root_dir)} (npx/tsc not installed)")
 
         return results
 
@@ -2132,7 +2135,7 @@ def cmd_status(args: argparse.Namespace, root_dir: Path) -> None:
     state_data = state_repo.load_state()
     st_map = state_data.get("stages", {})
 
-    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     print(f"\nPipeline: {pipeline.get('name', 'Software Specification Pipeline')}")
     print(f"Status as of: {now_str}\n")
     print(f"{'Stage':<12} | {'State':<10} | {'Last Run':<19} | {'Upstream':<12} | {'Downstream':<12}")
@@ -2140,16 +2143,22 @@ def cmd_status(args: argparse.Namespace, root_dir: Path) -> None:
 
     issues: List[str] = []
 
+    # Build downstream adjacency from the pipeline's `next` links
+    next_map: Dict[str, List[str]] = {stg.get("id", ""): list(stg.get("next", [])) for stg in stages}
+
+    # First pass: compute each stage's direct state from its own upstream hashes
+    states: Dict[str, str] = {}
+    upstream_map: Dict[str, str] = {}
+    downstream_map: Dict[str, str] = {}
+    last_run_map: Dict[str, str] = {}
     for stg in stages:
         sid = stg.get("id", "")
         recorded = st_map.get(sid, {})
         st_state = recorded.get("state", "absent")
-        last_run = recorded.get("last_run", "Never")[:19]
-
+        last_run_map[sid] = recorded.get("last_run", "Never")[:19]
         reqs = stg.get("requires", [])
         upstream_status = "consistent"
         downstream_status = "consistent"
-
         if not reqs:
             upstream_status = "N/A"
         else:
@@ -2164,11 +2173,29 @@ def cmd_status(args: argparse.Namespace, root_dir: Path) -> None:
                 issues.append(f"Stage '{sid}': upstream dependencies changed. Requires regeneration.")
             elif not stored_req_hash:
                 upstream_status = "pending"
-
         if st_state == "absent":
             downstream_status = "blocked"
+        states[sid] = st_state
+        upstream_map[sid] = upstream_status
+        downstream_map[sid] = downstream_status
 
-        print(f"{sid:<12} | {st_state:<10} | {last_run:<19} | {upstream_status:<12} | {downstream_status:<12}")
+    # Second pass: propagate staleness/absence transitively downstream
+    changed = True
+    while changed:
+        changed = False
+        for stg in stages:
+            sid = stg.get("id", "")
+            if states.get(sid) in ("stale", "absent"):
+                for nxt in next_map.get(sid, []):
+                    if nxt in states and states[nxt] == "approved":
+                        states[nxt] = "stale"
+                        downstream_map[nxt] = "at-risk"
+                        issues.append(f"Stage '{nxt}': transitively affected by stale/absent upstream '{sid}'. Regenerate the chain.")
+                        changed = True
+
+    for stg in stages:
+        sid = stg.get("id", "")
+        print(f"{sid:<12} | {states.get(sid, 'absent'):<10} | {last_run_map.get(sid, 'Never'):<19} | {upstream_map.get(sid, 'consistent'):<12} | {downstream_map.get(sid, 'consistent'):<12}")
 
     if issues:
         print("\nIssues detected:")
@@ -2356,13 +2383,19 @@ def main() -> None:
         print(f"[OK] Compacted living memory persisted to {p.relative_to(root_dir).as_posix()}")
     elif args.command == "verify":
         res = CompilerVerifier.verify_workspace(root_dir)
-        if res["success"]:
-            print("[OK] Compiler & linter verification passed cleanly.")
-        else:
+        for c in res.get("checks", []):
+            print(f"  [+] {c}")
+        for s in res.get("skipped", []):
+            print(f"  [~] {s}")
+        if res.get("errors"):
             print("[X] Compiler diagnostics found errors:")
             for err in res["errors"]:
                 print(f"  - {err}")
             sys.exit(1)
+        if not res.get("checks") and res.get("skipped"):
+            print("[~] Nothing was verified (toolchains unavailable or no source modules).")
+        else:
+            print("[OK] Compiler & linter verification passed cleanly.")
     elif args.command == "report":
         out_html = root_dir / args.html
         ReportService.generate_html_report(root_dir, out_html)

@@ -2,6 +2,16 @@
 
 All notable changes to GenOps are documented in this file.
 
+## [3.1.1] — 2026-08-20
+
+### Fixed (from end-to-end dogfooding)
+- `status` staleness now propagates **transitively** downstream — a PRD change flags HLD→ADR→LLD→code stale, not just the direct child.
+- `verify` now distinguishes *verified* from *skipped (toolchain not installed)*, and no longer reports "passed cleanly" when nothing was actually checked.
+- Frontmatter/YAML parsing now tolerates a UTF-8 byte-order mark, so Windows `Set-Content`/`Out-File` no longer silently breaks the document index.
+- `impact` lists downstream specs in cascade order (HLD→ADR→LLD) instead of graph-traversal order.
+- `status` timestamps are now consistent UTC.
+- Removed the unused `code/CODE-domain.md.template` (~1.4k tokens of dead weight); the code stage scaffolds `src/`.
+
 ## [3.1.0] — 2026-08-20
 
 ### Added

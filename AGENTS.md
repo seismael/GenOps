@@ -26,10 +26,7 @@ docs/
 │   ├── ADR-002-sqlite-storage.md
 │   └── ADR-003-cobra-cli-framework.md
 ├── lld/LLD-001-taskflow-design.md           ← Single domain = 1 file
-└── code/
-    ├── CODE-001-core-domain.md              ← Multiple files per domain
-    ├── CODE-002-storage-layer.md
-    └── CODE-003-cli-commands.md
+└── (code stage scaffolds src/, not a CODE-*.md doc)
 ```
 
 For multi-domain projects (e.g., e-commerce: catalog, cart, payments):
