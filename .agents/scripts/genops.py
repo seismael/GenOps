@@ -35,8 +35,9 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from urllib.parse import unquote, urlparse
 
-__version__ = "3.1.1"
+__version__ = "3.1.2"
 
 # Ensure stdout and stderr handle utf-8 cleanly across Windows/Linux/macOS
 if sys.platform == "win32":
@@ -1592,10 +1593,23 @@ class LineageGraphService:
 
         return violations
 
-
 # ==============================================================================
 # Domain VII: MCP JSON-RPC 2.0 Stdio Server
 # ==============================================================================
+
+
+def is_genops_project(path: Path) -> bool:
+    """Return True if *path* looks like a GenOps project root."""
+    return (path / "genops.yaml").exists() or (path / ".git").exists()
+
+
+def discover_project_root(start: Path) -> Optional[Path]:
+    """Walk upward from *start* to the nearest GenOps project root, if any."""
+    for candidate in [start] + list(start.parents):
+        if is_genops_project(candidate):
+            return candidate
+    return None
+
 
 class MCPServer:
     """Zero-dependency JSON-RPC 2.0 stdio MCP Server for AI Agent Integration."""
@@ -1621,10 +1635,63 @@ class MCPServer:
     def __init__(self, root_dir: Path):
         self.root_dir = root_dir
         self.state_repo = StateRepository(root_dir)
+        self.client_roots: List[Path] = []
+
+    @staticmethod
+    def _uri_to_path(uri: str) -> Optional[Path]:
+        """Convert an MCP workspace root URI to a local filesystem path."""
+        if not uri:
+            return None
+        parsed = urlparse(uri)
+        path = unquote(parsed.path) if parsed.scheme == "file" else uri
+        if not path:
+            return None
+        if sys.platform == "win32":
+            m = re.match(r"^/([A-Za-z]:[\\/].*)$", path)
+            if m:
+                path = m.group(1)
+            elif re.match(r"^/[A-Za-z]:$", path):
+                path = path[1:] + "/"
+        p = Path(path)
+        return p if p.is_dir() else None
+
+    def _capture_roots(self, roots: List[Any]) -> None:
+        """Store the client-provided workspace roots from an initialize request."""
+        self.client_roots = []
+        for r in roots or []:
+            if not isinstance(r, dict):
+                continue
+            p = self._uri_to_path(r.get("uri", ""))
+            if p is not None:
+                self.client_roots.append(p)
+
+    def _resolve_root(self) -> Optional[Path]:
+        """Return the best GenOps project root from the explicit root, client roots, or CWD."""
+        if is_genops_project(self.root_dir):
+            return self.root_dir
+        candidates = list(self.client_roots)
+        cwd = Path.cwd().resolve()
+        if cwd not in candidates:
+            candidates.append(cwd)
+        for c in candidates:
+            root = discover_project_root(c)
+            if root is not None:
+                return root
+        return None
 
     def dispatch(self, name: str, args: Dict[str, Any]) -> Tuple[str, bool]:
         """Dispatch tool calls to domain services."""
         try:
+            root = self._resolve_root()
+            if root is None:
+                return (
+                    "No GenOps project found in the current workspace. "
+                    "Run from a project containing genops.yaml or .git, or "
+                    "initialize one with `genops init --preset software-spec`.",
+                    True,
+                )
+            self.root_dir = root
+            self.state_repo = StateRepository(root)
             if name == "genops_validate":
                 errors = []
                 schema_path = self.root_dir / ".agents" / "schemas" / "genops.schema.json"
@@ -1741,6 +1808,8 @@ class MCPServer:
                 method = req.get("method")
 
                 if method == "initialize":
+                    params = req.get("params", {})
+                    self._capture_roots(params.get("roots", []))
                     resp = {
                         "jsonrpc": "2.0",
                         "id": req_id,
@@ -2284,18 +2353,16 @@ def main() -> None:
     
     # Dynamic project root discovery: search from CWD upward for genops.yaml or .git
     curr_dir = Path.cwd().resolve()
-    root_dir = curr_dir
-    found = False
-    for candidate in [curr_dir] + list(curr_dir.parents):
-        if (candidate / "genops.yaml").exists() or (candidate / ".git").exists():
-            root_dir = candidate
-            found = True
-            break
+    root_dir = discover_project_root(curr_dir)
 
-    if not found and args.command != "init":
-        print("ERROR: no genops.yaml or .git found in this directory tree.", file=sys.stderr)
-        print("Run from a GenOps project, or bootstrap one with: genops init --preset software-spec", file=sys.stderr)
-        sys.exit(1)
+    if root_dir is None:
+        root_dir = curr_dir
+        # `init` bootstraps a project and `mcp` resolves the root per request, so
+        # only interactive CLI commands require an existing project up front.
+        if args.command not in ("init", "mcp"):
+            print("ERROR: no genops.yaml or .git found in this directory tree.", file=sys.stderr)
+            print("Run from a GenOps project, or bootstrap one with: genops init --preset software-spec", file=sys.stderr)
+            sys.exit(1)
 
     if args.command == "init":
         cmd_init(args, root_dir)

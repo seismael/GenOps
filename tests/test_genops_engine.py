@@ -5,7 +5,6 @@ Unit and integration tests for GenOps Deterministic Pipeline Engine.
 import importlib.util
 import json
 import os
-import shutil
 import sys
 import tempfile
 import unittest
@@ -14,6 +13,7 @@ from pathlib import Path
 # Dynamically import genops.py from .agents/scripts/
 GENOPS_SCRIPT_PATH = Path(__file__).resolve().parent.parent / ".agents" / "scripts" / "genops.py"
 spec = importlib.util.spec_from_file_location("genops", str(GENOPS_SCRIPT_PATH))
+assert spec is not None and spec.loader is not None
 genops = importlib.util.module_from_spec(spec)
 sys.modules["genops"] = genops
 spec.loader.exec_module(genops)
@@ -166,7 +166,7 @@ class TestStateLock(unittest.TestCase):
         old_time = os.path.getmtime(self.lock_path) - 100
         os.utime(self.lock_path, (old_time, old_time))
 
-        with genops.StateLock(self.lock_path, timeout=0.5) as lock:
+        with genops.StateLock(self.lock_path, timeout=0.5):
             self.assertTrue(self.lock_path.exists())
         self.assertFalse(self.lock_path.exists())
 
@@ -616,6 +616,39 @@ class TestMCPServer(unittest.TestCase):
         out, is_err = server.dispatch("unknown_tool", {})
         self.assertTrue(is_err)
         self.assertIn("Unknown tool", out)
+
+
+class TestProjectDiscovery(unittest.TestCase):
+    """Tests for project-root discovery used by CLI and the MCP server."""
+
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root_dir = Path(self.temp_dir.name)
+        (self.root_dir / "genops.yaml").write_text("pipeline:\n  name: test\n  stages: []\n", encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self.temp_dir.cleanup()
+
+    def test_is_genops_project(self) -> None:
+        self.assertTrue(genops.is_genops_project(self.root_dir))
+        sub = self.root_dir / "sub"
+        sub.mkdir()
+        self.assertFalse(genops.is_genops_project(sub))
+
+    def test_discover_project_root_walks_up(self) -> None:
+        nested = self.root_dir / "a" / "b"
+        nested.mkdir(parents=True)
+        self.assertEqual(genops.discover_project_root(nested).resolve(), self.root_dir.resolve())
+
+    def test_discover_project_root_none_when_missing(self) -> None:
+        stray = self.root_dir.parent / "genops-stray-nothing"
+        stray.mkdir(exist_ok=True)
+        self.assertIsNone(genops.discover_project_root(stray))
+
+    def test_mcp_resolve_root_prefers_explicit_project(self) -> None:
+        server = genops.MCPServer(self.root_dir)
+        server._capture_roots([{"uri": "file:///C:/somewhere/else"}])
+        self.assertEqual(server._resolve_root().resolve(), self.root_dir.resolve())
 
 
 if __name__ == "__main__":

@@ -1,332 +1,103 @@
-# GenOps — Agent-Native Specification Pipeline & Governance Engine
+# GenOps
 
-[![CI](https://github.com/seismael/genops/actions/workflows/genops-ci.yml/badge.svg)](https://github.com/seismael/genops/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python: 3.8+](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)
-[![Zero External Dependencies](https://img.shields.io/badge/Dependencies-Zero%20External-brightgreen.svg)](#)
-[![Maturity Level](https://img.shields.io/badge/Maturity-v3.1.0-purple.svg)](#current-state--maturity-level)
+Agent-native specification pipeline and governance engine. GenOps decomposes
+software, research, and design work into isolated, cascading specification stages,
+each backed by a deterministic CLI engine with cryptographic state tracking.
 
-> **Declarative. Cascading. Executable. Socratic. 100% Agent-Native.**
-
-GenOps is an agent-native cognitive operating system and deterministic specification pipeline implementing the **Docs-as-Context (ContextOps)** paradigm. It decomposes complex software and research initiatives into isolated, cascading specification stages governed by Socratic elicitation, cryptographic LF-normalized SHA-256 state tracking, living memory compaction (`CONTEXT.md`), and automated CI/CD anti-drift gates.
+- **Zero external dependencies** — pure Python 3.8+ standard library.
+- **Agent-native** — driven through slash-command skills and a native MCP server.
+- **Deterministic** — LF-normalized SHA-256 state, atomic lockfile, immutable audit trail.
+- **Versioned in-repo** — the engine lives in `.agents/` and is versioned with the project it governs.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
 flowchart LR
-    subgraph P1 ["1. Requirements"]
-        direction TB
-        CMD_PRD["/genops-prd<br/><b>Principal PM</b>"]
-        DOC_PRD[("docs/prd/<br/>PRD-*.md")]
-        CMD_PRD --> DOC_PRD
-    end
-
-    subgraph P2 ["2. High-Level Design"]
-        direction TB
-        CMD_HLD["/genops-hld<br/><b>Principal Architect</b>"]
-        DOC_HLD[("docs/hld/<br/>HLD-*.md")]
-        CMD_HLD --> DOC_HLD
-    end
-
-    subgraph P3 ["3. Architecture Decisions"]
-        direction TB
-        CMD_ADR["/genops-adr<br/><b>Staff Systems Engineer</b>"]
-        DOC_ADR[("docs/architecture/<br/>ADR-*.md")]
-        CMD_ADR --> DOC_ADR
-    end
-
-    subgraph P4 ["4. Low-Level Design"]
-        direction TB
-        CMD_LLD["/genops-lld<br/><b>Lead Engineer</b>"]
-        DOC_LLD[("docs/lld/<br/>LLD-*.md")]
-        CMD_LLD --> DOC_LLD
-    end
-
-    subgraph P5 ["5. Implementation"]
-        direction TB
-        CMD_CODE["/genops-code<br/><b>Principal SWE</b>"]
-        OUT_SRC[("src/<br/>Clean Architecture & TDD")]
-        CMD_CODE --> OUT_SRC
-    end
-
-    DOC_PRD ==>|"Cascade"| CMD_HLD
-    DOC_HLD ==>|"Cascade"| CMD_ADR
-    DOC_ADR ==>|"Cascade"| CMD_LLD
-    DOC_LLD ==>|"Scaffold"| CMD_CODE
-
-    classDef stageNode fill:#f8fafc,stroke:#2563eb,stroke-width:1.5px,color:#0f172a,rx:8px,ry:8px;
-    classDef docNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#334155,rx:6px,ry:6px;
-    classDef codeNode fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d,rx:8px,ry:8px;
-    
-    class CMD_PRD,CMD_HLD,CMD_ADR,CMD_LLD stageNode;
-    class DOC_PRD,DOC_HLD,DOC_ADR,DOC_LLD docNode;
-    class CMD_CODE,OUT_SRC codeNode;
+    PRD[genops-prd] --> HLD[genops-hld] --> ADR[genops-adr] --> LLD[genops-lld] --> CODE[genops-code]
 ```
 
 ---
 
-## Current State & Maturity Level
+## Pipelines
 
-GenOps has achieved the **v3.1.0 Super Skills** milestone:
+Three declarative presets (`genops.yaml`) ship out of the box. Each stage generates
+a modular document with YAML frontmatter into its own `docs/` directory.
 
-| Capability Vector | Baseline (v2.0) | Current State (v3.1.0 Super Skills) | Operational Value |
-|---|---|---|---|
-| **Elicitation Model** | Static question checklist | Socratic Challenger (probes NFRs, challenges premature complexity) | Eliminates architectural errors before drafting |
-| **Review Process** | Human approval gate only | Dual-Pass: Simulated Staff Critic (STRIDE/Resilience/Observability) + `<HARD-GATE>` | Catches failure modes and security vulnerabilities early |
-| **Specification Format** | Markdown tables & narrative text | Machine-executable OpenAPI 3.1 YAML, PostgreSQL 16+ DDL, Go/Python Ports | Zero-ambiguity contracts ready for compiler generation |
-| **Scaffolding Depth** | Empty struct stubs with IDs | Hexagonal / Clean Architecture (`domain/`, `ports/`, `adapters/`, `handlers/`, `tests/`) | Production-ready, decoupled polyglot baselines |
-| **Verification Loop** | Regex table drift checks | Compiler-in-the-loop diagnostics (`genops verify`) + CI anti-drift gate | Verifies code compiles across Python/Go/Rust/TypeScript stacks |
-| **Living Context** | Static markdown placeholder | Active Living Memory Compactor (`ContextCompactor` $\to$ `CONTEXT.md`) | Prevents LLM context saturation and drift |
-| **Runtime Dependencies** | Standalone script | Zero external `pip` dependencies (pure Python 3.8+ stdlib) | 100% portable, agent-native, in-repo execution |
+| Preset | Stages |
+|---|---|
+| `software-spec` (default) | `prd` → `hld` → `adr` → `lld` → `code` |
+| `research` | `lit-review` → `hypothesis` → `experiment` → `report` |
+| `design` | `brief` → `wireframes` → `mockups` → `prototype` |
 
----
-
-## 100% Technology & Architecture Agnosticism
-
-GenOps does **not** force any language, runtime, or macro-architecture. It adapts across project scales via its built-in architecture spectrum (defined in [RFC-001](docs/architecture/RFC-001-contextops-architecture.md)):
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
-flowchart LR
-    subgraph Tier1 ["Tier 1: Full Enterprise Stack"]
-        direction TB
-        T1_PRD["PRD"] --> T1_HLD["HLD"] --> T1_ADR["ADR"] --> T1_LLD["LLD"] --> T1_CODE["Code"]
-    end
-
-    subgraph Tier2 ["Tier 2: Standard Service / Modular Monolith"]
-        direction TB
-        T2_HLD["HLD"] --> T2_ADR["ADR"] --> T2_CODE["Code"]
-    end
-
-    subgraph Tier3 ["Tier 3: Light Tool / CLI Script"]
-        direction TB
-        T3_README["README"] --> T3_ADR["ADR"] --> T3_CODE["Code"]
-    end
-
-    classDef t1 fill:#f8fafc,stroke:#2563eb,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
-    classDef t2 fill:#f8fafc,stroke:#0284c7,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
-    classDef t3 fill:#faf5ff,stroke:#9333ea,stroke-width:1.5px,color:#3b0764,rx:6px,ry:6px;
-    class T1_PRD,T1_HLD,T1_ADR,T1_LLD,T1_CODE t1;
-    class T2_HLD,T2_ADR,T2_CODE t2;
-    class T3_README,T3_ADR,T3_CODE t3;
-```
-
-- **Any Architectural Pattern:** Single-file script, CLI utility, Modular Monolith, Event-Driven microservices, CQRS/Event Sourcing, or Serverless.
-- **Any Programming Language:** Go, Rust, Python, TypeScript/Node, React 19, Java, C++, Zig, Elixir, or custom in-house enterprise stacks via declarative `.agents/scaffolds/<stack>/STRUCTURE.yaml`.
-
----
-
-## The Recursive Socratic Feedback Loop
-
-At every stage, the agent operates as a specialized thinking partner:
-
-```
-  [1. INQUIRE] ─────► [2. CHALLENGE] ─────► [3. CAPTURE NOTES]
-       ▲                                            │
-       │                                            ▼
-  [6. REFINE]  ◄───── [5. USER FEEDBACK] ◄───── [4. DRAFT & PRESENT]
-                             │
-                             ▼ (When Approved)
-                      [7. LOCK & RECORD] ──► [8. CASCADE DOWNSTREAM]
-```
-
-1. **Inquire:** Asks template questions one at a time (no questionnaire dumps).
-2. **Challenge (Socratic Challenger):** Probes assumptions, challenges premature complexity, and demands numeric SLOs.
-3. **Capture Notes:** Gathers non-negotiables, glossaries, and technology choices into `CONTEXT.md`.
-4. **Draft & Present:** Generates executable specifications with YAML frontmatter headers and previews downstream impact.
-5. **User Feedback & Refine:** Applies iterative delta adjustments per user direction.
-6. **Lock & Record:** Updates `docs/.genops-state.json` (v2.0) with atomic lock protection, appends immutable audit events, and marks downstream layers for cascading re-generation if upstream inputs change.
-
----
-
-## Tri-Layer System Architecture
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'Inter, system-ui, sans-serif', 'lineColor': '#64748b', 'primaryTextColor': '#0f172a' }}}%%
-flowchart TB
-    subgraph Agents ["Universal AI Coding Agent Layer"]
-        direction LR
-        AG1["Claude Code"]
-        AG2["Cursor IDE"]
-        AG3["Antigravity / Gemini"]
-        AG4["GitHub Copilot"]
-        AG5["Windsurf"]
-        AG6["Aider / OpenCode"]
-    end
-
-    subgraph Engine ["GenOps Control Plane & Deterministic Engine (genops.py)"]
-        direction TB
-        CLI["CLI Subcommands<br/>(init, validate, status, scaffold, compact, verify)"]
-        MCP["Native MCP Server<br/>(JSON-RPC 2.0 stdio)"]
-        HASHER["LF-Normalized SHA-256 Hasher"]
-        LOCK["State Lockfile<br/>(.genops.lock)"]
-        COMPACTOR["Living Memory Compactor<br/>(CONTEXT.md)"]
-        RULES["Cross-Layer Rules Checker"]
-        DRIFT["CI/CD Anti-Drift Gate"]
-        
-        CLI <--> LOCK
-        MCP <--> LOCK
-        LOCK --> HASHER
-        LOCK --> COMPACTOR
-        LOCK --> RULES
-        LOCK --> DRIFT
-    end
-
-    subgraph Specs ["Docs-as-Context (ContextOps) Specification Layer"]
-        direction TB
-        FRONTMATTER["Standard YAML Frontmatter Headers"]
-        DAG["Lineage DAG Graph (.genops-graph.json)"]
-        STATE["State v2.0 (.genops-state.json)"]
-        EVENTS["Immutable Audit Trail (.genops-events.jsonl)"]
-        CONTEXT["Active Living Memory (.agents/context/CONTEXT.md)"]
-        
-        FRONTMATTER --> DAG
-        DAG --> STATE
-        STATE --> EVENTS
-        STATE --> CONTEXT
-    end
-
-    subgraph Output ["Multi-Stack Clean Architecture Scaffolding"]
-        direction LR
-        S_GO["Go Clean Architecture"]
-        S_PY["Python FastAPI Hexagonal"]
-        S_REACT["React 19 Feature-Based"]
-        S_RUST["Rust Actix / Tokio"]
-        S_NODE["Node.js TypeScript Clean"]
-    end
-
-    Agents <==>|"Tools / Skills / Instructions"| Engine
-    Engine <==>|"Deterministic Hashing & Living State"| Specs
-    Engine ==>|"Scaffolds Source Code & TDD Suites"| Output
-
-    classDef agentBox fill:#faf5ff,stroke:#9333ea,stroke-width:1.5px,color:#3b0764,rx:6px,ry:6px;
-    classDef engineBox fill:#f8fafc,stroke:#0284c7,stroke-width:1.5px,color:#0f172a,rx:6px,ry:6px;
-    classDef specBox fill:#ffffff,stroke:#475569,stroke-width:1.5px,color:#1e293b,rx:6px,ry:6px;
-    classDef outBox fill:#f0fdf4,stroke:#16a34a,stroke-width:1.5px,color:#14532d,rx:6px,ry:6px;
-    
-    class AG1,AG2,AG3,AG4,AG5,AG6 agentBox;
-    class CLI,MCP,HASHER,LOCK,COMPACTOR,RULES,DRIFT engineBox;
-    class FRONTMATTER,DAG,STATE,EVENTS,CONTEXT specBox;
-    class S_GO,S_PY,S_REACT,S_RUST,S_NODE outBox;
-```
+A stage `next` defines the cascade; `requires`/`outputs` drive deterministic
+staleness propagation — an upstream change marks every downstream stage stale.
 
 ---
 
 ## Quick Start
 
-**Option A — Use this repository as a template (recommended):** click **"Use this template"** on GitHub, then clone the newly created repo. GenOps comes pre-wired (`genops.yaml`, `.agents/`, agent entrypoints).
+**Template (recommended):** click **"Use this template"** on GitHub, then clone.
 
-**Option B — Clone directly:**
+**Or clone directly:**
 
 ```bash
 git clone https://github.com/seismael/GenOps.git my-project
 cd my-project
 ```
 
-Initialize GenOps across all coding agent platforms in your repository (idempotent — safe to re-run):
+Initialize the pipeline and agent entrypoints (idempotent):
 
 ```bash
-# Synchronize all agent entrypoints (AGENTS.md, CLAUDE.md, Cursor rules, Copilot, Windsurf)
-python .agents/scripts/genops.py init --agent all
+python .agents/scripts/genops.py init --preset software-spec --agent all
 ```
 
-Confirm everything is healthy, then drive the pipeline from your AI agent:
+Verify health, then drive the pipeline from your agent:
 
 ```bash
 python .agents/scripts/genops.py doctor
 ```
 
-Execute the specification pipeline:
+---
+
+## Agent Integration
+
+GenOps surfaces in three ways:
+
+1. **Slash-command skills** — `.agents/skills/genops-*/SKILL.md` (17 skills) covering
+   every stage of all three pipelines plus the engine/init/status orchestrators.
+2. **Native MCP server** — a JSON-RPC 2.0 stdio server exposing 15 tools
+   (`genops_validate`, `genops_status`, `genops_scaffold`, …).
+3. **CLI engine** — `.agents/scripts/genops.py` with 19 subcommands.
+
+### Global install (all coding agents)
 
 ```bash
-/genops-prd            # 1. Requirements (Principal PM)
-/genops-hld            # 2. System Topology (Principal Architect)
-/genops-adr            # 3. Tech Trade-offs (Staff Systems Engineer)
-/genops-lld            # 4. Detailed Contracts & Scaffolding Blueprint (Lead Engineer)
-/genops-code           # 5. Clean Architecture & TDD Suite Scaffolding (Principal SWE)
+python .agents/scripts/install_global.py
 ```
 
-See [Distribution](docs/DISTRIBUTION.md) for every way to obtain and publish GenOps.
+This bundles the engine into `~/.genops/`, writes a **self-healing launcher**
+(`~/.genops/bin/genops`) that re-resolves a working Python interpreter on every
+launch, and registers the `genops` MCP server for every detected agent
+(Gemini/Antigravity, Claude Code, OpenCode, Cline). No interpreter path is baked,
+so removing or upgrading Python never breaks the MCP server.
 
----
+### MCP tools
 
-## Pipeline Presets
-
-GenOps supports multiple domain-specific pipelines out of the box:
-
-```bash
-# Software Specification Pipeline (Default)
-python .agents/scripts/genops.py init --preset software-spec
-
-# Systematic Research Pipeline (PRISMA Reviews, Formal Hypotheses, Empirical Reports)
-python .agents/scripts/genops.py init --preset research
-
-# Strategic Design Pipeline (WCAG Briefs, Wireframes, Design Tokens, Prototypes)
-python .agents/scripts/genops.py init --preset design
-```
-
----
-
-## Model Context Protocol (MCP) Integration
-
-Any agent environment supporting MCP can run GenOps natively over `stdio`:
-
-```json
-{
-  "mcpServers": {
-    "genops": {
-      "command": "python",
-      "args": [".agents/scripts/genops.py", "mcp"]
-    }
-  }
-}
-```
-
-> On systems where the interpreter is `python3` (e.g. some Linux distros), use `"command": "python3"` instead. The MCP transport is **stdio** — the agent spawns the in-repo script locally; there is no network service.
-
-Exposed MCP tools:
-- `genops_validate`: Validates configuration, presets, templates, and scaffolds.
-- `genops_status`: Retrieves live pipeline health and staleness graph.
-- `genops_impact`: Simulates change impact blast radius across downstream specs and modules.
-- `genops_hash`: Computes cross-platform LF-normalized SHA-256 hashes.
-- `genops_record`: Atomically records stage state with lockfile safety and triggers memory compaction.
-- `genops_compact`: Synthesizes living project memory into `.agents/context/CONTEXT.md`.
-- `genops_verify`: Executes compiler and linter diagnostics across polyglot source workspace.
-- `genops_scaffold`: Expands LLD module stubs and templates into `src/`.
-- `genops_graph`: Generates specification lineage graph and DAG visualization.
-- `genops_drift`: Runs CI/CD anti-drift check between LLD specs and source code.
-- `genops_check_rules`: Enforces cross-layer semantic validation rules.
-- `genops_rtm`: Generates bidirectional Requirements Traceability Matrix.
-- `genops_context`: Slices the DAG for domain-targeted prompt loading.
-- `genops_report`: Generates executive self-contained HTML dashboard.
-- `genops_ingest`: Reverse-engineers legacy un-architected codebases into baseline LLD specifications.
-
----
-
-## Clean Architecture Polyglot Scaffolds
-
-`/genops-code` expands production-grade Clean / Hexagonal Architecture folders in `src/`:
-
-```
-src/{module}/
-├── cmd/
-│   └── main.go                    # Application bootstrap & DI wireup
-├── internal/
-│   ├── domain/                    # Pure business logic & invariant validation
-│   ├── ports/                     # Primary & Secondary interface definitions
-│   ├── service/                   # Application use-case orchestrators
-│   ├── adapters/                  # Secondary infrastructure (Postgres, Redis)
-│   └── handlers/                  # Primary ingress adapters (REST, gRPC)
-└── tests/
-    └── contract/                  # OpenAPI / Contract test fixtures
-```
-
-Available built-in scaffolds (`.agents/scaffolds/`):
-- `go-service`: Hexagonal Go microservice (Gin/pgx/testify).
-- `python-fastapi`: Async Python Clean Service (FastAPI/Pydantic v2/SQLAlchemy).
-- `react-vite`: React 19 SPA with feature-based architecture and Tailwind design tokens.
-- `rust-service`: Asynchronous Rust microservice (Actix Web/Tokio/Serde).
-- `node-service`: TypeScript microservice (Express/Zod/Vitest).
-- `go-library`: Reusable Go domain package.
+| Tool | Description |
+|---|---|
+| `genops_validate` | Validate config, presets, templates, and scaffolds |
+| `genops_status` | Pipeline health and staleness graph |
+| `genops_impact` | Change-impact blast radius across downstream specs/modules |
+| `genops_hash` | LF-normalized SHA-256 hash of a file or directory |
+| `genops_record` | Atomically record stage approval into state v2 |
+| `genops_compact` | Compact living memory into `CONTEXT.md` |
+| `genops_verify` | Compiler/linter diagnostics across the source workspace |
+| `genops_scaffold` | Expand a module from a scaffold template into `src/` |
+| `genops_graph` | Generate the specification lineage DAG |
+| `genops_drift` | Anti-drift check between LLD specs and source |
+| `genops_check_rules` | Cross-layer semantic validation rules |
+| `genops_rtm` | Requirements Traceability Matrix |
+| `genops_context` | Domain-targeted DAG slice for prompt loading |
+| `genops_report` | Self-contained executive HTML dashboard |
+| `genops_ingest` | Reverse-engineer a legacy codebase into baseline LLD |
 
 ---
 
@@ -334,69 +105,67 @@ Available built-in scaffolds (`.agents/scaffolds/`):
 
 | Command | Description |
 |---|---|
-| `python .agents/scripts/genops.py init [--preset <p>] [--agent <a>]` | Initialize GenOps across agent entrypoint files |
-| `python .agents/scripts/genops.py validate` | Validate genops.yaml, presets, templates, and scaffolds |
-| `python .agents/scripts/genops.py doctor` | Run all governance gates (validate, check-rules, drift, verify) at once |
-| `python .agents/scripts/genops.py demo [--scaffold <s>] [--module <m>]` | Scaffold a throwaway module and verify it (proves the pipeline end-to-end) |
-| `python .agents/scripts/genops.py status` | Display pipeline health and cryptographic staleness status |
-| `python .agents/scripts/genops.py impact <spec>` | Simulate change-impact blast radius across downstream specs & code |
-| `python .agents/scripts/genops.py hash <path>` | Compute LF-normalized SHA-256 hash for file or directory |
-| `python .agents/scripts/genops.py record <stage> [--actor <a>]` | Atomically record stage approval into state v2.0 |
-| `python .agents/scripts/genops.py scaffold --module <m> --scaffold <s> [--entities <e>]` | Expand scaffold templates and entity stubs into `src/` |
-| `python .agents/scripts/genops.py compact` | Compact active living project memory into `CONTEXT.md` |
-| `python .agents/scripts/genops.py verify` | Run compiler & linter diagnostics across source workspace |
-| `python .agents/scripts/genops.py drift` | CI/CD anti-drift check asserting 100% LLD-to-code sync |
-| `python .agents/scripts/genops.py rtm` | Generate bidirectional Requirements Traceability Matrix |
-| `python .agents/scripts/genops.py graph` | Generate specification lineage DAG (`.genops-graph.json`) |
-| `python .agents/scripts/genops.py check-rules` | Verify cross-layer semantic validation rules |
-| `python .agents/scripts/genops.py context --domain <slug>` | Extract targeted upstream DAG slice for token efficiency |
-| `python .agents/scripts/genops.py report [--html <path>]` | Generate self-contained executive HTML dashboard |
-| `python .agents/scripts/genops.py ingest [--src <path>]` | Brownfield legacy codebase reverse-engineering |
-| `python .agents/scripts/genops.py mcp` | Start JSON-RPC 2.0 stdio Model Context Protocol server |
-| `python .agents/scripts/genops.py --version` | Print the engine version |
+| `genops init [--preset <p>] [--agent <a>]` | Initialize GenOps across agent entrypoints |
+| `genops validate` | Validate config, presets, templates, scaffolds |
+| `genops doctor` | Run all governance gates (validate, check-rules, drift, verify) |
+| `genops demo [--scaffold <s>] [--module <m>]` | Scaffold a throwaway module and verify it end-to-end |
+| `genops status` | Pipeline health and cryptographic staleness |
+| `genops impact <spec>` | Simulate change impact |
+| `genops hash <path>` | LF-normalized SHA-256 hash |
+| `genops record <stage> [--actor <a>]` | Record stage approval into state v2 |
+| `genops scaffold --module <m> --scaffold <s> [--entities <e>]` | Expand scaffold into `src/` |
+| `genops compact` | Compact living memory into `CONTEXT.md` |
+| `genops verify` | Compiler/linter diagnostics |
+| `genops drift` | Anti-drift gate (LLD ↔ source) |
+| `genops rtm` | Requirements Traceability Matrix |
+| `genops graph` | Lineage DAG (`.genops-graph.json`) |
+| `genops check-rules` | Cross-layer semantic rules |
+| `genops context --domain <slug>` | Targeted upstream DAG slice |
+| `genops report [--html <path>]` | Executive HTML dashboard |
+| `genops ingest [--src <path>]` | Brownfield reverse-engineering |
+| `genops mcp` | Start the MCP stdio server |
+| `genops --version` | Print the engine version |
 
 ---
 
-## Examples & Live Demo
+## Scaffolds
 
-Two complete, runnable projects demonstrate the full `PRD → HLD → ADR → LLD → Code` pipeline end-to-end. They are the fastest way to see the value GenOps produces.
+`genops-code` (or `genops scaffold`) expands Clean/Hexagonal Architecture into
+`src/{module}/` from `.agents/scaffolds/`:
 
-| Example | Stack | What it demonstrates |
+| Scaffold | Stack |
+|---|---|
+| `go-service` | Hexagonal Go microservice |
+| `python-fastapi` | Async FastAPI clean service |
+| `react-vite` | React 19 feature-based SPA |
+| `rust-service` | Async Rust microservice (Actix/Tokio) |
+| `node-service` | TypeScript microservice (Express/Zod) |
+| `go-library` | Reusable Go domain package |
+
+---
+
+## Examples
+
+| Example | Stack | Demonstrates |
 |---|---|---|
-| [`examples/url-shortener`](examples/url-shortener) | Python 3.11 · FastAPI · SQLite (WAL) | Clean/hexagonal architecture, SSRF-hardened domain, API-key auth, click analytics — a runnable HTTP API with 26 passing tests |
-| [`examples/url-shortener-cluster`](examples/url-shortener-cluster) | Go 1.22 microservices | Distributed Redis/Kafka/ClickHouse design with mocked adapters and 20k-goroutine concurrency tests |
-
-```bash
-# Run the FastAPI example's full test suite
-cd examples/url-shortener/src/url-shortener
-python -m unittest discover -s tests -p "test_*.py" -v
-
-# Serve the API and hit it
-python -m pip install "fastapi>=0.110" "pydantic>=2.6" "uvicorn>=0.27"
-uvicorn app.main:app --reload          # then open http://127.0.0.1:8000/healthz
-```
-
-```bash
-# Run the Go microservice tests (from each module root)
-cd examples/url-shortener-cluster/src/redirect-service && go test ./...
-cd ../analytics-service && go test ./...
-```
-
-Each example directory has its own `README.md` with the spec artifacts, architecture notes, and test instructions.
+| [`examples/url-shortener`](examples/url-shortener) | Python · FastAPI · SQLite | Hexagonal architecture, SSRF-hardened domain, API-key auth, click analytics |
+| [`examples/url-shortener-cluster`](examples/url-shortener-cluster) | Go microservices | Distributed Redis/Kafka/ClickHouse design with mocked adapters |
 
 ---
 
-## Use Cases & Documentation
+## Documentation
 
-- [User Experience, Real-World Use Cases & Workflows Guide](docs/guides/USE_CASES_AND_WORKFLOWS.md) — Walkthroughs for Greenfield, Incremental Features, Database Migrations, Brownfield Ingestion, and SOC2 Audits.
-- [RFC-001: ContextOps Architecture Whitepaper](docs/architecture/RFC-001-contextops-architecture.md) — Mathematical and architectural foundations of the Docs-as-Context paradigm.
+- [Distribution](docs/DISTRIBUTION.md) — how to obtain GenOps, publish a release, and install globally.
+- [RFC-001: ContextOps Architecture](docs/architecture/RFC-001-contextops-architecture.md) — architectural foundations.
+- [Use Cases & Workflows](docs/guides/USE_CASES_AND_WORKFLOWS.md) — greenfield, incremental, migration, and brownfield walkthroughs.
+- [Changelog](CHANGELOG.md) — release history.
 
 ---
 
 ## Requirements
 
-- Any AI coding agent (Claude Code, Cursor, Antigravity, GitHub Copilot, Windsurf, OpenCode, Aider)
-- Python 3.8+ (standard library only, zero external pip dependencies)
+- Any AI coding agent (Claude Code, Cursor, Gemini/Antigravity, Copilot, Windsurf, OpenCode, Aider)
+- Python 3.8+ (standard library only)
 
 ## License
 

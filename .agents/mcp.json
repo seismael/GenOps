@@ -1,9 +1,10 @@
 {
   "mcpServers": {
     "genops": {
+      "type": "stdio",
       "command": "python",
       "args": [".agents/scripts/genops.py", "mcp"],
-      "description": "GenOps Cascading Specification Pipeline & Deterministic State Engine"
+      "description": "GenOps Cascading Specification Pipeline & Deterministic State Engine (in-repo). For a global, self-healing install run `python .agents/scripts/install_global.py`."
     }
   }
 }

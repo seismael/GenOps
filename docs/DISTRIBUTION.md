@@ -23,6 +23,21 @@ python .agents/scripts/genops.py doctor
 
 GenOps's value is that the engine is **versioned together with the project** it governs. A globally-installed package would decouple the tool from the specs it generates (version drift) and contradict the zero-dependency, vendored-in-repo design. A registry could only ever be a thin `genops init` bootstrap shim — not the delivery of the engine itself — so it is intentionally omitted.
 
+## Global install (all coding agents)
+
+For a machine-wide install that survives interpreter churn, run:
+
+```bash
+python .agents/scripts/install_global.py
+```
+
+This (1) bundles the engine + assets into `~/.genops/`, (2) writes a **self-healing
+launcher** (`~/.genops/bin/genops`) that re-resolves a working Python on every
+launch, and (3) registers the `genops` MCP server for every detected agent
+(Gemini/Antigravity, Claude Code, OpenCode, Cline). Because no interpreter path is
+baked into the config, deleting or upgrading the system Python no longer breaks the
+MCP server.
+
 ## Publishing a release (maintainers)
 
 1. **Bump the version** in `.agents/scripts/genops.py` (`__version__`) and `CHANGELOG.md`.
@@ -39,4 +54,5 @@ GenOps's value is that the engine is **versioned together with the project** it 
 
 ## Release notes
 
+- [v3.1.2](releases/v3.1.2.md)
 - [v3.1.0](releases/v3.1.0.md)

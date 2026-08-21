@@ -2,6 +2,19 @@
 
 All notable changes to GenOps are documented in this file.
 
+## [3.1.2] — 2026-08-21
+
+### Fixed
+- **MCP server broke after deleting a Python install.** `install_global.py` previously baked `sys.executable` (an absolute path to whichever Python ran the installer) into every agent's MCP config. Deleting/upgrading that Python made the `genops` MCP server fail with CPython's `Could not find platform independent libraries <prefix>` error.
+- The installer also referenced itself (`install_global.py`) instead of the engine (`genops.py`), so CLI wrappers and the MCP args pointed at the wrong script.
+- **MCP server failed to start outside a GenOps project.** The server now starts regardless of CWD, resolves the project root per request (client workspace roots → working directory), and returns a clear error instead of crashing when no project is found.
+
+### Changed
+- `install_global.py` now bundles the engine + assets into a stable home (`~/.genops/`), independent of the source repo.
+- MCP servers and CLI wrappers now launch through a **self-healing launcher** (`~/.genops/bin/genops`) that re-resolves and validates a working Python interpreter on every launch (`python3` → `python` → `py -3`), so removing or upgrading the system Python no longer breaks GenOps.
+- MCP registrations now use the agent-appropriate config shape (`type: stdio` for Claude Code/OpenCode, `disabled`/`autoApprove` for Cline) and an absolute launcher path.
+- Added `tests/test_install_global.py` covering launcher templates, MCP entry shapes, and the engine self-test.
+
 ## [3.1.1] — 2026-08-20
 
 ### Fixed (from end-to-end dogfooding)
