@@ -1188,15 +1188,27 @@ class CompilerVerifier:
         tsconfigs = [p for p in sorted(src_dir.rglob("tsconfig.json")) if not DeterministicHasher._should_skip(p, src_dir)]
         for tsconfig in tsconfigs:
             rel_ts = tsconfig.parent.relative_to(root_dir)
+            has_node_modules = (tsconfig.parent / "node_modules").is_dir()
+            pkg_json = tsconfig.parent / "package.json"
+            has_deps = False
+            if pkg_json.is_file():
+                try:
+                    pkg_data = json.loads(pkg_json.read_text(encoding="utf-8"))
+                    has_deps = bool(pkg_data.get("dependencies") or pkg_data.get("devDependencies"))
+                except Exception:
+                    has_deps = True
             tsc_name = "tsc.cmd" if sys.platform == "win32" else "tsc"
             local_tsc = tsconfig.parent / "node_modules" / ".bin" / tsc_name
             global_tsc = shutil.which("tsc")
             npx_bin = shutil.which("npx")
             if local_tsc.is_file():
                 cmd = [str(local_tsc), "--noEmit", "-p", str(tsconfig)]
+            elif has_deps and not has_node_modules:
+                results["skipped"].append(f"TypeScript tsc skipped: {rel_ts} (node_modules not installed)")
+                continue
             elif global_tsc:
                 cmd = [global_tsc, "--noEmit", "-p", str(tsconfig)]
-            elif npx_bin and (tsconfig.parent / "node_modules").is_dir():
+            elif npx_bin and has_node_modules:
                 cmd = [npx_bin, "--no-install", "tsc", "--noEmit", "-p", str(tsconfig)]
             else:
                 results["skipped"].append(f"TypeScript tsc skipped: {rel_ts} (tsc not installed)")
