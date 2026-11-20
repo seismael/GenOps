@@ -4,6 +4,8 @@ domain: url-shortener
 stage: hld
 version: 1.0.0
 status: approved
+created_at: 2026-08-20T00:00:00Z
+updated_at: 2026-08-20T00:00:00Z
 upstream_refs: ["PRD-001-url-shortener"]
 downstream_refs: ["ADR-001-storage-engine", "ADR-002-short-code-generation", "LLD-001-url-shortener"]
 tags: [hld, architecture, topology, c4]

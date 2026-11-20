@@ -1,0 +1,32 @@
+name: "React 19 Frontend SPA"
+description: "Feature-based React 19 SPA with TypeScript, CSS design tokens, custom hooks, and API client adapters"
+language: "TypeScript"
+framework: "React 19"
+build: "npm run build"
+package_manager: "pnpm/npm"
+
+directories:
+  - "src/components/ui/"
+  - "src/features/{module_kebab}/components/"
+  - "src/features/{module_kebab}/hooks/"
+  - "src/features/{module_kebab}/services/"
+  - "src/features/{module_kebab}/types/"
+  - "src/styles/"
+  - "tests/"
+
+templates:
+  package.json.template: "{module_kebab}/package.json"
+  tsconfig.json.template: "{module_kebab}/tsconfig.json"
+  vite.config.ts.template: "{module_kebab}/vite.config.ts"
+
+entity_stubs:
+  component: "src/features/{module_kebab}/components/{Entity}Card.tsx"
+  hook: "src/features/{module_kebab}/hooks/use{Entity}.ts"
+  service: "src/features/{module_kebab}/services/{entity_lower}Api.ts"
+  type: "src/features/{module_kebab}/types/{entity_lower}.ts"
+  test: "tests/{Entity}.test.tsx"
+
+default_files:
+  - "{module_kebab}/src/App.tsx"
+  - "{module_kebab}/src/main.tsx"
+  - "{module_kebab}/index.html"

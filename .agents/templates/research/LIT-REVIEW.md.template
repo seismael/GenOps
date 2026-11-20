@@ -13,9 +13,9 @@ id: LIT-REVIEW-{NNN}-{slug}
 domain: {domain}
 stage: lit-review
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: []
 downstream_refs: []
 tags: [{domain}, research, literature-review, prisma]
@@ -23,11 +23,19 @@ tags: [{domain}, research, literature-review, prisma]
 
 # {Topic} — Systematic Literature Review
 
-## 1. Central Research Question & Methodology
+## 1. Central Research Question & Methodology (PRISMA 2020)
 * **Core Question:** <!-- Formal research inquiry -->
 * **Search Corpus:** ACM Digital Library, IEEE Xplore, arXiv, Semantic Scholar.
 * **Date Range:** 2020 – 2026.
 * **Inclusion / Exclusion Criteria:** Peer-reviewed empirical evaluations or benchmarked open-source implementations only.
+
+### PRISMA 2020 Screening & Selection Flow
+| Stage | Count ($N$) | Exclusion Rationale |
+|---|---|---|
+| Records Identified across Databases | <!-- N --> | Initial Boolean query corpus |
+| Duplicates Removed | <!-- N --> | Cross-index deduplication |
+| Records Screened (Title & Abstract) | <!-- N --> | Off-topic / non-empirical excluded |
+| Full-Text Assessed & Included | <!-- N --> | Primary synthesis corpus |
 
 ## 2. Prior Art Taxonomy & Comparative Matrix
 | Paper / Work | Authors & Year | Core Methodology | Key Contribution | Known Limitations |

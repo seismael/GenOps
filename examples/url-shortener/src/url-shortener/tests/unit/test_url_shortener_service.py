@@ -73,6 +73,9 @@ class TestKryptonGatewayEndToEnd(unittest.TestCase):
         self.gateway = KryptonGateway(self.container)
         self.token = self.gateway.create_api_key("marketing@acme.com", "marketing-token-123")
 
+    def tearDown(self) -> None:
+        self.container.db.close()
+
     def test_full_shorten_redirect_analytics_lifecycle(self) -> None:
         # 1. Shorten URL
         res = self.gateway.handle_shorten(self.token, "https://github.com/seismael/genops")
@@ -98,6 +101,45 @@ class TestKryptonGatewayEndToEnd(unittest.TestCase):
     def test_unauthorized_access(self) -> None:
         res = self.gateway.handle_shorten("invalid-token", "https://example.com")
         self.assertEqual(res["status"], 401)
+
+    def test_duplicate_custom_alias_returns_409_and_cache_preserves_clicks(self) -> None:
+        first = self.gateway.handle_shorten(self.token, "https://example.com/one", custom_alias="myalias")
+        self.assertEqual(first["status"], 201)
+        dup = self.gateway.handle_shorten(self.token, "https://example.com/two", custom_alias="myalias")
+        self.assertEqual(dup["status"], 409)
+
+        # Repeated cached redirects must increment live click_count consistently
+        for _ in range(3):
+            redir = self.gateway.handle_redirect("myalias", ip="9.9.9.9")
+            self.assertEqual(redir["status"], 302)
+        cached_obj = self.container.url_service._cache.get("myalias")
+        self.assertIsNotNone(cached_obj)
+        self.assertEqual(cached_obj.click_count, 3)
+
+    def test_lru_cache_bounded_eviction(self) -> None:
+        svc = UrlShortenerService(self.container.url_repo, self.container.analytics_repo, max_cache_size=2)
+        s1 = svc.shorten_url("https://example.com/1", custom_alias="code001")
+        s2 = svc.shorten_url("https://example.com/2", custom_alias="code002")
+        s3 = svc.shorten_url("https://example.com/3", custom_alias="code003")
+        self.assertEqual(len(svc._cache), 2)
+        self.assertNotIn(s1.code, svc._cache)
+        self.assertIn(s2.code, svc._cache)
+        self.assertIn(s3.code, svc._cache)
+
+    def test_api_key_hydration_duplicate_and_foreign_keys_enabled(self) -> None:
+        self.assertTrue(self.container.api_key_repo.verify_token(self.token))
+        expected_key, _ = ApiKey.create(self.token, "marketing@acme.com")
+        loaded = self.container.api_key_repo.get_by_id(expected_key.key_id)
+        self.assertIsNotNone(loaded)
+        self.assertIsNotNone(loaded.created_at)
+
+        dup_key, _ = ApiKey.create(self.token, "other@example.com")
+        with self.assertRaises(ValueError):
+            self.container.api_key_repo.save(dup_key)
+
+        with self.container.db.connection() as conn:
+            fk = conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        self.assertEqual(fk, 1)
 
 
 if __name__ == "__main__":

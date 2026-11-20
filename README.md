@@ -63,9 +63,9 @@ GenOps surfaces in three ways:
 
 1. **Slash-command skills** — `.agents/skills/genops-*/SKILL.md` (17 skills) covering
    every stage of all three pipelines plus the engine/init/status orchestrators.
-2. **Native MCP server** — a JSON-RPC 2.0 stdio server exposing 15 tools
+2. **Native MCP server** — a JSON-RPC 2.0 stdio server exposing 18 tools
    (`genops_validate`, `genops_status`, `genops_scaffold`, …).
-3. **CLI engine** — `.agents/scripts/genops.py` with 19 subcommands.
+3. **CLI engine** — `.agents/scripts/genops.py` (backed by `.agents/scripts/genops_engine/`) with 22 subcommands.
 
 ### Global install (all coding agents)
 
@@ -98,6 +98,9 @@ so removing or upgrading Python never breaks the MCP server.
 | `genops_context` | Domain-targeted DAG slice for prompt loading |
 | `genops_report` | Self-contained executive HTML dashboard |
 | `genops_ingest` | Reverse-engineer a legacy codebase into baseline LLD |
+| `genops_explain` | Inspect stage prerequisites, outputs, skill, template, and rules |
+| `genops_workspace` | Run `status` or `doctor` across all GenOps projects in a monorepo |
+| `genops_rotate_events` | Rotate `docs/.genops-events.jsonl` with a cryptographic checkpoint |
 
 ---
 
@@ -106,13 +109,16 @@ so removing or upgrading Python never breaks the MCP server.
 | Command | Description |
 |---|---|
 | `genops init [--preset <p>] [--agent <a>]` | Initialize GenOps across agent entrypoints |
-| `genops validate` | Validate config, presets, templates, scaffolds |
-| `genops doctor` | Run all governance gates (validate, check-rules, drift, verify) |
+| `genops validate [--sarif]` | Validate config, presets, templates, and scaffolds (optional SARIF 2.1.0) |
+| `genops doctor [--sarif]` | Run all governance gates (validate, check-rules, drift, verify) |
 | `genops demo [--scaffold <s>] [--module <m>]` | Scaffold a throwaway module and verify it end-to-end |
 | `genops status` | Pipeline health and cryptographic staleness |
+| `genops explain <stage>` | Inspect stage inputs, outputs, template, skill, and validation rules |
+| `genops workspace [status\|doctor]` | Aggregate health and status across all GenOps projects in a workspace |
 | `genops impact <spec>` | Simulate change impact |
 | `genops hash <path>` | LF-normalized SHA-256 hash |
 | `genops record <stage> [--actor <a>]` | Record stage approval into state v2 |
+| `genops rotate-events [--max-events <n>]` | Archive older audit events with a cryptographic checkpoint |
 | `genops scaffold --module <m> --scaffold <s> [--entities <e>]` | Expand scaffold into `src/` |
 | `genops compact` | Compact living memory into `CONTEXT.md` |
 | `genops verify` | Compiler/linter diagnostics |
@@ -148,6 +154,8 @@ so removing or upgrading Python never breaks the MCP server.
 
 | Example | Stack | Demonstrates |
 |---|---|---|
+| [`examples/ledgerflow`](examples/ledgerflow) | Python · SQLite WAL · CloudEvents | Multi-domain double-entry financial ledger (`accounts` + `transactions`), idempotency, reversals & RFC 9457 |
+| [`examples/pulsegate`](examples/pulsegate) | Python · SQLite WAL · Federation | Federated cross-repo lineage (`ext://ledger/...`), YAML 1.2 frontmatter, `.genopsignore`, SARIF 2.1.0 & log rotation |
 | [`examples/url-shortener`](examples/url-shortener) | Python · FastAPI · SQLite | Hexagonal architecture, SSRF-hardened domain, API-key auth, click analytics |
 | [`examples/url-shortener-cluster`](examples/url-shortener-cluster) | Go microservices | Distributed Redis/Kafka/ClickHouse design with mocked adapters |
 
@@ -156,7 +164,7 @@ so removing or upgrading Python never breaks the MCP server.
 ## Documentation
 
 - [Distribution](docs/DISTRIBUTION.md) — how to obtain GenOps, publish a release, and install globally.
-- [RFC-001: ContextOps Architecture](docs/architecture/RFC-001-contextops-architecture.md) — architectural foundations.
+- [RFC-001: ContextOps Architecture](docs/rfcs/RFC-001-contextops-architecture.md) — architectural foundations.
 - [Use Cases & Workflows](docs/guides/USE_CASES_AND_WORKFLOWS.md) — greenfield, incremental, migration, and brownfield walkthroughs.
 - [Changelog](CHANGELOG.md) — release history.
 

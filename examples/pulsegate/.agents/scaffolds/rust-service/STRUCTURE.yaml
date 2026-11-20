@@ -1,0 +1,31 @@
+name: "Rust Asynchronous Microservice"
+description: "High-throughput asynchronous Rust microservice using Actix Web, Tokio, and domain port abstractions"
+language: "Rust"
+framework: "Actix Web"
+build: "cargo test"
+
+directories:
+  - "src/domain/"
+  - "src/ports/"
+  - "src/services/"
+  - "src/adapters/"
+  - "src/handlers/"
+  - "tests/"
+
+templates:
+  Cargo.toml.template: "{module_kebab}/Cargo.toml"
+  main.rs.template: "{module_kebab}/src/main.rs"
+  Dockerfile.template: "{module_kebab}/Dockerfile"
+
+entity_stubs:
+  domain: "src/domain/{entity_snake}.rs"
+  domain_test: "tests/{entity_snake}_test.rs"
+  handler: "src/handlers/{entity_snake}_handler.rs"
+  service: "src/services/{entity_snake}_service.rs"
+
+default_files:
+  - "{module_kebab}/src/domain/mod.rs"
+  - "{module_kebab}/src/domain/errors.rs"
+  - "{module_kebab}/src/ports/mod.rs"
+  - "{module_kebab}/src/services/mod.rs"
+  - "{module_kebab}/src/handlers/mod.rs"

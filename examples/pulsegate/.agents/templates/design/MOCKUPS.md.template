@@ -1,0 +1,64 @@
+# {Project} — Visual Mockups & Design System
+
+## Interview
+
+1. **Design Tokens & Color Semantics** — "What are the primary, surface, text, and state colors with semantic mappings and contrast ratios?"
+2. **Typography Scale** — "What font families, scale ratios, and weights are defined?"
+3. **Component States & Transitions** — "What are the default, hover, active, disabled, and loading states for key interactive components?"
+
+## Output
+
+---
+id: MOCK-{NNN}-{slug}
+domain: {domain}
+stage: mockups
+version: 1.0.0
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
+upstream_refs: ["WIRE-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, design, mockups, design-system]
+---
+
+# {Project} — Visual Design System & UI Specifications (W3C DTCG & WCAG 2.2)
+
+## 1. Design Token Palette
+| Token Name | Hex Value | Semantic Usage | Contrast Ratio on Bg |
+|---|---|---|---|
+| `--color-primary-500` | `#2563EB` | Brand primary buttons, active links | 4.8:1 (WCAG 2.2 AA) |
+| `--color-surface-bg` | `#0F172A` | Global application background | - |
+| `--color-surface-card` | `#1E293B` | Elevated cards and modals | - |
+| `--color-text-primary` | `#F8FAFC` | Primary headings and body text | 14.2:1 (WCAG 2.2 AAA) |
+| `--color-danger-500` | `#EF4444` | Destructive actions, error states | 4.6:1 (WCAG 2.2 AA) |
+
+### W3C Design Tokens (DTCG Format)
+```json
+{
+  "color": {
+    "primary": {
+      "500": { "$value": "#2563EB", "$type": "color", "$description": "Brand primary action fill" }
+    }
+  },
+  "motion": {
+    "reduced": { "$value": "0ms", "$type": "duration", "$description": "Used when prefers-reduced-motion: reduce" }
+  }
+}
+```
+
+## 2. Typography Hierarchy
+| Level | Font Family | Size / Line Height | Weight | Tracking |
+|---|---|---|---|---|
+| `Display Heading` | Inter, system-ui | $32\text{px} / 40\text{px}$ | Bold (700) | $-0.02\text{em}$ |
+| `Section Title` | Inter, system-ui | $20\text{px} / 28\text{px}$ | SemiBold (600) | $-0.01\text{em}$ |
+| `Body Regular` | Inter, system-ui | $14\text{px} / 20\text{px}$ | Regular (400) | Normal |
+| `Code / Mono` | JetBrains Mono | $12\text{px} / 16\text{px}$ | Medium (500) | Normal |
+
+## 3. Stateful Component Specifications
+
+### Component: Primary Button (`<Button variant="primary" />`)
+* **Default:** Background `--color-primary-500`, Text `--color-text-primary`, Padding $8\text{px } 16\text{px}$, Radius $6\text{px}$.
+* **Hover:** Background `#1D4ED8`, Scale $1.02$, Transition $150\text{ms}$ ease-out.
+* **Active / Pressed:** Background `#1E40AF`, Scale $0.98$.
+* **Disabled:** Background `#64748B`, Opacity $0.5$, Cursor `not-allowed`.
+* **Loading:** Spinner replacement with `aria-busy="true"` accessibility tag.

@@ -72,6 +72,42 @@
             }
           }
         },
+        "federation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "remotes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["alias"],
+                "additionalProperties": false,
+                "properties": {
+                  "alias": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]*$"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "uri": {
+                    "type": "string"
+                  },
+                  "lock_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "allowed_specs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "validation_rules": {
           "type": "array",
           "description": "Cross-layer validation rules evaluated between stages",

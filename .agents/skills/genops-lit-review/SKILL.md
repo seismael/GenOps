@@ -17,7 +17,7 @@ First stage in the Research pipeline. No upstream dependencies. Generates system
 2. **LOAD** — Read template interview questions and output structure. Load `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Inquire: "Single research inquiry or multi-track literature survey?"
 4. **CHECK** — First stage. Check for existing `docs/research/LIT-REVIEW-*.md`.
-5. **INTERVIEW (Socratic Research Scientist)** — Ask questions ONE at a time: formal research question, search corpus (IEEE, ACM, arXiv), inclusion/exclusion criteria, prior art taxonomy.
+5. **INTERVIEW (Adaptive Socratic Research Scientist)** — Pre-extract research scope from user input/`CONTEXT.md`, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): formal research question, PRISMA 2020 search corpus (IEEE, ACM, arXiv), inclusion/exclusion criteria, prior art taxonomy.
 6. **GENERATE** — Generate `docs/research/LIT-REVIEW-{NNN}-{slug}.md` with prior art matrix and identified research gaps.
 7. **VALIDATE (Critic Pass)** — Verify date range bounds, peer-reviewed/benchmark criteria, and concrete research gap definition.
 8. **PRESENT → APPROVE** — Present literature synthesis and identified research gap. Enforce hard gate.

@@ -29,6 +29,11 @@ GenOps follows its own pipeline. All contributions should flow through the same 
 - **Hard Gates:** Always include `<HARD-GATE>` blocks for critical verification and approval gates.
 - **Machine-Readable Specs:** All generated templates must include standardized YAML frontmatter headers.
 
+## Commit & Versioning Standards
+
+- **Commit Messages:** Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- **Versioning & Changelog:** Follow [Semantic Versioning 2.0.0](https://semver.org/) and [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
+
 ## Testing Your Changes
 
 1. **Run Engine Validation:**

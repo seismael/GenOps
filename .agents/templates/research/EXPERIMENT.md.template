@@ -13,9 +13,9 @@ id: EXPR-{NNN}-{slug}
 domain: {domain}
 stage: experiment
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["HYPOTH-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, research, experiment, methodology]
@@ -23,16 +23,17 @@ tags: [{domain}, research, experiment, methodology]
 
 # {Topic} — Experimental Protocol & Results
 
-## 1. Experimental Environment & Apparatus
+## 1. Experimental Environment, Apparatus & Reproducibility Manifest
 * **Compute Infrastructure:** 8x NVIDIA H100 SXM5, Ubuntu 24.04 LTS, PyTorch 2.4 / CUDA 12.4.
 * **Dataset / Workload:** Standardized benchmark corpus ($100,000$ sequence evaluations).
 * **Control Against Bias:** Deterministic PRNG seed ($42$), cold cache runs before each benchmark suite.
+* **Artifact Reproducibility:** Git Commit `{COMMIT_SHA}` | Dataset SHA-256 `{DATASET_SHA256}`.
 
 ## 2. Experimental Data Results
-| Condition | Mean Metric ($p50$) | Tail Metric ($p99$) | Standard Deviation | Statistically Significant? |
-|---|---|---|---|---|
-| **Baseline** | $124.2\text{ms}$ | $245.0\text{ms}$ | $\sigma = 14.1$ | Baseline |
-| **Treatment A** | $88.5\text{ms}$ | $142.1\text{ms}$ | $\sigma = 8.2$ | Yes ($p = 0.0002$) |
+| Condition | Mean / $p50$ | Tail ($p99$) | Effect Size & $\text{CI}_{95\%}$ | Std Dev ($\sigma$) | Statistically Significant? |
+|---|---|---|---|---|---|
+| **Baseline** | $124.2\text{ms}$ | $245.0\text{ms}$ | Reference | $\sigma = 14.1$ | Baseline |
+| **Treatment A** | $88.5\text{ms}$ | $142.1\text{ms}$ | $-28.7\%$, Cohen's $d = 1.42$ ($\text{CI}_{95\%}: [1.28, 1.56]$) | $\sigma = 8.2$ | Yes ($p = 0.0002$) |
 
 ## 3. Threat to Validity & Mitigations
 * **Internal Validity:** Thermal throttling mitigated via fixed GPU fan curves and power caps.

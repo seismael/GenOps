@@ -1,0 +1,2 @@
+# Ignore local ops helper scripts from reverse-drift check
+src/ops-tools

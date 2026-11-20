@@ -17,7 +17,7 @@ Terminal stage in the Design pipeline. Requires approved mockups. Generates usab
 2. **LOAD** — Read upstream mockups and `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Discover domains from upstream mockups.
 4. **CHECK** — Compute LF-normalized hash of `docs/mockups/`.
-5. **INTERVIEW (Socratic UX Researcher)** — Ask questions ONE at a time: state transitions, micro-animations, testing scenarios, participant criteria.
+5. **INTERVIEW (Adaptive Socratic UX Researcher)** — Pre-extract component states from upstream mockups, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): state transitions, micro-animations, testing scenarios, participant criteria.
 6. **GENERATE** — Generate `docs/prototype/PROTO-{NNN}-{slug}.md` with state transition matrix, testing protocols, and remediation plans.
 7. **VALIDATE (Critic Pass)** — Ensure all interactive states from mockups have defined transitions; verify success criteria for each scenario.
 8. **PRESENT → APPROVE** — Present prototype testing protocol. Enforce hard gate.

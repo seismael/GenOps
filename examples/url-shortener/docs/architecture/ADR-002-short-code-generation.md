@@ -4,6 +4,8 @@ domain: algorithm
 stage: adr
 version: 1.0.0
 status: accepted
+created_at: 2026-08-20T00:00:00Z
+updated_at: 2026-08-20T00:00:00Z
 upstream_refs: ["HLD-001-url-shortener"]
 downstream_refs: ["LLD-001-url-shortener"]
 tags: [adr, architecture, algorithm, base62, encoding]

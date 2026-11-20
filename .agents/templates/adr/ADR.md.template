@@ -21,9 +21,9 @@ id: ADR-{NNN}-{slug}
 domain: {domain}
 stage: adr
 version: 1.0.0
-status: accepted
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["HLD-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, adr, decision, architecture]
@@ -31,7 +31,7 @@ tags: [{domain}, adr, decision, architecture]
 
 # ADR-{NNN}: {Decision Topic}
 
-**Status:** `Accepted` <!-- Proposed | Accepted | Deprecated | Superseded by ADR-XXX -->  
+**Status:** `Proposed` <!-- Proposed | Accepted | Deprecated | Superseded by ADR-XXX -->  
 **Deciders:** Technical Leadership / Engineering Team  
 **Date:** <!-- YYYY-MM-DD -->  
 **Technical Domain:** `{Domain}`

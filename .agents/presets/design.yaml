@@ -52,3 +52,14 @@ pipeline:
       file_pattern: "PROTO-{NNN}-{slug}.md"
       template: "design/PROTOTYPE.md.template"
       next: []
+
+  validation_rules:
+    - from: brief
+      to: wireframes
+      rule: "Verify each Design Brief goal and user flow maps to >=1 Wireframe layout or screen"
+    - from: wireframes
+      to: mockups
+      rule: "Verify each Wireframe screen and component is styled in Mockups with design tokens"
+    - from: mockups
+      to: prototype
+      rule: "Verify each Mockup interaction and transition is covered in Prototype specification and test plan"

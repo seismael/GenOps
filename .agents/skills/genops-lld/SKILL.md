@@ -33,9 +33,9 @@ Fourth stage. Requires approved HLD and ADR specifications. Generates detailed d
    - Compute live LF-normalized hashes of `docs/hld/` and `docs/architecture/` via `python .agents/scripts/genops.py hash`.
    - Verify upstream dependencies are consistent and approved.
 
-5. **INTERVIEW (Socratic Lead Engineer)**
+5. **INTERVIEW (Adaptive Socratic Lead Engineer)**
    - Start by confirming accepted ADR directives: *"ADR-001 mandates X, ADR-002 mandates Y. Confirming these directives govern this design."*
-   - Ask template interview questions ONE at a time.
+   - Pre-extract entities and contracts already specified upstream; ask remaining gaps ONE at a time with `[Question k/N]` progress and `(Recommended)` defaults (or synthesize an immediate draft with inline critic notes if `--fast`).
    - **Enforce DDD Integrity:** Distinguish between Aggregate Roots, Entities, and immutable Value Objects. Reject bloated structs without clear invariants.
    - **Demand SQL / Schema Precision:** Demand real SQL DDL with column data types, foreign keys, cascade rules, and query-optimized indexes.
    - **Lock API Contracts:** Verify request validation rules, headers, authentication scopes, and structured error schemas.

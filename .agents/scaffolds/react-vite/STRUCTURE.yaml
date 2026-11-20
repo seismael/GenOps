@@ -1,5 +1,5 @@
 name: "React 19 Frontend SPA"
-description: "Feature-based React 19 SPA with TypeScript, Tailwind design tokens, custom hooks, and API client adapters"
+description: "Feature-based React 19 SPA with TypeScript, CSS design tokens, custom hooks, and API client adapters"
 language: "TypeScript"
 framework: "React 19"
 build: "npm run build"

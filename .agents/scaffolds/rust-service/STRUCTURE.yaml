@@ -24,5 +24,8 @@ entity_stubs:
   service: "src/services/{entity_snake}_service.rs"
 
 default_files:
+  - "{module_kebab}/src/domain/mod.rs"
   - "{module_kebab}/src/domain/errors.rs"
   - "{module_kebab}/src/ports/mod.rs"
+  - "{module_kebab}/src/services/mod.rs"
+  - "{module_kebab}/src/handlers/mod.rs"

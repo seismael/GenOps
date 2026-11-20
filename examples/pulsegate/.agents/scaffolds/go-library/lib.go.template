@@ -1,0 +1,2 @@
+// Package pkg provides shared {module_name} types and utilities.
+package pkg

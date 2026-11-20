@@ -5,7 +5,7 @@ stage: lld
 version: 1.0.0
 status: approved
 upstream_refs: ["HLD-001-url-shortener", "ADR-001-storage-engine", "ADR-002-short-code-generation"]
-downstream_refs: ["CODE-001-url-shortener"]
+downstream_refs: []
 tags: [lld, design, schema, contracts, fast-api]
 ---
 
@@ -56,7 +56,7 @@ classDiagram
 
 ---
 
-## 2. Database Schema & DDL Migrations (SQLite / PostgreSQL)
+## 2. Database Schema & DDL Migrations (SQLite 3 WAL Mode, per ADR-001)
 
 ```sql
 -- Migration: 000001_create_url_shortener_tables.sql
@@ -142,9 +142,59 @@ paths:
                   target_url: { type: string }
                   created_at: { type: string, format: date-time }
         "400":
-          description: Invalid URL schema or private IP target
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
         "409":
-          description: Custom alias collision
+          $ref: "#/components/responses/ConflictError"
+
+  /api/v1/api-keys:
+    post:
+      summary: Mint a new API key
+      parameters:
+        - name: X-Admin-Token
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_email]
+              properties:
+                owner_email: { type: string, format: email }
+                raw_token: { type: string, minLength: 8 }
+      responses:
+        "201":
+          description: API key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key_id: { type: string }
+                  token: { type: string }
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+
+  /healthz:
+    get:
+      summary: Service health probe
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  service: { type: string }
+                  version: { type: string }
 
   /{code}:
     get:
@@ -160,7 +210,7 @@ paths:
           headers:
             Location: { schema: { type: string } }
         "404":
-          description: Short code not found or inactive
+          $ref: "#/components/responses/NotFoundError"
 
   /api/v1/analytics/{code}:
     get:
@@ -187,6 +237,49 @@ paths:
                   recent_referrers:
                     type: array
                     items: { type: string }
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    ProblemDetails:
+      type: object
+      description: IETF RFC 9457 Problem Details for HTTP APIs
+      required: [type, title, status, detail]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+  responses:
+    ValidationError:
+      description: Invalid URL schema or private IP target
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    UnauthorizedError:
+      description: Missing or invalid API token
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    NotFoundError:
+      description: Short code not found or inactive
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    ConflictError:
+      description: Custom alias or API key conflict
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
 ```
 
 ---

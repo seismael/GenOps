@@ -15,7 +15,7 @@ Third stage. Requires an approved HLD. Generates modular decision records into `
 
 1. **PRE-FLIGHT**
    - Verify `docs/hld/` exists with ≥1 approved HLD document.
-   - Scan upstream HLDs for the `## 8. Technology Decisions Backlog (Needs ADR)` section to compile unresolved decision topics.
+   - Scan upstream HLDs for the `Technology Decisions Backlog (Needs ADR)` section (any heading level/number) to compile unresolved decision topics.
    - Verify `.agents/templates/adr/ADR.md.template` exists with `## Interview` and `## Output` sections.
    - Run `python .agents/scripts/genops.py validate`.
 
@@ -34,15 +34,15 @@ Third stage. Requires an approved HLD. Generates modular decision records into `
    - Compute live LF-normalized hash of `docs/hld/` via `python .agents/scripts/genops.py hash docs/hld/`.
    - Verify that upstream HLD has not changed since last state record.
 
-5. **INTERVIEW (Socratic Staff Engineer)**
-   - Ask template interview questions ONE at a time.
+5. **INTERVIEW (Adaptive Socratic Staff Engineer)**
+   - Pre-extract candidate drivers from upstream HLDs and `CONTEXT.md`; ask remaining gaps ONE at a time with `[Question k/N]` progress and `(Recommended)` defaults (or synthesize an immediate draft with inline critic notes if `--fast`).
    - **Challenge Resume-Driven Development:** Push back against bleeding-edge technologies or over-engineered frameworks when boring, battle-tested solutions deliver equal business value.
    - **Score Multi-Criteria Matrix:** Guide the user through scoring each viable alternative across 5 vectors (Performance, Simplicity, Operational Complexity, Ecosystem, and Cost).
    - **Define Concrete Downstream Constraints:** Extract exact interface boundaries and rules that LLD and Code must follow.
 
 6. **GENERATE**
    - Generate `docs/architecture/ADR-{NNN}-{slug}.md` using the template output structure.
-   - Include standard YAML frontmatter (`id`, `domain`, `stage: adr`, `version: 1.0.0`, `status: accepted`, `upstream_refs: ["HLD-NNN-slug"]`, `downstream_refs: []`, `tags`).
+   - Include standard YAML frontmatter (`id`, `domain`, `stage: adr`, `version: 1.0.0`, `status: draft`, `upstream_refs: ["HLD-NNN-slug"]`, `downstream_refs: []`, `tags`).
 
 7. **VALIDATE (Adversarial Red-Team & Critic Pass)**
    - **Adversarial Red-Team Stress-Test:** Adopt an adversarial critic persona to generate and evaluate 3 specific failure scenarios:

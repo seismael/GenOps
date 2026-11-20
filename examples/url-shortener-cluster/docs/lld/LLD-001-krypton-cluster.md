@@ -4,8 +4,10 @@ domain: krypton-cluster
 stage: lld
 version: 2.0.0
 status: approved
+created_at: 2026-08-20T00:00:00Z
+updated_at: 2026-08-20T00:00:00Z
 upstream_refs: ["HLD-001-krypton-cluster", "ADR-001-distributed-storage-stack", "ADR-002-event-streaming-engine", "ADR-003-language-runtime-selection"]
-downstream_refs: ["CODE-001-redirect-service", "CODE-002-analytics-service"]
+downstream_refs: []
 tags: [lld, cluster, microservices, clickhouse, golang, kafka]
 ---
 
@@ -26,6 +28,9 @@ classDiagram
     }
 
     class ClickTelemetry {
+        +string SpecVersion
+        +string Source
+        +string Type
         +string EventID
         +string Code
         +string TenantID
@@ -37,15 +42,37 @@ classDiagram
         +ToProtobufBytes() []byte
     }
 
-    class AnalyticsAggregationResult {
+    class AnalyticsReport {
         +string Code
+        +string TenantID
         +int64 TotalClicks
         +int64 UniqueVisitors
         +map~string,int64~ TopReferrers
         +map~string,int64~ CountryBreakdown
+        +float64 QueryLatencyMs
+    }
+
+    class MetricQuery {
+        +string Code
+        +string TenantID
+        +time.Time StartTime
+        +time.Time EndTime
+        +string GroupBy
+    }
+
+    class ClickRecord {
+        +string EventID
+        +string Code
+        +string TenantID
+        +time.Time Timestamp
+        +string IPAddress
+        +string CountryCode
+        +string UserAgent
+        +string Referrer
     }
 
     RedirectRoute ..> ClickTelemetry : produces async event
+    ClickTelemetry ..> ClickRecord : persists into OLAP
 ```
 
 ---
@@ -96,7 +123,7 @@ type IKafkaProducerPort interface {
 // Secondary Port: Columnar OLAP Analytics Repository
 type IClickHouseAnalyticsPort interface {
     RecordBatch(ctx context.Context, events []ClickTelemetry) error
-    QueryMetrics(ctx context.Context, code string, timeRange TimeRange) (*AnalyticsAggregationResult, error)
+    QueryMetrics(ctx context.Context, code string, timeRange TimeRange) (*AnalyticsReport, error)
 }
 ```
 
@@ -108,4 +135,4 @@ type IClickHouseAnalyticsPort interface {
 | Module | Scaffold | Entities | Description |
 |---|---|---|---|
 | redirect-service | go-service | RedirectRoute, ClickTelemetry | High-concurrency Go redirection ingress gateway with Redis cluster and Kafka streaming |
-| analytics-service | go-service | AnalyticsAggregationResult, MetricQuery | Analytical query service executing vectorized aggregations over ClickHouse OLAP |
+| analytics-service | go-service | AnalyticsReport, MetricQuery, ClickRecord | Analytical query service executing vectorized aggregations over ClickHouse OLAP |

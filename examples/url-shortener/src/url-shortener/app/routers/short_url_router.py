@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 from app.container import ApplicationContainer
-from app.deps import get_container, require_api_key
+from app.deps import get_container, problem_response, require_api_key
 
 router = APIRouter()
 
@@ -33,8 +33,8 @@ def shorten(
     except ValueError as e:
         message = str(e)
         if "already taken" in message:
-            return JSONResponse(status_code=409, content={"error": message})
-        return JSONResponse(status_code=400, content={"error": message})
+            return problem_response(409, "Alias Conflict", message, "urn:krypton:error:alias-conflict")
+        return problem_response(400, "Invalid Target URL", message, "urn:krypton:error:invalid-url")
 
     return JSONResponse(
         status_code=201,

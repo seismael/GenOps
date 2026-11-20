@@ -1,0 +1,47 @@
+# {Topic} — Systematic Literature Review
+
+## Interview
+
+1. **Research Question & Corpus** — "What is the primary research inquiry? What databases (IEEE, ACM, arXiv, Semantic Scholar), search queries, and inclusion criteria define the review?"
+2. **Prior Art & Taxonomies** — "What are the key benchmark papers, methodologies, and findings in the existing literature?"
+3. **Research Gap** — "What specific unanswered question, methodological limitation, or untested condition exists in current prior art?"
+
+## Output
+
+---
+id: LIT-REVIEW-{NNN}-{slug}
+domain: {domain}
+stage: lit-review
+version: 1.0.0
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
+upstream_refs: []
+downstream_refs: []
+tags: [{domain}, research, literature-review, prisma]
+---
+
+# {Topic} — Systematic Literature Review
+
+## 1. Central Research Question & Methodology (PRISMA 2020)
+* **Core Question:** <!-- Formal research inquiry -->
+* **Search Corpus:** ACM Digital Library, IEEE Xplore, arXiv, Semantic Scholar.
+* **Date Range:** 2020 – 2026.
+* **Inclusion / Exclusion Criteria:** Peer-reviewed empirical evaluations or benchmarked open-source implementations only.
+
+### PRISMA 2020 Screening & Selection Flow
+| Stage | Count ($N$) | Exclusion Rationale |
+|---|---|---|
+| Records Identified across Databases | <!-- N --> | Initial Boolean query corpus |
+| Duplicates Removed | <!-- N --> | Cross-index deduplication |
+| Records Screened (Title & Abstract) | <!-- N --> | Off-topic / non-empirical excluded |
+| Full-Text Assessed & Included | <!-- N --> | Primary synthesis corpus |
+
+## 2. Prior Art Taxonomy & Comparative Matrix
+| Paper / Work | Authors & Year | Core Methodology | Key Contribution | Known Limitations |
+|---|---|---|---|---|
+| Paper A | Author et al. (2025) | Empirical Benchmark | 4x faster execution via vector quantization | Limited to static context lengths |
+| Paper B | Author et al. (2026) | State Space Models | Sub-quadratic scaling for long inputs | Degraded retrieval precision |
+
+## 3. Identified Research Gap
+<!-- Concrete statement of the unsolved problem or untested condition in the existing literature -->

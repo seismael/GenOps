@@ -21,9 +21,9 @@ id: PRD-{NNN}-{slug}
 domain: {domain}
 stage: prd
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: []
 downstream_refs: []
 tags: [{domain}, prd, requirements]
@@ -46,11 +46,16 @@ tags: [{domain}, prd, requirements]
 | Admin | System administrator managing policies | Full system access, audit visibility | Zero direct database write access |
 | End User | Primary consumer executing domain tasks | Low friction, predictable responses | Rate-limited per IP/Tenant |
 
-## 4. Key Capabilities & User Stories (BDD Format)
+## 4. Key Capabilities & User Stories (ISO/IEC/IEEE 29148 & BDD Format)
+
+### Requirements Traceability Summary
+| Req ID | I want to... | Priority | Verification Method | Acceptance Reference |
+|---|---|---|---|---|
+| `US-{NNN}-01` | <!-- Concise capability summary --> | `P1` | `Test` | `Scenario 1, Scenario 2` |
 
 ### US-{NNN}-01: {Feature Name}
 * **Story:** As an `{Actor}`, I want `{Action}` so that `{Business Outcome}`.
-* **Priority:** `P1` <!-- P1 (Must Have), P2 (Should Have), P3 (Nice to Have) -->
+* **Priority:** `P1` <!-- P0 (Critical/Blocker), P1 (Must Have), P2 (Should Have), P3 (Nice to Have) -->
 * **Acceptance Criteria (Given-When-Then):**
   * **Scenario 1 (Happy Path):**
     * **Given:** `{System state or prerequisite}`

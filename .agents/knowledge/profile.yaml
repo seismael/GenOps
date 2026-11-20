@@ -1,0 +1,37 @@
+schema: loop.profile.v1
+project: "genops"
+target: "Maintain 100% deterministic governance, schema/template/scaffold validity, and cross-agent specification pipeline integrity"
+metric: "genops doctor pass rate and unit test pass count"
+predicate: "doctor_errors == 0 AND unit_test_failures == 0"
+modes: [eval, dev]
+paths:
+  loop: ".agents/loop"
+  agents: ".agents"
+  coverage: ".agents/loop/coverage.json"
+  knowledge: ".agents/knowledge"
+boundaries:
+  - "Zero third-party Python dependencies (Python 3.8+ standard library only)"
+  - "LF-normalized SHA-256 cryptographic determinism across Windows, macOS, and Linux"
+  - "Pure JSON-RPC 2.0 stdout during MCP server execution (zero raw print leaks)"
+  - "Strict path traversal prevention on all scaffold, report, and MCP arguments"
+fronts:
+  orient: {required: true}
+  discover: {required: true}
+  audit: {required: true}
+  diagnose: {required: true, sub_axes: [mcp_parity, parser_edge_cases, scaffold_compilation, example_sync]}
+  debug: {required: true, sub_axes: [state_tracking, lineage_rules, rtm_extraction, drift_detection]}
+  improve: {required: true, sub_axes: [engine, templates, scaffolds, skills, installer]}
+  harden: {required: true}
+  pipeline: {required: true}
+  knowledge: {required: true}
+  plan: {required: true}
+pipeline:
+  - {id: validate, kind: evaluate, command: "python -B .agents/scripts/genops.py doctor", artifact: "docs/.genops-state.json"}
+  - {id: test, kind: evaluate, command: "python -B -m unittest discover -s tests -p test_*.py", artifact: "tests/"}
+gates:
+  objective: "All governance gates (validate, check-rules, drift, verify) and unit tests pass with zero warnings or errors"
+  invariants: "python -B .agents/scripts/genops.py doctor && python -B -m unittest discover -s tests -p test_*.py"
+completion:
+  rule: "target criteria met AND coverage complete"
+  require_coverage: true
+  require_delivery: true

@@ -1,0 +1,45 @@
+# {Topic} — Comprehensive Research Report
+
+## Interview
+
+1. **Abstract & Key Finding** — "Summarize the core problem, methodology, findings, and implications in 150-250 words."
+2. **Analysis & Discussion** — "What do the empirical findings demonstrate? What limitations or unexpected behaviors were observed?"
+3. **Future Research & Actionable Next Steps** — "What future engineering or academic directions does this work open?"
+
+## Output
+
+---
+id: RPRT-{NNN}-{slug}
+domain: {domain}
+stage: report
+version: 1.0.0
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
+upstream_refs: ["EXPR-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, research, report, publication]
+---
+
+# {Topic} — Final Research Findings & Empirical Report
+
+## 1. Abstract
+<!-- 150-250 word summary covering problem, methodology, key findings, and implications -->
+
+## 2. Introduction & Motivation
+<!-- Contextual background, research question, and structural overview of the paper -->
+
+## 3. Methodology & Apparatus
+<!-- Summary of experimental conditions, variables, and statistical models -->
+
+## 4. Results & Empirical Analysis
+<!-- Data presentation, charts, significance testing, and ablation findings -->
+
+## 5. Discussion & Limitations
+<!-- Interpretation of results, unexpected observations, and operational boundaries -->
+
+## 6. Conclusion & Future Research Directions
+<!-- Summary of contributions and actionable future engineering explorations -->
+
+## 7. References
+<!-- Formal bibliographic entries -->

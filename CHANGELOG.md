@@ -2,7 +2,33 @@
 
 All notable changes to GenOps are documented in this file.
 
-## [3.1.2] — 2026-08-21
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [3.2.0] - 2026-11-20
+
+### Added
+- **Modular zero-dependency engine package** (`.agents/scripts/genops_engine/`): decomposed YAML parsing (`yaml_parser.py`), JSON Schema Draft-07 validation (`schema.py`), AST/SQL anti-drift (`antidrift.py`), SARIF 2.1.0 reporting (`sarif.py`), and federated/workspace orchestration (`workspace.py`) behind the single-entry `.agents/scripts/genops.py` facade.
+- **YAML 1.2 Core parser & frontmatter support**: literal/folded block scalars (`|`, `|-`, `|+`, `>`, `>-`, `>+`), depth-aware nested flow collections, anchors/aliases (`&anchor`, `*alias`), merge keys (`<<:`), and null keys.
+- **Full JSON Schema Draft-07 core**: local JSON Pointer `$ref` (`#/...`) with cycle protection, `minProperties`, `maxProperties`, `exclusiveMinimum`, `exclusiveMaximum`, `multipleOf` (`decimal.Decimal`), `not`, `if`/`then`/`else`, `patternProperties`, `propertyNames`, `dependencies`, `contains`, `additionalItems`, and `format` (`date-time`, `date`, `email`, `uri`, `uuid`, `ipv4`).
+- **Federated cross-repo lineage (`ext://<alias>/<SPEC-ID>`)**: `pipeline.federation.remotes` in `genops.yaml` + optional `docs/.genops-federation-lock.json`.
+- **Stage explainability & monorepo workspace orchestration**: `genops explain <stage>` (`genops_explain`), `genops workspace {status,doctor}` (`genops_workspace`), OASIS SARIF v2.1.0 output (`--sarif` on `validate`, `doctor`, `check-rules`, `drift`), and `genops rotate-events` (`genops_rotate_events`) with cryptographic `ROTATION_CHECKPOINT` archival.
+- **Two complete multi-domain reference examples**: `examples/ledgerflow` (double-entry financial ledger) and `examples/pulsegate` (edge rate-limiter & federated webhook platform).
+- **Preset parity**: added declarative `validation_rules` to `design.yaml` and `research.yaml`, expanded `TraceabilityService.build_rtm` for `brief`/`hypothesis`/`lit-review` stages, and made `next_action` preset-aware.
+
+### Changed
+- **AST, SQL contract & bidirectional anti-drift**: Python `ast.parse` and comment-stripped regex verify actual entity symbol declarations, ```sql `CREATE TABLE` blocks verify SQL DDL parity, and undeclared `src/<module>/` directories are flagged unless excluded in `.genopsignore`.
+- **Approval & rule gates**: `record_stage` prevents out-of-order approvals when required upstream artifacts are missing and rejects unresolved `TODO`/`TBD`/`FIXME` or template tokens (`--force` to override); `check_rules` enforces missing-upstream-stage rules even when upstream folders are empty and validates `mermaid` diagram headers.
+- **Performance**: added `mtime_ns`/size-keyed caches on `ConfigManager.load_yaml`, `MarkdownParser.parse_frontmatter`, and `MarkdownParser.collect_specs`, plus $O(1)$ tail-seeking in `StateRepository._last_event_hash()`.
+- **MCP protocol**: byte-accurate UTF-8 `Content-Length` framing and `resources/templates/list` + `logging/setLevel` support.
+
+### Security
+- Hardened `install_global.py` launcher templates (`_LAUNCHER_SH`, `_LAUNCHER_CMD`, `_LAUNCHER_PS1`) against shell/batch/PowerShell metacharacter injection.
+- Hardened `DeterministicHasher._should_skip` against symlinks escaping the hashed root and `CompilerVerifier.verify_workspace` against leading-dash filename argument injection (`--`).
+
+## [3.1.2] - 2026-08-21
 
 ### Fixed
 - **MCP server broke after deleting a Python install.** `install_global.py` previously baked `sys.executable` (an absolute path to whichever Python ran the installer) into every agent's MCP config. Deleting/upgrading that Python made the `genops` MCP server fail with CPython's `Could not find platform independent libraries <prefix>` error.
@@ -15,7 +41,7 @@ All notable changes to GenOps are documented in this file.
 - MCP registrations now use the agent-appropriate config shape (`type: stdio` for Claude Code/OpenCode, `disabled`/`autoApprove` for Cline) and an absolute launcher path.
 - Added `tests/test_install_global.py` covering launcher templates, MCP entry shapes, and the engine self-test.
 
-## [3.1.1] — 2026-08-20
+## [3.1.1] - 2026-08-20
 
 ### Fixed (from end-to-end dogfooding)
 - `status` staleness now propagates **transitively** downstream — a PRD change flags HLD→ADR→LLD→code stale, not just the direct child.
@@ -25,7 +51,7 @@ All notable changes to GenOps are documented in this file.
 - `status` timestamps are now consistent UTC.
 - Removed the unused `code/CODE-domain.md.template` (~1.4k tokens of dead weight); the code stage scaffolds `src/`.
 
-## [3.1.0] — 2026-08-20
+## [3.1.0] - 2026-08-20
 
 ### Added
 - `genops doctor` — one-command health check running all four governance gates (validate, check-rules, drift, verify).
@@ -53,5 +79,12 @@ All notable changes to GenOps are documented in this file.
 - `.githooks/pre-commit` was non-executable (now `100755`).
 - Committed stale state, bytecode (`.pyc`), and `TEMP.md` removed; `.gitignore` hardened.
 
-## [3.0.0] — earlier
+## [3.0.0] - 2026-08-14
 - Initial "Super Skills" milestone: Socratic elicitation, dual-pass critic, executable specs (OpenAPI/DDL), polyglot scaffolds, compiler-in-the-loop verify, living-memory compaction.
+
+[Unreleased]: https://github.com/seismael/GenOps/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/seismael/GenOps/compare/v3.1.2...v3.2.0
+[3.1.2]: https://github.com/seismael/GenOps/compare/v3.1.1...v3.1.2
+[3.1.1]: https://github.com/seismael/GenOps/compare/v3.1.0...v3.1.1
+[3.1.0]: https://github.com/seismael/GenOps/compare/v3.0.0...v3.1.0
+[3.0.0]: https://github.com/seismael/GenOps/releases/tag/v3.0.0

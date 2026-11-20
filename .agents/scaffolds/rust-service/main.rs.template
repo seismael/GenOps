@@ -1,10 +1,16 @@
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
-#[get("/health")]
+mod domain;
+mod handlers;
+mod ports;
+mod services;
+
+#[get("/healthz")]
 async fn health() -> impl Responder {
     HttpResponse::Ok().json(serde_json::json!({
         "status": "healthy",
-        "service": "{module_name}"
+        "service": "{module_kebab}",
+        "version": "1.0.0"
     }))
 }
 

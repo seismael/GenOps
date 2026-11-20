@@ -33,8 +33,8 @@ Second stage. Requires an approved PRD. Generates system design specifications i
    - Compute LF-normalized hash of `docs/prd/` via `python .agents/scripts/genops.py hash docs/prd/`.
    - Compare with stored `requires_hash` in `docs/.genops-state.json`. If state is `approved` and unchanged, prompt before re-generating.
 
-5. **INTERVIEW (Socratic Principal Architect)**
-   - Ask template interview questions ONE at a time.
+5. **INTERVIEW (Adaptive Socratic Principal Architect)**
+   - Pre-extract constraints already settled in upstream PRDs and `CONTEXT.md`; ask remaining gaps ONE at a time with `[Question k/N]` progress and `(Recommended)` defaults (or synthesize an immediate draft with inline critic notes if `--fast`).
    - **Challenge Distributed Complexity:** Interrogate microservices choices against throughput and team size. If a modular monolith suffices, advocate for it.
    - **Enforce Resiliency:** Demand explicit failure recovery mechanisms for every integration point (e.g., fallback behaviors, message queues, circuit breakers).
    - **Identify "Needs ADR" Items:** Whenever an unvetted technology, database, message queue, or protocol choice arises, flag it immediately for the Architecture Decisions stage.
@@ -42,7 +42,7 @@ Second stage. Requires an approved PRD. Generates system design specifications i
 6. **GENERATE**
    - Generate `docs/hld/HLD-{NNN}-{slug}.md` using the template output structure.
    - Include standard YAML frontmatter (`id`, `domain`, `stage: hld`, `version: 1.0.0`, `status: draft`, `upstream_refs: ["PRD-NNN-slug"]`, `downstream_refs: []`, `tags`).
-   - Include formal Mermaid `C4Context` and `sequenceDiagram` definitions.
+   - Include formal Mermaid `flowchart TB` (C4 Context/Container subgraphs) and `sequenceDiagram` definitions.
 
 7. **VALIDATE (Adversarial Red-Team & Critic Pass)**
    - **Coverage Check:** Verify that 100% of PRD Key Capabilities map to at least one component or sequence flow.

@@ -1,0 +1,75 @@
+# {Project} — Information Architecture & Wireframes
+
+## Interview
+
+1. **Information Architecture** — "What is the global navigation hierarchy and screen taxonomy?"
+2. **Critical User Flow** — "Walk through the primary conversion/action flow step-by-step."
+3. **Screen Layouts** — "What is the layout structure for each key screen?"
+
+## Output
+
+---
+id: WIRE-{NNN}-{slug}
+domain: {domain}
+stage: wireframes
+version: 1.0.0
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
+upstream_refs: ["BRIEF-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, design, wireframes, ux]
+---
+
+# {Project} — Information Architecture & Wireframes
+
+## 1. Information Architecture (Site Map)
+```mermaid
+graph TD
+    HOME["Home / Dashboard"] --> LIST["Resource List"]
+    LIST --> DETAIL["Resource Detail"]
+    DETAIL --> ACTION["Primary Action / Flow"]
+    HOME --> SETTINGS["Account & Settings"]
+```
+
+## 2. Primary User Flows
+
+```mermaid
+sequenceDiagram
+    actor User as User
+    participant Screen1 as List View
+    participant Screen2 as Detail Modal
+    participant System as App Engine
+
+    User->>Screen1: Selects item from list
+    Screen1->>Screen2: Opens detail overlay
+    User->>Screen2: Clicks 'Confirm Action'
+    Screen2->>System: Dispatches payload
+    System-->>Screen2: Returns Success
+    Screen2-->>Screen1: Updates list item state
+```
+
+## 3. Structural Screen Wireframes
+
+### Screen: {Screen Name}
+
+```
++-------------------------------------------------------------+
+| [Logo]        Search... [Ctrl+K]          [Notifications] (U)|
++-------------------------------------------------------------+
+| Nav: [Overview] [Activity] [Reports] [Settings]             |
++-------------------------------------------------------------+
+| Header: {Screen Title}                   [+ Primary Action] |
+| Subtitle: Contextual description of this view               |
++-------------------------------------------------------------+
+| [Filters: Status v] [Date Range v]              [Search...] |
+|                                                             |
+| +---------------------------------------------------------+ |
+| | Item Title                              [Status: Active]| |
+| | Subtext metadata description...                         | |
+| | [Action 1] [Action 2]                        [Details >]| |
+| +---------------------------------------------------------+ |
+|                                                             |
+| Pagination: < [1] 2 3 4 >               Showing 1-10 of 42  |
++-------------------------------------------------------------+
+```

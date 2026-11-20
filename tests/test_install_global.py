@@ -6,10 +6,15 @@ registration, without touching the real home directory or performing an
 actual install.
 """
 
+import contextlib
 import importlib.util
+import io
+import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 INSTALL_SCRIPT_PATH = (
     Path(__file__).resolve().parent.parent / ".agents" / "scripts" / "install_global.py"
@@ -19,6 +24,7 @@ spec = importlib.util.spec_from_file_location(
 )
 assert spec is not None and spec.loader is not None
 install_global = importlib.util.module_from_spec(spec)
+sys.modules["install_global"] = install_global
 spec.loader.exec_module(install_global)
 
 
@@ -122,6 +128,109 @@ class TestRegisterMcp(unittest.TestCase):
         install_global.register_mcp(data, self._launchers(), "gemini")
         command = data["mcpServers"]["genops"]["command"]
         self.assertIn("genops", command)
+
+    def test_cursor_windsurf_and_antigravity_registration(self):
+        for kind in ("cursor", "windsurf", "antigravity"):
+            data = {}
+            install_global.register_mcp(data, self._launchers(), kind)
+            self.assertEqual(data["mcpServers"]["genops"]["args"], ["mcp"])
+
+
+class TestInstallerSafetyAndLifecycle(unittest.TestCase):
+    def test_ps1_apostrophe_escaping_and_py38_probe(self):
+        out = install_global._launcher_contents(
+            install_global._LAUNCHER_PS1, "C:\\O'Malley\\.genops\\scripts\\genops.py", escape_ps1=True
+        )
+        self.assertIn("O''Malley", out)
+        self.assertIn("(3, 8)", out)
+
+    def test_corrupt_json_not_overwritten(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = Path(tmp) / "broken.json"
+            cfg.write_text("{ invalid json,", encoding="utf-8")
+            with mock.patch("install_global.logger") as mock_log:
+                loaded = install_global._load_json(cfg)
+            self.assertIsNone(loaded)
+            mock_log.warning.assert_called_once()
+            self.assertEqual(cfg.read_text(encoding="utf-8"), "{ invalid json,")
+
+    def test_copy_bundle_cleans_stale_and_skips_pycache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src_agents = Path(tmp) / "src_agents"
+            dest_home = Path(tmp) / "dest_home"
+            (src_agents / "templates" / "__pycache__").mkdir(parents=True)
+            (src_agents / "templates" / "__pycache__" / "x.pyc").write_bytes(b"123")
+            (src_agents / "templates" / "keep.md").write_text("ok", encoding="utf-8")
+            (dest_home / "templates").mkdir(parents=True)
+            (dest_home / "templates" / "obsolete.md").write_text("old", encoding="utf-8")
+
+            install_global.copy_bundle(src_agents, dest_home)
+            self.assertTrue((dest_home / "templates" / "keep.md").exists())
+            self.assertFalse((dest_home / "templates" / "obsolete.md").exists())
+            self.assertFalse((dest_home / "templates" / "__pycache__").exists())
+
+    def test_install_status_dry_run_and_uninstall_isolated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_home = Path(tmp) / "genops-home"
+            fake_mcp_cfg = Path(tmp) / "cursor_mcp.json"
+            fake_mcp_cfg.write_text('{"other": 1}\n', encoding="utf-8")
+            with mock.patch("install_global._mcp_json_targets", return_value=[(fake_mcp_cfg, "cursor")]), \
+                 mock.patch("install_global.CLI_BIN_DIRS", []):
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    rc_dry = install_global.main(["--home", str(fake_home), "--dry-run"])
+                self.assertEqual(rc_dry, 0)
+                self.assertFalse(fake_home.exists())
+
+                with contextlib.redirect_stdout(io.StringIO()):
+                    rc_inst = install_global.main(["--home", str(fake_home), "--install"])
+                    rc_stat = install_global.main(["--home", str(fake_home), "--status"])
+                self.assertEqual(rc_inst, 0)
+                self.assertEqual(rc_stat, 0)
+                self.assertTrue((fake_home / "scripts" / "genops.py").is_file())
+                self.assertIn("genops", fake_mcp_cfg.read_text(encoding="utf-8"))
+
+                with contextlib.redirect_stdout(io.StringIO()):
+                    rc_uninst = install_global.main(["--home", str(fake_home), "--uninstall"])
+                self.assertEqual(rc_uninst, 0)
+                self.assertFalse(fake_home.exists())
+                self.assertNotIn("genops", fake_mcp_cfg.read_text(encoding="utf-8"))
+
+    def test_default_home_respects_xdg_data_home_and_genops_home(self) -> None:
+        orig_genops = os.environ.get("GENOPS_HOME")
+        orig_xdg = os.environ.get("XDG_DATA_HOME")
+        try:
+            os.environ.pop("GENOPS_HOME", None)
+            os.environ["XDG_DATA_HOME"] = "/tmp/xdg-custom"
+            self.assertEqual(install_global._default_genops_home(), Path("/tmp/xdg-custom") / "genops")
+
+            os.environ["GENOPS_HOME"] = "/tmp/genops-explicit"
+            self.assertEqual(install_global._default_genops_home(), Path("/tmp/genops-explicit"))
+        finally:
+            if orig_genops is None:
+                os.environ.pop("GENOPS_HOME", None)
+            else:
+                os.environ["GENOPS_HOME"] = orig_genops
+            if orig_xdg is None:
+                os.environ.pop("XDG_DATA_HOME", None)
+            else:
+                os.environ["XDG_DATA_HOME"] = orig_xdg
+
+    def test_shell_cmd_ps1_escaping_neutralizes_metacharacters(self) -> None:
+        sh_out = install_global._launcher_contents(
+            install_global._LAUNCHER_SH, "/Users/dev$1`id`\"q's/.genops/scripts/genops.py"
+        )
+        self.assertIn("ENGINE='/Users/dev$1`id`\"q'\"'\"'s/.genops/scripts/genops.py'", sh_out)
+
+        cmd_out = install_global._launcher_contents(
+            install_global._LAUNCHER_CMD, 'C:\\Users\\%USERNAME%\\"evil"\\genops.py'
+        )
+        self.assertIn('set "ENGINE=C:\\Users\\%%USERNAME%%\\evil\\genops.py"', cmd_out)
+
+        ps1_out = install_global._launcher_contents(
+            install_global._LAUNCHER_PS1, "C:\\Users\\O'Brien$HOME\\genops.py"
+        )
+        self.assertIn("$engine = 'C:\\Users\\O''Brien$HOME\\genops.py'", ps1_out)
 
 
 if __name__ == "__main__":

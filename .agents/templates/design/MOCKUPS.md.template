@@ -13,24 +13,38 @@ id: MOCK-{NNN}-{slug}
 domain: {domain}
 stage: mockups
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["WIRE-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, design, mockups, design-system]
 ---
 
-# {Project} — Visual Design System & UI Specifications
+# {Project} — Visual Design System & UI Specifications (W3C DTCG & WCAG 2.2)
 
 ## 1. Design Token Palette
 | Token Name | Hex Value | Semantic Usage | Contrast Ratio on Bg |
 |---|---|---|---|
-| `--color-primary-500` | `#2563EB` | Brand primary buttons, active links | 4.8:1 (Pass AA) |
+| `--color-primary-500` | `#2563EB` | Brand primary buttons, active links | 4.8:1 (WCAG 2.2 AA) |
 | `--color-surface-bg` | `#0F172A` | Global application background | - |
 | `--color-surface-card` | `#1E293B` | Elevated cards and modals | - |
-| `--color-text-primary` | `#F8FAFC` | Primary headings and body text | 14.2:1 (Pass AAA) |
-| `--color-danger-500` | `#EF4444` | Destructive actions, error states | 4.6:1 (Pass AA) |
+| `--color-text-primary` | `#F8FAFC` | Primary headings and body text | 14.2:1 (WCAG 2.2 AAA) |
+| `--color-danger-500` | `#EF4444` | Destructive actions, error states | 4.6:1 (WCAG 2.2 AA) |
+
+### W3C Design Tokens (DTCG Format)
+```json
+{
+  "color": {
+    "primary": {
+      "500": { "$value": "#2563EB", "$type": "color", "$description": "Brand primary action fill" }
+    }
+  },
+  "motion": {
+    "reduced": { "$value": "0ms", "$type": "duration", "$description": "Used when prefers-reduced-motion: reduce" }
+  }
+}
+```
 
 ## 2. Typography Hierarchy
 | Level | Font Family | Size / Line Height | Weight | Tracking |

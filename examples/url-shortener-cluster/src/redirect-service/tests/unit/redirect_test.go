@@ -23,20 +23,29 @@ func TestDomainInvariantsAndSSRF(t *testing.T) {
 		t.Fatalf("expected valid route, got error: %v", err)
 	}
 
-	ssrfRoute := domain.RedirectRoute{
-		Code:      "badssrf",
-		TargetURL: "http://127.0.0.1/admin",
-		TenantID:  "tenant_100",
-		IsActive:  true,
+	ssrfCases := []string{
+		"http://127.0.0.1/admin",
+		"http://LOCALHOST/admin",
+		"http://localhost./admin",
+		"http://sub.localhost/admin",
 	}
-	if err := ssrfRoute.Validate(); err == nil {
-		t.Fatalf("expected SSRF error, got nil")
+	for _, target := range ssrfCases {
+		ssrfRoute := domain.RedirectRoute{
+			Code:      "badssrf",
+			TargetURL: target,
+			TenantID:  "tenant_100",
+			IsActive:  true,
+		}
+		if err := ssrfRoute.Validate(); err == nil {
+			t.Fatalf("expected SSRF error for %s, got nil", target)
+		}
 	}
 }
 
 func TestConcurrentRedirectionAndTelemetryThroughput(t *testing.T) {
 	redisCluster := cache.NewMemoryRedisCluster()
 	kafkaProducer := streaming.NewAsyncKafkaProducer(50000)
+	defer kafkaProducer.Close()
 	svc := services.NewRedirectService(redisCluster, kafkaProducer)
 
 	route := domain.RedirectRoute{
@@ -71,5 +80,9 @@ func TestConcurrentRedirectionAndTelemetryThroughput(t *testing.T) {
 
 	if svc.GetTotalServed() != int64(concurrency) {
 		t.Fatalf("expected %d served, got %d", concurrency, svc.GetTotalServed())
+	}
+	kafkaProducer.Close()
+	if kafkaProducer.GetProducedCount() == 0 {
+		t.Fatalf("expected produced telemetry events > 0, got 0")
 	}
 }

@@ -44,10 +44,21 @@ class TestApiKeyDomain(unittest.TestCase):
         self.assertFalse(api_key.verify(token))
 
     def test_same_token_hashes_deterministically(self) -> None:
-        key1, _ = ApiKey.create("same-token", "a@example.com")
-        key2, _ = ApiKey.create("same-token", "b@example.com")
+        key1, _ = ApiKey.create("same-token-123", "a@example.com")
+        key2, _ = ApiKey.create("same-token-123", "b@example.com")
         self.assertEqual(key1.key_hash, key2.key_hash)
         self.assertEqual(key1.key_id, key2.key_id)
+
+    def test_csprng_generated_when_token_omitted(self) -> None:
+        key, token = ApiKey.create(None, "gen@example.com")
+        self.assertTrue(len(token) >= 32)
+        self.assertTrue(key.verify(token))
+
+    def test_invalid_email_and_short_token_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            ApiKey.create("short", "dev@example.com")
+        with self.assertRaises(ValueError):
+            ApiKey.create("super-secret-token", "not-an-email")
 
 
 if __name__ == "__main__":

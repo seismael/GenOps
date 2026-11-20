@@ -19,7 +19,7 @@ Before ANY action, run these checks. Halt on first failure.
 
 ## State Management
 
-Each stage: `state`, `last_run`, `requires_hash`, `files` (per-file LF-normalized SHA-256), `combined_hash`, `output_dir`, `domain_count`, `approved_by`. Append-only event history logged in `docs/.genops-events.jsonl`.
+Each stage: `state`, `last_run`, `requires_hash`, `files` (per-file LF-normalized SHA-256), `combined_hash`, `output_dir`, `file_count`, `dependencies`, `approved_by`. Append-only hash-chained event history logged in `docs/.genops-events.jsonl`.
 
 ## Staleness Detection
 
@@ -44,7 +44,7 @@ Run `python .agents/scripts/genops.py status`. Outputs table: stage | state | la
 
 ## Stage Protocol
 
-All stages follow **genops-stage**: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT → APPROVE → RECORD → TRANSITION (11 steps). Non-code stages generate documents with YAML frontmatter from templates. Code stage uses scaffold templates via `python .agents/scripts/genops.py scaffold`.
+All stages follow **genops-stage**: PRE-FLIGHT → LOAD → DOMAINS → CHECK → INTERVIEW → GENERATE → VALIDATE → PRESENT & APPROVE → RECORD & COMPACT → TRANSITION (10 steps). Non-code stages generate documents with YAML frontmatter from templates. Code stage uses scaffold templates via `python .agents/scripts/genops.py scaffold`.
 
 ## Transition Logic
 - `--nonstop` → next with `--nonstop`

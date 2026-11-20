@@ -1,0 +1,155 @@
+# {Domain} — High-Level Design
+
+## Interview
+
+Questions asked ONE at a time. The agent operates as a Principal Systems Architect, enforcing structural decoupling, clean interfaces, and resilient distributed patterns.
+
+**Required:**
+1. **System Topology & Architecture Pattern** — "What macro-architecture fits best (Modular Monolith, Event-Driven Microservices, Serverless, CQRS/Event Sourcing)? What is the primary justification against simpler alternatives?"
+2. **Component Boundaries & Core Responsibilities** — "What are the 3-5 primary components or services in this domain? For each: what is its single responsibility, what public interface does it expose, and what are its direct dependencies?"
+3. **End-to-End Critical Data Flows** — "Walk through the primary data flow and transaction path end-to-end. Which components interact synchronously (REST/gRPC) vs. asynchronously (Events/Queues)?"
+4. **Failure Domains & Resilience Strategy** — "What happens when a downstream dependency or database fails? What are the explicit timeout, retry, circuit breaker, and fallback strategies?"
+
+**Optional / Operational:**
+5. **Data Storage & Consistency Model** — "What data consistency guarantees are required (Strict ACID, Eventual Consistency, Read-after-Write)? What storage paradigm fits (Relational, Document, Key-Value, Vector)?"
+6. **Cross-Cutting Concerns** — "What is the ingress/gateway strategy, authentication propagation model, and distributed tracing approach?"
+7. **Technology Candidates (Needs ADR)** — "What technologies, databases, frameworks, or external infrastructure are being considered that require an explicit Architecture Decision Record (ADR)?"
+
+## Output
+
+---
+id: HLD-{NNN}-{slug}
+domain: {domain}
+stage: hld
+version: 1.0.0
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
+upstream_refs: ["PRD-{NNN}-{slug}"]
+downstream_refs: []
+tags: [{domain}, hld, architecture, topology]
+---
+
+# {Domain} — High-Level Design Specification
+
+## 1. System Overview & Architectural Approach (ISO/IEC/IEEE 42010)
+<!-- 2-3 paragraphs describing the target architecture, stakeholder concerns, structural boundaries, and architectural rationale -->
+
+## 2. System Topology (C4 Context & Container)
+
+### 2.1 C4 System Context Diagram
+```mermaid
+flowchart TB
+    USER["User / Client<br/>(Interacts with {Domain} services)"]
+    SYS["{Domain} System<br/>(Handles core domain logic & workflows)"]
+    IDP["Identity Provider<br/>(Validates JWT tokens & RBAC)"]
+    BUS[("Event Bus / Broker<br/>(CloudEvents v1.0.2 Async Streaming)")]
+
+    USER -->|"HTTPS / JSON"| SYS
+    SYS -->|"OIDC / JWKS"| IDP
+    SYS -->|"CloudEvents 1.0.2 / Kafka"| BUS
+```
+
+### 2.2 Component Container Boundaries
+
+```mermaid
+graph TB
+    subgraph ClientLayer ["Client & Ingress Layer"]
+        GW["API Gateway / Reverse Proxy"]
+    end
+
+    subgraph CoreDomain ["{Domain} Service Boundary"]
+        API["API Controller / Router"]
+        SVC["Domain Application Service"]
+        STORE["Persistence Store / Cache"]
+    end
+
+    subgraph External ["External Services & Infrastructure"]
+        DB[(Primary Database)]
+        QUEUE[("Event Broker / Kafka")]
+    end
+
+    GW -->|"gRPC / HTTPS"| API
+    API -->|"Invokes"| SVC
+    SVC -->|"Reads/Writes"| STORE
+    STORE -->|"SQL / TCP"| DB
+    SVC -->|"Publishes Async"| QUEUE
+```
+
+## 3. Component Specifications
+
+### 3.1 {Component Name}
+* **Single Responsibility:** 
+* **Public Interface:** 
+* **Dependencies:** 
+* **Statefulness:** Stateless | Stateful | Ephemeral Cache
+* **Failure Blast Radius:** 
+
+## 4. End-to-End Data Flow & Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client / Caller
+    participant GW as API Gateway
+    participant Svc as {Domain} Service
+    participant DB as Persistence Store
+    participant Broker as Event Broker
+
+    Client->>GW: POST /api/v1/{domain}/action (Bearer Token)
+    GW->>GW: Validate JWT & Rate Limits
+    GW->>Svc: Forward sanitized request
+    Svc->>DB: Begin Transaction & Query State
+    alt State Valid
+        Svc->>DB: Commit State Change
+        Svc-->>Broker: Emit {Domain}CreatedEvent (Async)
+        Svc-->>GW: 201 Created (Payload)
+        GW-->>Client: 201 Created
+    else Validation or Concurrency Conflict
+        Svc->>DB: Rollback
+        Svc-->>GW: 409 Conflict / 422 Unprocessable
+        GW-->>Client: Structured Error Response
+    end
+```
+
+## 5. Failure Domains & Resiliency Framework
+
+| Integration Point | Failure Mode | Resilience Pattern | Fallback / Recovery Strategy |
+|---|---|---|---|
+| Primary Database | Connection Timeout / Pool Exhaustion | Exponential Backoff with Jitter | Return 503 with `Retry-After` header; alert APM |
+| Downstream Sync API | Network Partition / High Latency | Circuit Breaker (50% fail in 10s) | Serve degraded cached response or enqueue task |
+| Event Broker | Broker Unreachable on Publish | Outbox Pattern (Transactional Store) | Relay worker drains outbox once broker recovers |
+
+## 6. Integration Points & Protocols
+
+| Integration Name | Protocol | Direction | Sync / Async | Payload Format | SLA Target |
+|---|---|---|---|---|---|
+| Ingress API | HTTPS | Inbound | Synchronous | JSON / Protobuf | $p99 < 150\text{ms}$ |
+| Domain Events | Kafka / AMQP | Outbound | Asynchronous | CloudEvents (JSON) | $< 50\text{ms}$ ack |
+| Database | TCP (Postgres Wire) | Outbound | Synchronous | Binary SQL | $p99 < 10\text{ms}$ |
+
+## 7. Non-Functional Requirements (NFR), Trust Boundaries & Observability
+* **Throughput & Scalability:** Support $\ge 1,000\text{ req/sec}$ horizontal scale with stateless compute nodes.
+* **Data Consistency:** Strict serializability for financial/inventory writes; eventual consistency ($< 500\text{ms}$) for analytics read replicas.
+* **Security & Trust Boundaries:** TLS 1.3 at public ingress; mTLS + W3C `traceparent` propagation between internal services; AES-256-GCM at rest.
+* **Observability & Telemetry (OpenTelemetry):** Export RED metrics (Rate, Errors, Duration), `/healthz` readiness probes, and structured audit logs; enforce CloudEvents v1.0.2 envelope (`specversion`, `id`, `source`, `type`, `time`, `datacontenttype`, `data`) for all async events:
+```json
+{
+  "specversion": "1.0",
+  "id": "evt-01936b8c-9f21-7000-8000-000000000001",
+  "source": "/services/{domain}",
+  "type": "com.genops.{domain}.created",
+  "time": "{YYYY-MM-DDTHH:MM:SSZ}",
+  "datacontenttype": "application/json",
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "data": { "entity_id": "..." }
+}
+```
+
+## 8. Technology Decisions Backlog (Needs ADR)
+
+| Area | Decision Item | Recommended Candidate | Alternatives to Evaluate | Status |
+|---|---|---|---|---|
+| Runtime / Language | Programming Language & Engine | Go 1.22+ | Rust, TypeScript (Node), Python | Needs ADR |
+| Persistence | Primary Datastore | PostgreSQL 16 | MySQL, MongoDB, DynamoDB | Needs ADR |
+| Transport Protocol | Inter-Service Communication | gRPC / HTTP2 | REST (HTTP/1.1), GraphQL | Needs ADR |

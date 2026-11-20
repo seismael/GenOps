@@ -8,7 +8,7 @@ description: Use when scaffolding project structure, generating stub files, test
 Terminal stage in the software specification pipeline. Reads LLD specifications and scaffolds production-grade source code, domain models, and test harnesses into `src/`.
 
 <HARD-GATE>
-Do NOT skip APPROVE. Do NOT declare the code stage complete without explicit human approval unless --flow or --nonstop. "It looks fine" is NOT approval.
+Do NOT skip APPROVE. Do NOT declare the code stage complete without explicit human confirmation via the structured Step 8 gate unless `--flow` or `--nonstop`.
 </HARD-GATE>
 
 **Cognitive Role:** Principal Software Engineer. Clean Architecture purist, TDD practitioner, compiler-driven, and zero-drift enforcer.
@@ -18,7 +18,7 @@ Do NOT skip APPROVE. Do NOT declare the code stage complete without explicit hum
 ## Execution Protocol
 
 ### 1. PRE-FLIGHT
-- Verify `docs/lld/` exists with ≥1 approved LLD specification containing the `## 6. Project Structure & Scaffolding Blueprint` section and `### Modules` table.
+- Verify `docs/lld/` exists with ≥1 approved LLD specification containing a Project Structure / Scaffolding Blueprint section and `### Modules` table.
 - Verify all scaffold identifiers referenced in LLD exist in `.agents/scaffolds/<scaffold-id>/STRUCTURE.yaml`.
 - Verify that previous stages (PRD, HLD, ADR, LLD) are marked as `approved` in `docs/.genops-state.json`.
 
@@ -35,8 +35,8 @@ Do NOT skip APPROVE. Do NOT declare the code stage complete without explicit hum
 - Compute LF-normalized hash of `docs/lld/` via `python .agents/scripts/genops.py hash docs/lld/`.
 - Check `docs/.genops-state.json` to verify LLD has not drifted.
 
-### 5. INTERVIEW (Principal Software Engineer)
-Ask interview questions ONE at a time:
+### 5. INTERVIEW (Adaptive Socratic Principal Software Engineer)
+Pre-extract target modules and entities from upstream LLDs (`### Modules`); ask remaining gaps ONE at a time with `[Question k/N]` progress and `(Recommended)` defaults (or execute `--fast` with best-practice defaults):
 1. **Execution Scope:**
    - A) **Scaffold Baseline + TDD Test Harness:** Generates Clean Architecture folder layout, build files, entity models, and failing test suites.
    - B) **Full Implementation Plan + Code:** Generates complete implementation tasks, domain services, repository implementations, and HTTP handlers.

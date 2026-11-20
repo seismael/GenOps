@@ -40,9 +40,9 @@ class ShortUrl:
 
     @staticmethod
     def _is_prohibited_host(hostname: str) -> bool:
-        """Return True for localhost or loopback/private/link-local IP literals."""
-        lowered = hostname.lower()
-        if lowered == "localhost":
+        """Return True for localhost, .local/.internal domains, or non-global/private IP literals."""
+        lowered = hostname.lower().rstrip(".")
+        if not lowered or lowered == "localhost" or lowered.endswith((".localhost", ".local", ".internal")):
             return True
 
         try:
@@ -51,25 +51,20 @@ class ShortUrl:
             # Not an IP literal (e.g., a public DNS hostname) — allowed.
             return False
 
-        if ip.version == 4:
-            octets = [int(part) for part in str(ip).split(".")]
-            a, b = octets[0], octets[1]
-            if a == 127:                        # 127.0.0.0/8 loopback
-                return True
-            if a == 10:                         # 10.0.0.0/8 RFC1918
-                return True
-            if a == 192 and b == 168:           # 192.168.0.0/16 RFC1918
-                return True
-            if a == 172 and 16 <= b <= 31:      # 172.16.0.0/12 RFC1918
-                return True
-            if a == 169 and b == 254:           # 169.254.0.0/16 link-local
-                return True
-            if a == 0 and all(o == 0 for o in octets):  # 0.0.0.0 unspecified
-                return True
-            return False
+        if ip.version == 6 and ip.ipv4_mapped is not None:
+            ip = ip.ipv4_mapped
 
-        # IPv6: ::1 loopback, fe80::/10 link-local, fc00::/7 unique-local
-        return ip.is_loopback or ip.is_link_local or ip.is_private or ip.is_unspecified
+        # Reject loopback, RFC1918 private, CGNAT (100.64.0.0/10), link-local,
+        # unspecified, reserved, and multicast addresses.
+        return (
+            ip.is_loopback
+            or ip.is_private
+            or ip.is_link_local
+            or ip.is_unspecified
+            or ip.is_reserved
+            or ip.is_multicast
+            or not ip.is_global
+        )
 
     def increment_clicks(self) -> None:
         """Increment aggregate click counter."""

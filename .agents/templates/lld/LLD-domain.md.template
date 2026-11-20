@@ -21,9 +21,9 @@ id: LLD-{NNN}-{slug}
 domain: {domain}
 stage: lld
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["HLD-{NNN}-{slug}", "ADR-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, lld, detailed-design, contracts]
@@ -83,6 +83,8 @@ erDiagram
 ```sql
 -- Migration: 000001_create_{domain}_tables.up.sql
 -- Dialect: PostgreSQL 16+
+-- Primary keys use application-generated IETF RFC 9562 UUIDv7 for B-tree index locality
+-- (gen_random_uuid() serves only as a DB-level fallback; use uuidv7() on PostgreSQL 17+).
 
 CREATE TABLE IF NOT EXISTS {domain}_aggregates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -124,6 +126,8 @@ paths:
     post:
       summary: Create a new {domain} aggregate
       operationId: create{Domain}
+      security:
+        - BearerAuth: []
       parameters:
         - in: header
           name: X-Idempotency-Key
@@ -131,6 +135,12 @@ paths:
             type: string
           required: false
           description: Client-generated idempotency key
+        - in: header
+          name: traceparent
+          schema:
+            type: string
+          required: false
+          description: W3C Trace Context propagation header
       requestBody:
         required: true
         content:
@@ -146,10 +156,17 @@ paths:
                 $ref: '#/components/schemas/{Domain}Response'
         '400':
           $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
         '409':
           $ref: '#/components/responses/ConflictError'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Create{Domain}Request:
       type: object
@@ -180,6 +197,68 @@ components:
         createdAt:
           type: string
           format: date-time
+    ProblemDetails:
+      type: object
+      description: IETF RFC 9457 Problem Details for HTTP APIs
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        error_code:
+          type: string
+  responses:
+    ValidationError:
+      description: Validation invariant failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    UnauthorizedError:
+      description: Authentication credentials missing or invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    NotFoundError:
+      description: Requested resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    ConflictError:
+      description: Resource conflict or duplicate idempotency/key constraint
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+```
+
+### 3.2 Async Event Envelope (CNCF CloudEvents v1.0.2 & W3C Trace Context)
+
+```json
+{
+  "specversion": "1.0",
+  "id": "01936b8c-9f21-7000-8000-000000000001",
+  "source": "/{domain}-service",
+  "type": "com.genops.{domain}.event.v1",
+  "time": "{YYYY-MM-DDTHH:MM:SSZ}",
+  "datacontenttype": "application/json",
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "data": { "aggregateId": "01936b8c-9f21-7000-8000-000000000002" }
+}
 ```
 
 ---

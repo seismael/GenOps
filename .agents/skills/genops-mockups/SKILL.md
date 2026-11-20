@@ -17,7 +17,7 @@ Third stage in the Design pipeline. Requires approved wireframes. Generates UI s
 2. **LOAD** — Read upstream wireframes and `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Discover domains from upstream wireframes.
 4. **CHECK** — Compute LF-normalized hash of `docs/wireframes/`.
-5. **INTERVIEW (Socratic Design Systems Engineer)** — Ask questions ONE at a time: design tokens, contrast ratios, typography hierarchy, component interactive states.
+5. **INTERVIEW (Adaptive Socratic Design Systems Engineer)** — Pre-extract brand constraints from upstream specs, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): W3C DTCG design tokens, WCAG 2.2 contrast ratios, typography hierarchy, component interactive states.
 6. **GENERATE** — Generate `docs/mockups/MOCK-{NNN}-{slug}.md` with design tokens table, typography scale, and stateful component specifications.
 7. **VALIDATE (Critic Pass)** — Calculate WCAG contrast ratios (minimum 4.5:1 for AA text, 7:1 for AAA); ensure loading/disabled states for all inputs.
 8. **PRESENT → APPROVE** — Present token palette and component specifications. Enforce hard gate.

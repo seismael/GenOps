@@ -4,6 +4,8 @@ domain: krypton-cluster
 stage: prd
 version: 2.0.0
 status: approved
+created_at: 2026-08-20T00:00:00Z
+updated_at: 2026-08-20T00:00:00Z
 upstream_refs: []
 downstream_refs: ["HLD-001-krypton-cluster"]
 tags: [krypton-cluster, hyperscale, microservices, streaming, enterprise]

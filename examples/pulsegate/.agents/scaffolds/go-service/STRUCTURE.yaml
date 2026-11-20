@@ -1,0 +1,30 @@
+name: "Go Clean Microservice"
+description: "Hexagonal / Clean Architecture Go service with pure domain models, ports, postgres adapters, and gin HTTP routes"
+language: "Go"
+framework: "gin"
+build: "go build ./..."
+
+directories:
+  - "cmd/"
+  - "internal/domain/"
+  - "internal/ports/"
+  - "internal/service/"
+  - "internal/adapters/postgres/"
+  - "internal/handlers/http/"
+  - "tests/contract/"
+
+templates:
+  go.mod.template: "{module_kebab}/go.mod"
+  main.go.template: "{module_kebab}/cmd/main.go"
+  Dockerfile.template: "{module_kebab}/Dockerfile"
+
+entity_stubs:
+  domain: "internal/domain/{entity_snake}.go"
+  domain_test: "internal/domain/{entity_snake}_test.go"
+  service: "internal/service/{entity_snake}_service.go"
+  repository: "internal/adapters/postgres/{entity_snake}_repository.go"
+  handler: "internal/handlers/http/{entity_snake}_handler.go"
+
+default_files:
+  - "{module_kebab}/internal/domain/errors.go"
+  - "{module_kebab}/internal/ports/interfaces.go"

@@ -13,9 +13,9 @@ id: HYPOTH-{NNN}-{slug}
 domain: {domain}
 stage: hypothesis
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["LIT-REVIEW-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, research, hypothesis]
@@ -36,5 +36,6 @@ tags: [{domain}, research, hypothesis]
 
 ## 3. Statistical Power & Validation Criteria
 * **Alpha Level ($\alpha$):** $0.01$
+* **Minimum Effect Size & Precision:** Cohen's $d \ge 0.8$ (large effect) reported alongside $95\%$ Confidence Intervals ($\text{CI}_{95\%}$) and relative delta ($\ge 20\%$).
 * **Statistical Test:** Two-tailed Welch's $t$-test / Mann-Whitney $U$ test.
 * **Sample Size:** $N \ge 1,000$ independent trials per condition.

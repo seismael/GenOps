@@ -17,7 +17,7 @@ Second stage in the Research pipeline. Requires approved literature review. Gene
 2. **LOAD** — Read upstream literature review and `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Discover domains from upstream review.
 4. **CHECK** — Compute LF-normalized hash of `docs/research/`.
-5. **INTERVIEW (Socratic Research Scientist)** — Ask questions ONE at a time: formal $H_0/H_1$ hypotheses, independent/dependent/controlled variables, alpha level ($\alpha$), sample size $N$, statistical tests.
+5. **INTERVIEW (Adaptive Socratic Research Scientist)** — Pre-extract gaps from upstream review, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): formal $H_0/H_1$ hypotheses, variables, alpha ($\alpha$), effect size / $\text{CI}_{95\%}$, sample size $N$, statistical tests.
 6. **GENERATE** — Generate `docs/hypothesis/HYPOTH-{NNN}-{slug}.md` with hypotheses specification, variable matrix, and statistical power criteria.
 7. **VALIDATE (Critic Pass)** — Verify falsifiability of $H_1$, clear operational definitions, and appropriate statistical power.
 8. **PRESENT → APPROVE** — Present hypothesis specification. Enforce hard gate.

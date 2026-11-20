@@ -17,7 +17,7 @@ Third stage in the Research pipeline. Requires approved hypothesis. Generates ex
 2. **LOAD** — Read upstream hypothesis and `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Discover domains from upstream hypothesis.
 4. **CHECK** — Compute LF-normalized hash of `docs/hypothesis/`.
-5. **INTERVIEW (Socratic Experimental Scientist)** — Ask questions ONE at a time: compute infrastructure/apparatus, benchmark workloads, bias controls, collected metric distributions ($p50, p99, \sigma$).
+5. **INTERVIEW (Adaptive Socratic Experimental Scientist)** — Pre-extract hypotheses/variables from upstream specs, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): apparatus, reproducibility manifest, bias controls, distributions ($p50, p99, \sigma$, effect size).
 6. **GENERATE** — Generate `docs/experiment/EXPR-{NNN}-{slug}.md` with apparatus specs, empirical results table, and threats to validity.
 7. **VALIDATE (Critic Pass)** — Verify reproducibility details, deterministic seeds, and statistical significance calculations ($p$-value).
 8. **PRESENT → APPROVE** — Present experimental findings. Enforce hard gate.

@@ -17,7 +17,7 @@ Terminal stage in the Research pipeline. Requires approved experiment. Generates
 2. **LOAD** — Read upstream experiment data and `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Discover domains from upstream experiment.
 4. **CHECK** — Compute LF-normalized hash of `docs/experiment/`.
-5. **INTERVIEW (Socratic Research Investigator)** — Ask questions ONE at a time: structured abstract, introduction & motivation, empirical analysis discussion, future engineering implications.
+5. **INTERVIEW (Adaptive Socratic Research Investigator)** — Pre-extract experiment findings from upstream specs, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): structured abstract, introduction & motivation, empirical analysis discussion, future engineering implications.
 6. **GENERATE** — Generate `docs/report/RPRT-{NNN}-{slug}.md` adhering to the complete IMRAD format.
 7. **VALIDATE (Critic Pass)** — Verify all experimental findings are cited; ensure actionable recommendations and limitations are candidly stated.
 8. **PRESENT → APPROVE** — Present final research report. Enforce hard gate.

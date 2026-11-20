@@ -4,6 +4,8 @@ domain: krypton-cluster
 stage: hld
 version: 2.0.0
 status: approved
+created_at: 2026-08-20T00:00:00Z
+updated_at: 2026-08-20T00:00:00Z
 upstream_refs: ["PRD-001-krypton-cluster"]
 downstream_refs: ["ADR-001-distributed-storage-stack", "ADR-002-event-streaming-engine", "ADR-003-language-runtime-selection", "LLD-001-krypton-cluster"]
 tags: [hld, cluster, microservices, c4, distributed-systems, kafka]

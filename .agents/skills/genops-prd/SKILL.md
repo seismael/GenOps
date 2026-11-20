@@ -29,8 +29,8 @@ First stage. No upstream dependencies. Generates specification documents into `d
 4. **CHECK**
    - First stage: verify if `docs/prd/PRD-*.md` files already exist. Prompt if re-running.
 
-5. **INTERVIEW (Socratic Principal PM)**
-   - Ask template interview questions ONE at a time.
+5. **INTERVIEW (Adaptive Socratic Principal PM)**
+   - Pre-extract answers already provided in the user prompt and `CONTEXT.md`; confirm inferred items and ask remaining gaps ONE at a time with `[Question k/N]` progress and `(Recommended)` defaults (or synthesize an immediate draft with inline critic notes if `--fast`).
    - **Challenge Vague Objectives:** Demand measurable baselines and targets (e.g., "Reduce checkout latency from 800ms to <200ms" instead of "Make it faster").
    - **Enforce BDD Acceptance:** Ensure each user story has at least one concrete `Given-When-Then` scenario.
    - **Lock Scope Boundaries:** Challenge any feature without clear ROI and relegate it to "Out of Scope / Anti-Features".

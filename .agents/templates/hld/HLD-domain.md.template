@@ -22,9 +22,9 @@ id: HLD-{NNN}-{slug}
 domain: {domain}
 stage: hld
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["PRD-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, hld, architecture, topology]
@@ -32,24 +32,22 @@ tags: [{domain}, hld, architecture, topology]
 
 # {Domain} — High-Level Design Specification
 
-## 1. System Overview & Architectural Approach
-<!-- 2-3 paragraphs describing the target architecture, structural boundaries, and architectural rationale -->
+## 1. System Overview & Architectural Approach (ISO/IEC/IEEE 42010)
+<!-- 2-3 paragraphs describing the target architecture, stakeholder concerns, structural boundaries, and architectural rationale -->
 
 ## 2. System Topology (C4 Context & Container)
 
 ### 2.1 C4 System Context Diagram
 ```mermaid
-C4Context
-  title System Context Diagram — {Domain}
-  
-  Person(user, "User / Client", "Interacts with {Domain} services")
-  System(domainSystem, "{Domain} System", "Handles core domain logic and workflows")
-  System_Ext(authProvider, "Identity Provider", "Validates JWT tokens & RBAC")
-  System_Ext(eventBus, "Message Broker / Event Bus", "Asynchronous domain event streaming")
-  
-  Rel(user, domainSystem, "Invokes APIs", "HTTPS / JSON")
-  Rel(domainSystem, authProvider, "Validates Auth", "OIDC / JWKS")
-  Rel(domainSystem, eventBus, "Publishes Events", "CloudEvents / Kafka")
+flowchart TB
+    USER["User / Client<br/>(Interacts with {Domain} services)"]
+    SYS["{Domain} System<br/>(Handles core domain logic & workflows)"]
+    IDP["Identity Provider<br/>(Validates JWT tokens & RBAC)"]
+    BUS[("Event Bus / Broker<br/>(CloudEvents v1.0.2 Async Streaming)")]
+
+    USER -->|"HTTPS / JSON"| SYS
+    SYS -->|"OIDC / JWKS"| IDP
+    SYS -->|"CloudEvents 1.0.2 / Kafka"| BUS
 ```
 
 ### 2.2 Component Container Boundaries
@@ -130,10 +128,23 @@ sequenceDiagram
 | Domain Events | Kafka / AMQP | Outbound | Asynchronous | CloudEvents (JSON) | $< 50\text{ms}$ ack |
 | Database | TCP (Postgres Wire) | Outbound | Synchronous | Binary SQL | $p99 < 10\text{ms}$ |
 
-## 7. Non-Functional Requirements (NFR) Allocations
+## 7. Non-Functional Requirements (NFR), Trust Boundaries & Observability
 * **Throughput & Scalability:** Support $\ge 1,000\text{ req/sec}$ horizontal scale with stateless compute nodes.
 * **Data Consistency:** Strict serializability for financial/inventory writes; eventual consistency ($< 500\text{ms}$) for analytics read replicas.
-* **Security & Auth:** TLS 1.3 in transit; mTLS between internal microservices; AES-256-GCM at rest.
+* **Security & Trust Boundaries:** TLS 1.3 at public ingress; mTLS + W3C `traceparent` propagation between internal services; AES-256-GCM at rest.
+* **Observability & Telemetry (OpenTelemetry):** Export RED metrics (Rate, Errors, Duration), `/healthz` readiness probes, and structured audit logs; enforce CloudEvents v1.0.2 envelope (`specversion`, `id`, `source`, `type`, `time`, `datacontenttype`, `data`) for all async events:
+```json
+{
+  "specversion": "1.0",
+  "id": "evt-01936b8c-9f21-7000-8000-000000000001",
+  "source": "/services/{domain}",
+  "type": "com.genops.{domain}.created",
+  "time": "{YYYY-MM-DDTHH:MM:SSZ}",
+  "datacontenttype": "application/json",
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "data": { "entity_id": "..." }
+}
+```
 
 ## 8. Technology Decisions Backlog (Needs ADR)
 

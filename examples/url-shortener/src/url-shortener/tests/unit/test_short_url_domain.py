@@ -69,6 +69,13 @@ class TestShortUrlSSRF(unittest.TestCase):
         "http://[fc00::1]/internal",           # IPv6 unique-local fc00::/7
         "http://[fd00::1]/internal",           # IPv6 unique-local fd00::/7
         "http://[fe80::1]/link-local",         # IPv6 link-local fe80::/10
+        "http://localhost./admin",             # trailing dot bypass
+        "http://LOCALHOST/admin",              # uppercase bypass
+        "http://sub.localhost/admin",          # RFC 6761 .localhost subdomain
+        "http://db.local/admin",               # mDNS .local
+        "http://metadata.internal/latest",     # cloud internal suffix
+        "http://100.64.0.1/cgnat",             # RFC 6598 CGNAT non-global
+        "http://[::ffff:127.0.0.1]/admin",     # IPv4-mapped IPv6 loopback
     ]
 
     def test_prohibited_hosts_raise(self) -> None:

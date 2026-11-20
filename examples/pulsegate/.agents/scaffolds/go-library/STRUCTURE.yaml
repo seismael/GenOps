@@ -1,0 +1,18 @@
+# Go Library Scaffold
+# Used when LLD Project Structure maps a module to scaffold: go-library
+
+name: "Go Library"
+description: "Shared Go library package, no main entrypoint"
+language: "Go"
+build: "go build"
+
+directories:
+  - pkg/
+
+templates:
+  go.mod.template: "{module}/go.mod"
+  lib.go.template: "{module}/pkg/{module}.go"
+
+entity_stubs:
+  type: "pkg/{entity_lower}.go"
+  test: "pkg/{entity_lower}_test.go"

@@ -54,5 +54,7 @@ MCP server.
 
 ## Release notes
 
+- [v3.2.0](releases/v3.2.0.md)
 - [v3.1.2](releases/v3.1.2.md)
+- [v3.1.1](releases/v3.1.1.md)
 - [v3.1.0](releases/v3.1.0.md)

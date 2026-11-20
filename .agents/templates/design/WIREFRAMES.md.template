@@ -13,9 +13,9 @@ id: WIRE-{NNN}-{slug}
 domain: {domain}
 stage: wireframes
 version: 1.0.0
-status: approved
-created_at: {TIMESTAMP}
-updated_at: {TIMESTAMP}
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
 upstream_refs: ["BRIEF-{NNN}-{slug}"]
 downstream_refs: []
 tags: [{domain}, design, wireframes, ux]

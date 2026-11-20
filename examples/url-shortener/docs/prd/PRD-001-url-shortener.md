@@ -4,6 +4,8 @@ domain: url-shortener
 stage: prd
 version: 1.0.0
 status: approved
+created_at: 2026-08-20T00:00:00Z
+updated_at: 2026-08-20T00:00:00Z
 upstream_refs: []
 downstream_refs: ["HLD-001-url-shortener"]
 tags: [url-shortener, gateway, core, api]

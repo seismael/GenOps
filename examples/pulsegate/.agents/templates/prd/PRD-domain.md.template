@@ -1,0 +1,97 @@
+# {Domain} — Product Requirements
+
+## Interview
+
+Questions asked ONE at a time. The agent operates as a Principal Product Manager, challenging assumptions and demanding numeric precision.
+
+**Required:**
+1. **Problem & North Star** — "What specific customer friction or business bottleneck are we solving? What is the single measurable North Star metric that defines success (including current baseline vs. target)?"
+2. **Target Personas & Access Boundaries** — "Who are the primary user personas interacting with this domain? What are their operational goals, permission levels, and primary constraints?"
+3. **Core User Stories (BDD Format)** — "What are the 3-5 critical capabilities required? For each capability, formulate as: As a <role>, I want <feature> so that <benefit>, with acceptance criteria in Given-When-Then format."
+4. **Scope Boundaries & Anti-Features** — "What is strictly IN-SCOPE for v1, and what are the explicit ANTI-FEATURES (items deliberately excluded to prevent scope creep)?"
+
+**Optional / Operational:**
+5. **Scale, Latency & SLOs** — "What are the expected traffic baselines? (e.g., peak requests/sec, concurrent users, acceptable p99 latency threshold)?"
+6. **Compliance, Privacy & Security Constraints** — "Are there strict regulatory requirements (GDPR, SOC2, HIPAA, PCI-DSS) or data sovereignty constraints governing this domain?"
+
+## Output
+
+---
+id: PRD-{NNN}-{slug}
+domain: {domain}
+stage: prd
+version: 1.0.0
+status: draft
+created_at: {YYYY-MM-DDTHH:MM:SSZ}
+updated_at: {YYYY-MM-DDTHH:MM:SSZ}
+upstream_refs: []
+downstream_refs: []
+tags: [{domain}, prd, requirements]
+---
+
+# {Domain} — Product Requirements Document
+
+## 1. Executive Summary & Problem Statement
+<!-- 2-3 sentences explaining the core problem, affected stakeholders, and the business rationale for the solution -->
+
+## 2. Business Goals & Measurable North Star
+| Metric | Baseline | Target | Measurement Method | Target Timeline |
+|---|---|---|---|---|
+| Primary (North Star) | <!-- e.g., 85% manual review --> | <!-- e.g., <5% manual review --> | <!-- Datadog / Analytics --> | <!-- 90 days post-launch --> |
+| Secondary Metric | <!-- e.g., 4.2s p95 latency --> | <!-- e.g., <500ms p95 latency --> | <!-- Prometheus APM --> | <!-- At launch --> |
+
+## 3. User Personas & Permissions
+| Persona | Role Description | Key Motivations | Operational Constraints |
+|---|---|---|---|
+| Admin | System administrator managing policies | Full system access, audit visibility | Zero direct database write access |
+| End User | Primary consumer executing domain tasks | Low friction, predictable responses | Rate-limited per IP/Tenant |
+
+## 4. Key Capabilities & User Stories (ISO/IEC/IEEE 29148 & BDD Format)
+
+### Requirements Traceability Summary
+| Req ID | I want to... | Priority | Verification Method | Acceptance Reference |
+|---|---|---|---|---|
+| `US-{NNN}-01` | <!-- Concise capability summary --> | `P1` | `Test` | `Scenario 1, Scenario 2` |
+
+### US-{NNN}-01: {Feature Name}
+* **Story:** As an `{Actor}`, I want `{Action}` so that `{Business Outcome}`.
+* **Priority:** `P1` <!-- P0 (Critical/Blocker), P1 (Must Have), P2 (Should Have), P3 (Nice to Have) -->
+* **Acceptance Criteria (Given-When-Then):**
+  * **Scenario 1 (Happy Path):**
+    * **Given:** `{System state or prerequisite}`
+    * **When:** `{Action is executed}`
+    * **Then:** `{Expected state transition and response payload}`
+  * **Scenario 2 (Edge Case / Failure Mode):**
+    * **Given:** `{Invalid input or degraded dependency}`
+    * **When:** `{Action is executed}`
+    * **Then:** `{Specific error response code and sanitized message returned}`
+
+## 5. Scope Boundaries
+
+### In Scope (v1 MVP)
+* <!-- Explicitly included capabilities -->
+
+### Anti-Features (Explicitly Out of Scope)
+* <!-- Deliberately excluded capabilities to prevent scope creep, with rationale -->
+
+## 6. Non-Functional Requirements (NFRs) & SLO Targets
+| Category | Requirement Specification | Strict Target Bound |
+|---|---|---|
+| **Latency** | End-to-end API response time | $p99 < 250\text{ms}$, $p50 < 50\text{ms}$ |
+| **Throughput** | Sustained load capability | $\ge 500\text{ req/sec}$ peak |
+| **Availability** | Multi-region uptime target | $99.95\%$ per calendar month |
+| **Data Retention** | Audit and event log lifecycle | 365 days encrypted retention |
+
+## 7. Assumptions, Dependencies & Risks
+
+### Strategic Assumptions
+* <!-- Key business and technical assumptions -->
+
+### System Dependencies
+* <!-- Upstream systems, external APIs, third-party authentication -->
+
+### Risk & Mitigation Matrix (STRIDE & Operational)
+| Risk Description | Severity | Likelihood | Mitigation Strategy |
+|---|---|---|---|
+| High API traffic spikes during event windows | High | Med | Implement distributed token-bucket rate limiting and circuit breaking |
+| Unauthorized access to sensitive tenant records | Critical | Low | Enforce mandatory ABAC / RBAC checks at the API gateway tier |

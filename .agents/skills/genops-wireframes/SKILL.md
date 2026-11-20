@@ -17,7 +17,7 @@ Second stage in the Design pipeline. Requires approved brief. Generates structur
 2. **LOAD** — Read upstream brief documents and `.agents/context/CONTEXT.md`.
 3. **DOMAINS** — Discover domains from upstream brief.
 4. **CHECK** — Compute LF-normalized hash of `docs/brief/` via `python .agents/scripts/genops.py hash docs/brief/`.
-5. **INTERVIEW (Socratic Information Architect)** — Ask questions ONE at a time: global IA, critical conversion sequence, ASCII layouts.
+5. **INTERVIEW (Adaptive Socratic Information Architect)** — Pre-extract known persona flows from upstream briefs, then ask remaining gaps ONE at a time (`[Question k/N]` with `(Recommended)` default, or synthesize immediately if `--fast`): global IA, critical conversion sequence, ASCII layouts.
 6. **GENERATE** — Generate `docs/wireframes/WIRE-{NNN}-{slug}.md` with Mermaid sitemaps, user flows, and wireframe layouts.
 7. **VALIDATE (Critic Pass)** — Verify 100% of user personas from brief have mapped flows; verify mobile and desktop breakpoints.
 8. **PRESENT → APPROVE** — Present wireframes and sitemaps. Enforce hard gate.

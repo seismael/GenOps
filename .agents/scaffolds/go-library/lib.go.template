@@ -1,2 +1,2 @@
-// Package {module_name} provides shared types and utilities.
-package {module_lower}
+// Package pkg provides shared {module_name} types and utilities.
+package pkg

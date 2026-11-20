@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -33,23 +34,26 @@ func (r *RedirectRoute) Validate() error {
 	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
 		return ErrProhibitedTarget
 	}
-	host := parsed.Hostname()
-	if host == "localhost" {
+	host := strings.TrimSuffix(strings.ToLower(parsed.Hostname()), ".")
+	if host == "" || host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".local") || strings.HasSuffix(host, ".internal") {
 		return ErrProhibitedTarget
 	}
-	// SSRF guard: reject loopback, link-local, and RFC1918 private IP literals
+	// SSRF guard: reject loopback, link-local, multicast, and RFC1918 private IP literals
 	// (127.0.0.0/8, 169.254.0.0/16, 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12,
 	// and IPv6 ::1 / fe80::/10 / fc00::/7).
 	if ip := net.ParseIP(host); ip != nil {
-		if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsPrivate() || ip.IsUnspecified() {
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsMulticast() {
 			return ErrProhibitedTarget
 		}
 	}
 	return nil
 }
 
-// ClickTelemetry captures high-velocity immutable telemetry event.
+// ClickTelemetry captures a CloudEvents v1.0.2 compliant immutable clickstream event.
 type ClickTelemetry struct {
+	SpecVersion   string `json:"specversion"`
+	Source        string `json:"source"`
+	Type          string `json:"type"`
 	EventID       string `json:"event_id"`
 	Code          string `json:"code"`
 	TenantID      string `json:"tenant_id"`

@@ -52,3 +52,14 @@ pipeline:
       file_pattern: "RPRT-{NNN}-{slug}.md"
       template: "research/REPORT.md.template"
       next: []
+
+  validation_rules:
+    - from: lit-review
+      to: hypothesis
+      rule: "Verify each research gap identified in Literature Review maps to >=1 testable Hypothesis"
+    - from: hypothesis
+      to: experiment
+      rule: "Verify each Hypothesis variable, control, and metric is evaluated in an Experiment protocol"
+    - from: experiment
+      to: report
+      rule: "Verify all Experiment results, statistical analyses, and limitations are synthesized in Report"
